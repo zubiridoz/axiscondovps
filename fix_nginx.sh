@@ -1,1 +1,0 @@
-sed -i 's/location \~ \* \\.\(css|js|jpg|jpeg|gif|png|ico|svg|woff|woff2|ttf|eot|map\)\$ {/location \~ \* \^(?!\/(admin|api|media)\/).*\\.\(css|js|jpg|jpeg|gif|png|ico|svg|woff|woff2|ttf|eot|map\)\$ {/g' /etc/nginx/sites-enabled/app.axiscondo.mx.conf

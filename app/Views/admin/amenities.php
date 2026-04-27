@@ -599,7 +599,7 @@
                     Comience creando su primera amenidad para ayudar a los residentes a reservar instalaciones del
                     condominio.
                 </p>
-                <a href="<?= base_url('admin/amenidades/nueva') ?>" class="btn-new-amenity mx-auto"
+                <a href="<?= base_url('admin/amenidades/nueva') ?>" class="cc-hero-btn"
                     style="text-decoration:none;">
                     <i class="bi bi-plus-lg"></i> Crear Primera Amenidad
                 </a>

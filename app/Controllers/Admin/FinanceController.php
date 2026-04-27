@@ -372,8 +372,16 @@ class FinanceController extends BaseController
 
         $condominiumName = esc($demoCondo['name']);
 
-        $logoPath = WRITEPATH . 'uploads/logos/' . ($demoCondo['logo'] ?? '');
-        $hasLogo = !empty($demoCondo['logo'] ?? '') && is_file($logoPath);
+   $logoFile = $demoCondo['logo'] ?? '';
+        if (!empty($logoFile)) {
+            $logoPath = (strpos($logoFile, '/') !== false)
+                ? WRITEPATH . 'uploads/' . $logoFile
+                : WRITEPATH . 'uploads/condominiums/' . $demoCondo['id'] . '/' . $logoFile;
+            $hasLogo = is_file($logoPath);
+        } else {
+            $logoPath = '';
+            $hasLogo = false;
+        }
 
         // Preparar fecha (ej: 26 de Marzo de 2026)
         $meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
@@ -3169,8 +3177,16 @@ class FinanceController extends BaseController
         $pdf->SetFillColor(29, 76, 157); // dark blue
         $pdf->Rect(20, 15, 175.6, 28, 'F');
 
-        $logoPath = WRITEPATH . 'uploads/' . ($demoCondo['logo'] ?? '');
-        $hasLogo = !empty($demoCondo['logo']) && is_file($logoPath);
+        $logoFile = $demoCondo['logo'] ?? '';
+        if (!empty($logoFile)) {
+            $logoPath = (strpos($logoFile, '/') !== false)
+                ? WRITEPATH . 'uploads/' . $logoFile
+                : WRITEPATH . 'uploads/condominiums/' . $demoCondo['id'] . '/' . $logoFile;
+            $hasLogo = is_file($logoPath);
+        } else {
+            $logoPath = '';
+            $hasLogo = false;
+        }
 
         if ($hasLogo) {
             // Auto-scale to fit within 20x20
@@ -3860,9 +3876,30 @@ class FinanceController extends BaseController
         $builder->orderBy('ft.created_at', 'ASC');
         $transactions = $builder->get()->getResultArray();
 
-        $logoPath = WRITEPATH . 'uploads/' . ($demoCondo['logo'] ?? '');
-        $hasLogo = !empty($demoCondo['logo']) && is_file($logoPath);
-        $logoSrc = $hasLogo ? $logoPath : 'https://ui-avatars.com/api/?name=C+N&background=ffffff&color=000&bold=true';
+       $logoFile = $demoCondo['logo'] ?? '';
+        if (!empty($logoFile)) {
+            $logoPath = (strpos($logoFile, '/') !== false)
+                ? WRITEPATH . 'uploads/' . $logoFile
+                : WRITEPATH . 'uploads/condominiums/' . $demoCondo['id'] . '/' . $logoFile;
+            $hasLogo = is_file($logoPath);
+        } else {
+            $logoPath = '';
+            $hasLogo = false;
+        }
+
+        // TCPDF no resuelve bien paths absolutos del filesystem dentro de <img src="..."> en writeHTML().
+        // Convertimos el archivo a base64 data URI para inyectarlo inline.
+        if ($hasLogo) {
+            $imgBinary = @file_get_contents($logoPath);
+            if ($imgBinary !== false) {
+                $logoSrc = '@' . base64_encode($imgBinary);
+            } else {
+                $hasLogo = false;
+                $logoSrc = 'https://ui-avatars.com/api/?name=C+N&background=ffffff&color=000&bold=true';
+            }
+        } else {
+            $logoSrc = 'https://ui-avatars.com/api/?name=C+N&background=ffffff&color=000&bold=true';
+        }
 
         $addressStr = $demoCondo['address'] ?? '';
         $parts = array_values(array_filter(array_map('trim', explode(',', $addressStr)), static fn($item) => $item !== ''));
@@ -3969,14 +4006,13 @@ class FinanceController extends BaseController
         <br>
         <h3 class="section-title">Análisis de Ingresos</h3>';
 
-        if (empty($incomeByCat)) {
+    if (empty($incomeByCat)) {
             $html .= '
             <br>
             <table width="100%" cellpadding="30"><tr><td>
                 <table width="100%" cellpadding="15" bgcolor="#f8fafc" style="border: 1px dashed #cbd5e1; border-radius: 8px;">
                     <tr>
                         <td align="center">
-                            <span style="font-family: dejavusans; font-size: 24pt; color: #94a3b8;">âŠ•</span><br><br>
                             <span style="font-weight: bold; font-size: 14pt; color: #475569;">Sin Datos de Ingresos</span><br><br>
                             <span style="font-size: 10pt; color: #64748b;">No se registraron ingresos durante este período.</span>
                         </td>
@@ -4099,7 +4135,6 @@ class FinanceController extends BaseController
                 <table width="100%" cellpadding="15" bgcolor="#f8fafc" style="border: 1px dashed #cbd5e1; border-radius: 8px;">
                     <tr>
                         <td align="center">
-                            <span style="font-size: 24pt; color: #94a3b8;">&#9675;</span><br><br>
                             <span style="font-weight: bold; font-size: 14pt; color: #475569;">Sin Datos de Gastos</span><br><br>
                             <span style="font-size: 10pt; color: #64748b;">No se registraron gastos durante este período.</span>
                         </td>
@@ -4300,27 +4335,26 @@ class FinanceController extends BaseController
         <h3 class="section-title">Observaciones</h3>
         <table width="100%" cellpadding="10" bgcolor="#fafafa" style="border: 1px solid #e2e8f0;">';
 
-        // Reglas
+     // Reglas
         if ($tasaCobranza < 85) {
-            $html3 .= '<tr><td><span style="color: #dc2626; font-size: 10pt; font-weight: bold;">&#9888; La tasa de cobranza est&#225; por debajo del 85%. Se recomienda implementar acciones de cobranza.</span></td></tr>';
+            $html3 .= '<tr><td><span style="color: #dc2626; font-size: 10pt; font-weight: bold;">La tasa de cobranza está por debajo del 85%. Se recomienda implementar acciones de cobranza.</span></td></tr>';
         } else {
-            $html3 .= '<tr><td><span style="color: #16a34a; font-size: 10pt; font-weight: bold;">&#10004; La tasa de cobranza es excelente, manteniendo buenas finanzas sanas.</span></td></tr>';
+            $html3 .= '<tr><td><span style="color: #16a34a; font-size: 10pt; font-weight: bold;">La tasa de cobranza es excelente, manteniendo buenas finanzas sanas.</span></td></tr>';
         }
 
         if ($utilidadNeta > 0) {
-            $html3 .= '<tr><td><span style="color: #16a34a; font-size: 10pt; font-weight: bold;">&#10004; El per&#237;odo muestra utilidades positivas.</span></td></tr>';
+            $html3 .= '<tr><td><span style="color: #16a34a; font-size: 10pt; font-weight: bold;">El período muestra utilidades positivas.</span></td></tr>';
         } else if ($utilidadNeta < 0) {
-            $html3 .= '<tr><td><span style="color: #dc2626; font-size: 10pt; font-weight: bold;">&#9888; El per&#237;odo muestra utilidades negativas. Revisa tus gastos.</span></td></tr>';
+            $html3 .= '<tr><td><span style="color: #dc2626; font-size: 10pt; font-weight: bold;">El período muestra utilidades negativas. Revisa tus gastos.</span></td></tr>';
         } else {
-            $html3 .= '<tr><td><span style="color: #d97706; font-size: 10pt; font-weight: bold;">&#9679; El per&#237;odo no reporta utilidad ni p&#233;rdida.</span></td></tr>';
+            $html3 .= '<tr><td><span style="color: #d97706; font-size: 10pt; font-weight: bold;">El período no reporta utilidad ni pérdida.</span></td></tr>';
         }
 
         if ($unidadesMorosas > 0) {
-            $html3 .= '<tr><td><span style="color: #d97706; font-size: 10pt; font-weight: bold;">&#9888; ' . $unidadesMorosas . ' unidades requieren seguimiento de cobranza.</span></td></tr>';
+            $html3 .= '<tr><td><span style="color: #d97706; font-size: 10pt; font-weight: bold;">' . $unidadesMorosas . ' unidades requieren seguimiento de cobranza.</span></td></tr>';
         } else {
-            $html3 .= '<tr><td><span style="color: #16a34a; font-size: 10pt; font-weight: bold;">&#10004; Todas las unidades se encuentran al corriente.</span></td></tr>';
+            $html3 .= '<tr><td><span style="color: #16a34a; font-size: 10pt; font-weight: bold;">Todas las unidades se encuentran al corriente.</span></td></tr>';
         }
-
         $html3 .= '</table>';
 
         $pdf->writeHTML($html3, true, false, true, false, '');
