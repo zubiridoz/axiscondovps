@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Nueva Entrada - AxisCondo</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="manifest" href="manifest.json">
+    <style>
+        /* Ajuste específico para el body para que el botón no quede oculto */
+        .content { padding-bottom: 120px; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header style="justify-content: flex-start; position: relative;">
+            <a href="entradas.html" style="color:var(--navy); text-decoration:none; display:flex; align-items:center; gap:4px; font-weight:500; font-size:16px;">
+                <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+                Atrás
+            </a>
+            <span style="position:absolute; left:50%; transform:translateX(-50%); font-weight:700; font-size:17px; color:var(--navy);">
+                Nueva entrada
+            </span>
+        </header>
+
+        <div class="content">
+            <div id="msg" class="alert" style="margin: 16px 20px 0;"></div>
+            
+            <form id="frmManual">
+                <input type="hidden" id="purpose" value="Visita">
+                <input type="hidden" id="vehicle" value="Auto">
+
+                <!-- Propósito -->
+                <div class="manual-card">
+                    <div class="manual-card-title">Propósito</div>
+                    <div class="manual-grid">
+                        <div class="manual-option-btn selected" data-group="purpose" data-val="Visita">
+                            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                            </svg>
+                            <span>Visita</span>
+                        </div>
+                        <div class="manual-option-btn" data-group="purpose" data-val="Residente">
+                            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                            </svg>
+                            <span>Residente</span>
+                        </div>
+                        <div class="manual-option-btn" data-group="purpose" data-val="Entrega de comida">
+                            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                                <!-- Fast food / Burger icon -->
+                                <path d="M12 2C8.43 2 5.23 4.33 4.15 7.63c-.15.48-.15.82 0 1.37h15.7c.15-.55.15-.89 0-1.37C18.77 4.33 15.57 2 12 2zM3 11v2a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-2H3zm2 6h14a2 2 0 0 1 2 2v1H3v-1a2 2 0 0 1 2-2z"/>
+                            </svg>
+                            <span>Entrega de<br>comida</span>
+                        </div>
+                        <div class="manual-option-btn" data-group="purpose" data-val="Entrega de paquetería">
+                            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                                <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                                <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                            </svg>
+                            <span>Entrega de<br>paquetería</span>
+                        </div>
+                        <div class="manual-option-btn" data-group="purpose" data-val="Proveedor de servicios">
+                            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 9.36l-7.19 7.19a2 2 0 0 1-2.83-2.83l7.19-7.19a6 6 0 0 1 9.36-7.94z"></path>
+                            </svg>
+                            <span>Proveedor de<br>servicios</span>
+                        </div>
+                        <div class="manual-option-btn" data-group="purpose" data-val="Otro">
+                            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="1.5"></circle>
+                                <circle cx="19" cy="12" r="1.5"></circle>
+                                <circle cx="5" cy="12" r="1.5"></circle>
+                            </svg>
+                            <span>Otro</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vehículo -->
+                <div class="manual-card">
+                    <div class="manual-card-title">Vehículo</div>
+                    <div class="manual-grid">
+                        <div class="manual-option-btn" data-group="vehicle" data-val="Sin vehículo">
+                            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="4" r="2.5"></circle>
+                                <path d="m12 10 3-1.5"></path>
+                                <path d="m12 10-2-1.5"></path>
+                                <path d="M12 6v6"></path>
+                                <path d="m14 16-2-4-2 4"></path>
+                                <path d="M12 16v6"></path>
+                            </svg>
+                            <span>Sin vehículo</span>
+                        </div>
+                        <div class="manual-option-btn selected" data-group="vehicle" data-val="Auto">
+                            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14 16H9m10 0h3v-3.15a1 1 0 0 0-.84-.99L16 11l-2.7-3.6a2 2 0 0 0-1.6-.8H9.3a2 2 0 0 0-1.6.8L5 11l-5.16.86a1 1 0 0 0-.84.99V16h3m10 0a2 2 0 1 1-4 0m4 0a2 2 0 1 0-4 0m-7 0a2 2 0 1 1-4 0m4 0a2 2 0 1 0-4 0"></path>
+                            </svg>
+                            <span>Auto</span>
+                        </div>
+                        <div class="manual-option-btn" data-group="vehicle" data-val="Motocicleta">
+                            <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="5.5" cy="17.5" r="3.5"></circle>
+                                <circle cx="18.5" cy="17.5" r="3.5"></circle>
+                                <path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-3 11.5V14l-3-3 4-3 2 3h2"></path>
+                            </svg>
+                            <span>Motocicleta</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detalles de entrada -->
+                <div class="manual-card">
+                    <div class="manual-card-title">Detalles de entrada</div>
+                    
+                    <div class="manual-form-row">
+                        <div class="mf-label">Nombre del Visitante</div>
+                        <div class="mf-input-wrapper">
+                            <input type="text" id="visitor" placeholder="Nombre" required>
+                        </div>
+                    </div>
+
+                    <div class="manual-form-row" id="rowSelectUnit" style="cursor:pointer;">
+                        <div class="mf-label">Unidad</div>
+                        <div class="mf-input-wrapper" style="position:relative;">
+                            <input type="text" id="unit_display" placeholder="Seleccionar" readonly style="padding-right: 20px; cursor:pointer; font-weight: 500;">
+                            <input type="hidden" id="unit_id">
+                            <svg class="chevron" viewBox="0 0 24 24" style="position:absolute; right:0;">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Imágenes -->
+                <div class="manual-card">
+                    <div class="manual-card-title">Imágenes</div>
+                    
+                    <!-- Hidden file inputs -->
+                    <input type="file" id="file_id" accept="image/*" capture="environment" style="display:none;">
+                    <input type="file" id="file_plate" accept="image/*" capture="environment" style="display:none;">
+
+                    <div class="manual-form-row">
+                        <div class="mf-label">Documento de identificación</div>
+                        <div class="mf-input-wrapper">
+                            <img id="thumb_id" class="manual-photo-thumb" src="">
+                            <svg class="camera-btn" id="btnCaptureId" viewBox="0 0 24 24">
+                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                <circle cx="12" cy="13" r="4"></circle>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div class="manual-form-row" id="rowPlatePhoto">
+                        <div class="mf-label">Placa</div>
+                        <div class="mf-input-wrapper">
+                            <img id="thumb_plate" class="manual-photo-thumb" src="">
+                            <svg class="camera-btn" id="btnCapturePlate" viewBox="0 0 24 24">
+                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                <circle cx="12" cy="13" r="4"></circle>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-manual-submit" id="btnSubmit">Registrar Entrada</button>
+            </form>
+        </div>
+
+        <!-- Bottom Navigation -->
+        </div>
+    </div>
+
+    <!-- Modal Seleccionar Unidad -->
+    <div class="modal-full" id="modalUnits">
+        <div class="modal-full-header">
+            <span class="modal-full-header-btn" id="btnCancelUnit">Cancelar</span>
+            <span class="modal-full-title">Seleccionar unidad</span>
+            <span class="modal-full-header-btn" id="btnDoneUnit" style="visibility:hidden;">Listo</span>
+        </div>
+        <div class="modal-full-search">
+            <svg class="modal-full-search-icon" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" class="modal-full-search-input" id="searchUnit" placeholder="Buscar">
+        </div>
+        <div class="modal-full-list">
+            <div class="modal-grouped-list" id="unitListContainer">
+                <!-- Se poblará con JS -->
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/app.js"></script>
+    <script>
+        Auth.checkProtected();
+
+        // UI Logic for option groups
+        document.querySelectorAll('.manual-option-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const group = this.dataset.group;
+                const val = this.dataset.val;
+                
+                // Deselect siblings
+                document.querySelectorAll(`.manual-option-btn[data-group="${group}"]`).forEach(el => {
+                    el.classList.remove('selected');
+                });
+                
+                // Select clicked
+                this.classList.add('selected');
+                
+                // Update hidden input
+                document.getElementById(group).value = val;
+
+                // Vehicle specific logic
+                if(group === 'vehicle') {
+                    const plateRow = document.getElementById('rowPlatePhoto');
+                    if(val === 'Sin vehículo') {
+                        plateRow.style.display = 'none';
+                        document.getElementById('thumb_plate').src = '';
+                        document.getElementById('thumb_plate').style.display = 'none';
+                        document.getElementById('btnCapturePlate').style.display = 'block';
+                    } else {
+                        plateRow.style.display = 'flex';
+                    }
+                }
+            });
+        });
+
+        // Camera Logic with compression
+        const setupCamera = (btnId, fileId, thumbId) => {
+            const btn = document.getElementById(btnId);
+            const file = document.getElementById(fileId);
+            const thumb = document.getElementById(thumbId);
+
+            btn.addEventListener('click', () => {
+                file.click();
+            });
+
+            file.addEventListener('change', async function() {
+                if (this.files && this.files[0]) {
+                    // Comprimir imagen antes de guardar
+                    const compressed = await ImageCompressor.compress(this.files[0]);
+                    
+                    // Reemplazar el archivo en el input con el comprimido
+                    const dt = new DataTransfer();
+                    dt.items.add(compressed);
+                    this.files = dt.files;
+
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        thumb.src = e.target.result;
+                        thumb.style.display = 'block';
+                        btn.style.display = 'none';
+                    }
+                    reader.readAsDataURL(compressed);
+                }
+            });
+
+            // Permite cambiar la foto si se hace click en el thumbnail
+            thumb.addEventListener('click', () => file.click());
+        };
+
+        setupCamera('btnCaptureId', 'file_id', 'thumb_id');
+        setupCamera('btnCapturePlate', 'file_plate', 'thumb_plate');
+
+        // Form Submit
+        const processLog = async () => {
+            const visitor = document.getElementById('visitor').value;
+            const unit = document.getElementById('unit_id').value;
+            const purpose = document.getElementById('purpose').value;
+            const vehicle = document.getElementById('vehicle').value;
+            
+            if(!visitor) {
+                alert("Completa el nombre del visitante"); 
+                return;
+            }
+            if(!unit) {
+                alert("Selecciona una unidad destino.");
+                return;
+            }
+
+            const submitBtn = document.getElementById('btnSubmit');
+            const originalText = submitBtn.innerText;
+            submitBtn.innerText = 'Registrando...';
+            submitBtn.disabled = true;
+
+            try {
+                const fd = new FormData();
+                fd.append('visitor_name', visitor);
+                fd.append('unit_id', unit);
+                
+                // Tipo físico para la Enum de BD (peatonal o en vehículo)
+                fd.append('visitor_type', vehicle === 'Sin vehículo' ? 'pedestrian' : 'vehicle');
+                
+                // Clasificación explícita para la UI
+                fd.append('visit_type', purpose);
+                fd.append('vehicle_type', vehicle);
+                
+                fd.append('gate_number', 'Caseta Principal');
+                fd.append('notes', `[Registro Manual] Motivo: ${purpose}. Vehículo: ${vehicle}.`);
+
+                const fileId = document.getElementById('file_id').files[0];
+                if(fileId) fd.append('photo_id', fileId);
+
+                if (vehicle !== 'Sin vehículo') {
+                    const filePlate = document.getElementById('file_plate').files[0];
+                    if(filePlate) fd.append('photo_plate', filePlate);
+                }
+
+                const token = Auth.getToken();
+                const resRaw = await fetch(`${CONFIG.API_URL}/security/entry`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: fd
+                });
+                const res = await resRaw.json();
+                
+                const msg = document.getElementById('msg');
+                
+                if(resRaw.ok && res && res.status === 'success') {
+                    sessionStorage.setItem('toast_entry', 'true');
+                    window.location.href = 'entradas.html';
+                } else {
+                    msg.className = 'alert error';
+                    msg.innerText = res ? res.message : 'Error en servidor';
+                    msg.style.display = 'block';
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            } catch (err) {
+                console.error(err);
+                const msg = document.getElementById('msg');
+                msg.className = 'alert error';
+                msg.innerText = 'Error de conexión';
+                msg.style.display = 'block';
+            } finally {
+                submitBtn.innerText = originalText;
+                submitBtn.disabled = false;
+            }
+        };
+
+        document.getElementById('frmManual').addEventListener('submit', (e) => {
+            e.preventDefault();
+            processLog();
+        });
+
+        // -------------------------
+        // UNIT SELECTOR MODAL VIEWS
+        // -------------------------
+        let allUnits = [];
+        let selectedUnitObj = null;
+
+        const loadUnits = async () => {
+            const list = document.getElementById('unitListContainer');
+            list.innerHTML = '<div style="padding:20px; text-align:center;">Cargando...</div>';
+            
+            try {
+                const res = await ApiClient.request('/security/units_directory', 'GET');
+                if(res && res.status === 'success') {
+                    allUnits = res.data; // Ya viene ordenado por unit_number del backend
+                    renderUnits(allUnits);
+                }
+            } catch (e) {
+                list.innerHTML = '<div style="padding:20px; text-align:center; color:red;">Error al cargar</div>';
+            }
+        };
+
+        const renderUnits = (units) => {
+            const list = document.getElementById('unitListContainer');
+            list.innerHTML = '';
+            if(units.length === 0) {
+                list.innerHTML = '<div style="padding:20px; text-align:center; color:#94a3b8;">No hay resultados</div>';
+                return;
+            }
+
+            // Agrupar por sección
+            const grouped = {};
+            units.forEach(u => {
+                const sec = u.section_name || 'Sin Sección';
+                if(!grouped[sec]) grouped[sec] = [];
+                grouped[sec].push(u);
+            });
+
+            // Renderizar grupos
+            Object.keys(grouped).sort().forEach(sec => {
+                const secHeader = document.createElement('div');
+                secHeader.className = 'modal-list-header';
+                secHeader.innerText = sec;
+                list.appendChild(secHeader);
+
+                grouped[sec].forEach(u => {
+                    const owner = (u.residents && u.residents.length > 0) ? u.residents[0] : null;
+                    const headStr = owner ? owner.name : 'Sin Asignar';
+                    
+                    const div = document.createElement('div');
+                    div.className = 'modal-list-item';
+                    div.innerText = `${u.unit_number} - ${headStr}`;
+                    
+                    div.addEventListener('click', () => {
+                        document.querySelectorAll('.modal-list-item').forEach(el => el.classList.remove('selected'));
+                        div.classList.add('selected');
+                        // El nombre se pone en minúsculas en el backend, o usamos first_name last_name
+                        const finalName = owner ? owner.name : 'Sin Asignar';
+                        selectedUnitObj = { id: u.id, text: `${u.unit_number} - ${finalName}` };
+                    });
+                    
+                    list.appendChild(div);
+                });
+            });
+        };
+
+        document.getElementById('searchUnit').addEventListener('input', (e) => {
+            const q = e.target.value.toLowerCase();
+            const filtered = allUnits.filter(u => {
+                const searchStr = u.search_string || '';
+                return searchStr.toLowerCase().includes(q) || u.unit_number.toLowerCase().includes(q);
+            });
+            renderUnits(filtered);
+        });
+
+        // Open Modal
+        document.getElementById('rowSelectUnit').addEventListener('click', () => {
+            document.getElementById('modalUnits').style.display = 'flex';
+            if(allUnits.length === 0) loadUnits();
+            
+            // clear selection and input
+            document.getElementById('searchUnit').value = '';
+            if(allUnits.length > 0) renderUnits(allUnits);
+            selectedUnitObj = null;
+        });
+
+        // Close/Cancel Modal
+        document.getElementById('btnCancelUnit').addEventListener('click', () => {
+            document.getElementById('modalUnits').style.display = 'none';
+        });
+
+        // Use setTimeout to check if user tapped - 'Listo' button is simulated by tapping the row logic in iOS, 
+        // Here we just attach it to click
+        document.getElementById('unitListContainer').addEventListener('click', (e) => {
+            if(e.target.classList.contains('modal-list-item') || e.target.closest('.modal-list-item')) {
+                // If they tapped one, assume they want to confirm
+                setTimeout(() => {
+                    if(selectedUnitObj) {
+                        document.getElementById('unit_id').value = selectedUnitObj.id;
+                        document.getElementById('unit_display').value = selectedUnitObj.text;
+                        document.getElementById('modalUnits').style.display = 'none';
+                    }
+                }, 200);
+            }
+        });
+
+    </script>
+</body>
+</html>

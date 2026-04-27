@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1E1B4B">
+    <title>AxisCondo — Residentes</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="manifest" href="manifest.json">
+    <style>
+        /* Tab System */
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 24px;
+            border-radius: var(--radius-sm);
+            background: var(--bg);
+            padding: 4px;
+            gap: 4px;
+        }
+        .auth-tabs button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            background: transparent;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: var(--transition-fast);
+        }
+        .auth-tabs button.active {
+            background: var(--surface);
+            color: var(--primary);
+            font-weight: 600;
+            box-shadow: var(--shadow-sm);
+        }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; animation: slideUp 0.3s ease; }
+
+        /* Token info card */
+        .token-info {
+            background: rgba(79,70,229,0.06);
+            border: 1px solid rgba(79,70,229,0.15);
+            border-radius: var(--radius-sm);
+            padding: 12px 14px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+        .token-info svg {
+            width: 16px;
+            height: 16px;
+            stroke: var(--primary);
+            vertical-align: -3px;
+            margin-right: 4px;
+        }
+    </style>
+</head>
+<body class="login-page">
+    <div class="login-card">
+        <div class="login-brand">
+            <div class="logo-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 21h18"/>
+                    <path d="M5 21V7l8-4v18"/>
+                    <path d="M19 21V11l-6-4"/>
+                    <path d="M9 9v.01"/><path d="M9 12v.01"/><path d="M9 15v.01"/><path d="M9 18v.01"/>
+                </svg>
+            </div>
+            <h1>AxisCondo</h1>
+            <p>Portal de Residentes</p>
+        </div>
+
+        <!-- Tabs -->
+        <div class="auth-tabs">
+            <button id="tabLogin" class="active" onclick="switchTab('login')">Iniciar Sesión</button>
+            <button id="tabRegister" onclick="switchTab('register')">Registrarse</button>
+        </div>
+
+        <!-- ==================== TAB: LOGIN ==================== -->
+        <div id="panelLogin" class="tab-panel active">
+            <div id="loginMsg" class="alert" style="display:none;"></div>
+
+            <form id="frmLogin">
+                <div class="form-group">
+                    <label>Correo Electrónico</label>
+                    <input type="email" id="login_email" placeholder="tu@correo.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Contraseña</label>
+                    <input type="password" id="login_password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn" id="btnLogin">Ingresar</button>
+            </form>
+
+            <p style="text-align:center; margin-top:16px; font-size:12px; color:var(--text-muted);">
+                ¿Tienes una invitación? <a href="#" onclick="switchTab('register'); return false;" style="color:var(--primary); font-weight:500;">Regístrate aquí</a>
+            </p>
+        </div>
+
+        <!-- ==================== TAB: REGISTER ==================== -->
+        <div id="panelRegister" class="tab-panel">
+            <div class="token-info">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></svg>
+                Ingresa el código de invitación que recibiste de tu administrador y crea tu contraseña para acceder a tu comunidad.
+            </div>
+
+            <div id="registerMsg" class="alert" style="display:none;"></div>
+
+            <form id="frmRegister">
+                <div class="form-group">
+                    <label>Código de Invitación</label>
+                    <input type="text" id="reg_token" placeholder="Pega tu código aquí" required>
+                </div>
+                <div class="form-group">
+                    <label>Contraseña</label>
+                    <input type="password" id="reg_password" placeholder="Mínimo 6 caracteres" required minlength="6">
+                </div>
+                <div class="form-group">
+                    <label>Confirmar Contraseña</label>
+                    <input type="password" id="reg_password_confirm" placeholder="Repite tu contraseña" required minlength="6">
+                </div>
+                <button type="submit" class="btn" id="btnRegister">Crear Mi Cuenta</button>
+            </form>
+
+            <p style="text-align:center; margin-top:16px; font-size:12px; color:var(--text-muted);">
+                ¿Ya tienes cuenta? <a href="#" onclick="switchTab('login'); return false;" style="color:var(--primary); font-weight:500;">Inicia sesión</a>
+            </p>
+        </div>
+    </div>
+
+    <script src="assets/js/app.js"></script>
+    <script>
+        // Si ya está logueado, redirigir
+        if (Auth.getToken()) window.location.replace('dashboard.html');
+
+        // Extraer token de la URL si viene como ?token=xxx
+        const urlParams = new URLSearchParams(window.location.search);
+        const inviteToken = urlParams.get('token');
+        if (inviteToken) {
+            switchTab('register');
+            document.getElementById('reg_token').value = inviteToken;
+        }
+
+        // Auto-login (desde el backend web con transición transparente al PWA)
+        const authToken = urlParams.get('auth_token');
+        const userDataStr = urlParams.get('user_data');
+        if (authToken && userDataStr) {
+            try {
+                Auth.setToken(authToken);
+                Auth.setUser(JSON.parse(atob(userDataStr)));
+                window.location.replace('dashboard.html');
+            } catch (e) {
+                console.error('Fallo en el auto-login:', e);
+            }
+        }
+
+        // === TAB SWITCHING ===
+        function switchTab(tab) {
+            document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
+            document.getElementById('tabRegister').classList.toggle('active', tab === 'register');
+            document.getElementById('panelLogin').classList.toggle('active', tab === 'login');
+            document.getElementById('panelRegister').classList.toggle('active', tab === 'register');
+            // Limpiar mensajes al cambiar
+            document.getElementById('loginMsg').style.display = 'none';
+            document.getElementById('registerMsg').style.display = 'none';
+        }
+
+        // === LOGIN FORM ===
+        document.getElementById('frmLogin').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btnLogin');
+            const msg = document.getElementById('loginMsg');
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Autenticando...';
+            msg.style.display = 'none';
+
+            const res = await Auth.login(
+                document.getElementById('login_email').value,
+                document.getElementById('login_password').value
+            );
+
+            if (res.success) {
+                window.location.replace('dashboard.html');
+            } else {
+                msg.className = 'alert error';
+                msg.innerText = res.message;
+                msg.style.display = 'block';
+                btn.disabled = false;
+                btn.innerText = 'Ingresar';
+            }
+        });
+
+        // === REGISTER FORM ===
+        document.getElementById('frmRegister').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btnRegister');
+            const msg = document.getElementById('registerMsg');
+
+            const password = document.getElementById('reg_password').value;
+            const confirm = document.getElementById('reg_password_confirm').value;
+
+            if (password !== confirm) {
+                msg.className = 'alert error';
+                msg.innerText = 'Las contraseñas no coinciden.';
+                msg.style.display = 'block';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Registrando...';
+            msg.style.display = 'none';
+
+            try {
+                const response = await fetch(`${CONFIG.API_URL}/register-invitation`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        token: document.getElementById('reg_token').value.trim(),
+                        password: password,
+                        password_confirm: confirm
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Registro exitoso: mostrar mensaje y cambiar a login
+                    msg.className = 'alert success';
+                    msg.innerText = result.message;
+                    msg.style.display = 'block';
+
+                    // Pre-llenar el email en el login
+                    if (result.data && result.data.email) {
+                        document.getElementById('login_email').value = result.data.email;
+                    }
+
+                    // Tras 2 segundos, cambiar al tab de login
+                    setTimeout(() => {
+                        switchTab('login');
+                        const loginMsg = document.getElementById('loginMsg');
+                        loginMsg.className = 'alert success';
+                        loginMsg.innerText = '¡Cuenta creada exitosamente! Ingresa tu correo y contraseña.';
+                        loginMsg.style.display = 'block';
+                    }, 2000);
+                } else {
+                    msg.className = 'alert error';
+                    msg.innerText = result.message || 'Error desconocido';
+                    msg.style.display = 'block';
+                }
+            } catch (err) {
+                msg.className = 'alert error';
+                msg.innerText = 'Problema de conexión al servidor.';
+                msg.style.display = 'block';
+            }
+
+            btn.disabled = false;
+            btn.innerText = 'Crear Mi Cuenta';
+        });
+    </script>
+</body>
+</html>

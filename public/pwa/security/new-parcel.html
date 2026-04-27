@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Nuevo Paquete - AxisCondo</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="manifest" href="manifest.json">
+    <style>
+        .content { padding-bottom: 120px; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header style="justify-content: flex-start; position: relative;">
+            <a href="paqueteria.html" style="color:var(--navy); text-decoration:none; display:flex; align-items:center; gap:4px; font-weight:500; font-size:16px;">
+                <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+                Atrás
+            </a>
+            <span style="position:absolute; left:50%; transform:translateX(-50%); font-weight:700; font-size:17px; color:var(--navy);">
+                Nuevo paquete
+            </span>
+        </header>
+
+        <div class="content">
+            <div id="msg" class="alert" style="margin: 16px 20px 0;"></div>
+
+            <!-- Photo Hero -->
+            <div class="parcel-photo-hero" id="photoHero">
+                <img id="photoPreview" src="" alt="Foto del paquete">
+                <div class="parcel-photo-overlay">
+                    <div class="parcel-camera-circle">
+                        <svg viewBox="0 0 24 24">
+                            <circle cx="12" cy="13" r="4"></circle>
+                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <input type="file" id="filePhoto" accept="image/*" capture="environment" style="display:none;">
+            </div>
+
+            <!-- Form Card -->
+            <div class="parcel-form-card">
+                <!-- Hora -->
+                <div class="parcel-form-row" style="cursor:default;">
+                    <div class="pf-label">Hora</div>
+                    <div class="pf-value filled">
+                        <span class="pill-date" id="dateDisplay"></span>
+                        <span class="pill-date" id="timeDisplay"></span>
+                    </div>
+                </div>
+
+                <!-- Tipo de paquete -->
+                <div class="parcel-form-row" style="cursor:default;">
+                    <div class="pf-label">Tipo de paquete</div>
+                    <div class="pf-value">
+                        <select id="parcelType">
+                            <option value="Paquete" selected>Paquete ◇</option>
+                            <option value="Sobre">Sobre ◇</option>
+                            <option value="Caja">Caja ◇</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Cantidad -->
+                <div class="parcel-form-row" id="rowQuantity">
+                    <div class="pf-label">Cantidad</div>
+                    <div class="pf-value filled">
+                        <span id="quantityDisplay">1</span>
+                        <svg class="chevron" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>
+                </div>
+
+                <!-- Proveedor de paquetería -->
+                <div class="parcel-form-row" id="rowCourier">
+                    <div class="pf-label">
+                        <span class="check-icon" id="checkCourier">
+                            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </span>
+                        Proveedor de<br>paquetería
+                    </div>
+                    <div class="pf-value" id="courierValue">
+                        <span>Seleccionar</span>
+                        <svg class="chevron" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>
+                </div>
+
+                <!-- Unidad -->
+                <div class="parcel-form-row" id="rowUnit">
+                    <div class="pf-label">
+                        <span class="check-icon" id="checkUnit">
+                            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </span>
+                        Unidad
+                    </div>
+                    <div class="pf-value" id="unitValue">
+                        <span>Seleccionar</span>
+                        <svg class="chevron" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>
+                </div>
+
+                <!-- Cambiar foto -->
+                <div class="parcel-form-row" id="rowChangePhoto" style="display:none;">
+                    <div class="pf-label">
+                        <span class="check-icon" id="checkPhoto">
+                            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </span>
+                        Cambiar foto
+                    </div>
+                    <div class="pf-value">
+                        <svg viewBox="0 0 24 24" style="width:20px; height:20px; stroke:#94a3b8; fill:none; stroke-width:1.5;">
+                            <circle cx="12" cy="13" r="4"></circle>
+                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                        <svg class="chevron" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hidden data -->
+            <input type="hidden" id="selectedCourier" value="">
+            <input type="hidden" id="selectedUnitId" value="">
+            <input type="hidden" id="selectedQuantity" value="1">
+
+            <!-- Submit Button -->
+            <button class="btn-manual-submit" id="btnSubmit">Crear</button>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <div class="bottom-nav">
+            <a href="unidades.html">
+                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                Unidades
+            </a>
+            <a href="entradas.html">
+                <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                Entradas
+            </a>
+            <a href="paqueteria.html" class="active">
+                <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                Paquetería
+            </a>
+            <a href="configuracion.html">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                Configuración
+            </a>
+        </div>
+    </div>
+
+    <!-- Quantity Modal -->
+    <div class="quantity-modal-overlay" id="quantityModal">
+        <div class="quantity-modal">
+            <div class="quantity-box-icon">
+                <svg viewBox="0 0 24 24">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                </svg>
+            </div>
+            <h3>Cantidad de paquetes</h3>
+            <div class="quantity-controls">
+                <button class="quantity-btn" id="btnQtyMinus">
+                    <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                </button>
+                <div class="quantity-number" id="qtyNumber">1</div>
+                <button class="quantity-btn" id="btnQtyPlus">
+                    <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                </button>
+            </div>
+            <button class="btn-confirm-qty" id="btnQtyConfirm">Confirmar</button>
+        </div>
+    </div>
+
+    <!-- Courier Selector Modal -->
+    <div class="courier-modal" id="courierModal">
+        <div class="courier-modal-header">
+            <span class="cancel-btn" id="btnCancelCourier">Cancelar</span>
+            <span class="title">Seleccionar transportista</span>
+            <span style="width:60px;"></span>
+        </div>
+        <div class="courier-list">
+            <div class="courier-list-inner" id="courierListContainer">
+                <div style="padding:20px; text-align:center; color:#94a3b8;">Cargando...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Unit Selector Modal -->
+    <div class="modal-full" id="modalUnits">
+        <div class="modal-full-header">
+            <span class="modal-full-header-btn" id="btnCancelUnit">Cancelar</span>
+            <span class="modal-full-title">Seleccionar unidad</span>
+            <span class="modal-full-header-btn" id="btnDoneUnit" style="visibility:hidden;">Listo</span>
+        </div>
+        <div class="modal-full-search">
+            <svg class="modal-full-search-icon" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" class="modal-full-search-input" id="searchUnit" placeholder="Buscar">
+        </div>
+        <div class="modal-full-list">
+            <div class="modal-grouped-list" id="unitListContainer">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/app.js"></script>
+    <script>
+        Auth.checkProtected();
+
+        // ============================
+        // STATE
+        // ============================
+        let parcelState = {
+            courier: null,
+            courierName: '',
+            courierIcon: '',
+            unitId: null,
+            unitDisplay: '',
+            quantity: 1,
+            parcelType: 'Paquete',
+            photoFile: null
+        };
+
+        let allUnits = [];
+        let allCouriers = [];
+
+        // ============================
+        // DATE/TIME AUTO-FILL
+        // ============================
+        const formatDate = () => {
+            const now = new Date();
+            const days = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+            const months = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+            const day = days[now.getDay()];
+            const date = now.getDate();
+            const month = months[now.getMonth()];
+            document.getElementById('dateDisplay').textContent = `${day} ${date} de ${month}`;
+
+            let hours = now.getHours();
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const ampm = hours >= 12 ? 'p.m.' : 'a.m.';
+            hours = hours % 12 || 12;
+            document.getElementById('timeDisplay').textContent = `${hours}:${minutes} ${ampm}`;
+        };
+        formatDate();
+
+        // ============================
+        // VALIDATION CHECK ICONS
+        // ============================
+        const updateValidation = () => {
+            const checkCourier = document.getElementById('checkCourier');
+            const checkUnit = document.getElementById('checkUnit');
+            const checkPhoto = document.getElementById('checkPhoto');
+
+            if (parcelState.courier) checkCourier.classList.add('visible');
+            else checkCourier.classList.remove('visible');
+
+            if (parcelState.unitId) checkUnit.classList.add('visible');
+            else checkUnit.classList.remove('visible');
+
+            if (parcelState.photoFile) checkPhoto.classList.add('visible');
+            else checkPhoto.classList.remove('visible');
+        };
+
+        // ============================
+        // PHOTO CAPTURE
+        // ============================
+        const photoHero = document.getElementById('photoHero');
+        const filePhoto = document.getElementById('filePhoto');
+        const photoPreview = document.getElementById('photoPreview');
+
+        photoHero.addEventListener('click', () => filePhoto.click());
+
+        document.getElementById('rowChangePhoto').addEventListener('click', () => filePhoto.click());
+
+        filePhoto.addEventListener('change', async function() {
+            if (this.files && this.files[0]) {
+                const compressed = await ImageCompressor.compress(this.files[0]);
+                
+                // Replace file in input
+                const dt = new DataTransfer();
+                dt.items.add(compressed);
+                this.files = dt.files;
+
+                parcelState.photoFile = compressed;
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    photoPreview.src = e.target.result;
+                    photoHero.classList.add('has-photo');
+                    document.getElementById('rowChangePhoto').style.display = 'flex';
+                    updateValidation();
+                };
+                reader.readAsDataURL(compressed);
+            }
+        });
+
+        // ============================
+        // PARCEL TYPE
+        // ============================
+        document.getElementById('parcelType').addEventListener('change', function() {
+            parcelState.parcelType = this.value;
+        });
+
+        // ============================
+        // QUANTITY MODAL
+        // ============================
+        const qtyModal = document.getElementById('quantityModal');
+        const qtyNumber = document.getElementById('qtyNumber');
+        let tempQty = 1;
+
+        document.getElementById('rowQuantity').addEventListener('click', () => {
+            tempQty = parcelState.quantity;
+            qtyNumber.textContent = tempQty;
+            qtyModal.classList.add('active');
+        });
+
+        document.getElementById('btnQtyMinus').addEventListener('click', () => {
+            if (tempQty > 1) {
+                tempQty--;
+                qtyNumber.textContent = tempQty;
+            }
+        });
+
+        document.getElementById('btnQtyPlus').addEventListener('click', () => {
+            if (tempQty < 99) {
+                tempQty++;
+                qtyNumber.textContent = tempQty;
+            }
+        });
+
+        document.getElementById('btnQtyConfirm').addEventListener('click', () => {
+            parcelState.quantity = tempQty;
+            document.getElementById('quantityDisplay').textContent = tempQty;
+            document.getElementById('selectedQuantity').value = tempQty;
+            qtyModal.classList.remove('active');
+        });
+
+        // Close on overlay click
+        qtyModal.addEventListener('click', (e) => {
+            if (e.target === qtyModal) qtyModal.classList.remove('active');
+        });
+
+        // ============================
+        // COURIER SELECTOR
+        // ============================
+        const courierModal = document.getElementById('courierModal');
+
+        const getCourierSvg = (iconKey) => {
+            const icons = {
+                'mercadolibre': '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><circle cx="9" cy="10" r="1.2"/><circle cx="15" cy="10" r="1.2"/></svg>',
+                'amazon': '<svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M7.5 4.21l4.5 2.6 4.5-2.6"/><path d="M7.5 19.79V14.6L3 12"/><path d="M21 12l-4.5 2.6v5.19"/><path d="M3.27 6.96L12 12.01l8.73-5.05"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>',
+                'dhl': '<svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h12"/><path d="M6 9h8"/><path d="M6 15h8"/></svg>',
+                'fedex': '<svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>',
+                'estafeta': '<svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
+                'ups': '<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>',
+                'redpack': '<svg viewBox="0 0 24 24"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/><line x1="12" y1="22" x2="12" y2="8.5"/><line x1="22" y1="8.5" x2="2" y2="8.5"/></svg>',
+                '99minutos': '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+                'correosmx': '<svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>',
+                'paquetexpress': '<svg viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>',
+                'otro': '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/><circle cx="5" cy="12" r="1.5"/></svg>',
+            };
+            return icons[iconKey] || icons['otro'];
+        };
+
+        const loadCouriers = async () => {
+            const container = document.getElementById('courierListContainer');
+            container.innerHTML = '<div style="padding:20px; text-align:center; color:#94a3b8;">Cargando...</div>';
+
+            try {
+                const res = await ApiClient.request('/security/couriers', 'GET');
+                if (res && res.status === 'success') {
+                    allCouriers = res.data;
+                    renderCouriers(allCouriers);
+                }
+            } catch (e) {
+                container.innerHTML = '<div style="padding:20px; text-align:center; color:red;">Error al cargar</div>';
+            }
+        };
+
+        const renderCouriers = (couriers) => {
+            const container = document.getElementById('courierListContainer');
+            container.innerHTML = '';
+
+            couriers.forEach(c => {
+                const div = document.createElement('div');
+                div.className = 'courier-item';
+                div.innerHTML = `
+                    <div class="courier-icon">${getCourierSvg(c.icon)}</div>
+                    <div class="courier-name">${c.name}</div>
+                `;
+                div.addEventListener('click', () => {
+                    parcelState.courier = c.name;
+                    parcelState.courierName = c.name;
+                    parcelState.courierIcon = c.icon;
+
+                    // Update display
+                    const valueEl = document.getElementById('courierValue');
+                    valueEl.innerHTML = `
+                        <span class="courier-mini-icon">${getCourierSvg(c.icon)}</span>
+                        <span>${c.name}</span>
+                        <svg class="chevron" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    `;
+                    valueEl.classList.add('filled');
+
+                    courierModal.classList.remove('active');
+                    updateValidation();
+
+                    // Auto-advance to unit selector
+                    setTimeout(() => openUnitModal(), 300);
+                });
+                container.appendChild(div);
+            });
+        };
+
+        document.getElementById('rowCourier').addEventListener('click', () => {
+            courierModal.classList.add('active');
+            if (allCouriers.length === 0) loadCouriers();
+        });
+
+        document.getElementById('btnCancelCourier').addEventListener('click', () => {
+            courierModal.classList.remove('active');
+        });
+
+        // ============================
+        // UNIT SELECTOR (reused from manual-entry pattern)
+        // ============================
+        let selectedUnitObj = null;
+
+        const openUnitModal = () => {
+            document.getElementById('modalUnits').style.display = 'flex';
+            if (allUnits.length === 0) loadUnits();
+            document.getElementById('searchUnit').value = '';
+            if (allUnits.length > 0) renderUnits(allUnits);
+            selectedUnitObj = null;
+        };
+
+        const loadUnits = async () => {
+            const list = document.getElementById('unitListContainer');
+            list.innerHTML = '<div style="padding:20px; text-align:center;">Cargando...</div>';
+            
+            try {
+                const res = await ApiClient.request('/security/units_directory', 'GET');
+                if (res && res.status === 'success') {
+                    allUnits = res.data;
+                    renderUnits(allUnits);
+                }
+            } catch (e) {
+                list.innerHTML = '<div style="padding:20px; text-align:center; color:red;">Error al cargar</div>';
+            }
+        };
+
+        const renderUnits = (units) => {
+            const list = document.getElementById('unitListContainer');
+            list.innerHTML = '';
+            if (units.length === 0) {
+                list.innerHTML = '<div style="padding:20px; text-align:center; color:#94a3b8;">No hay resultados</div>';
+                return;
+            }
+
+            // Group by section
+            const grouped = {};
+            units.forEach(u => {
+                const sec = u.section_name || 'Sin Sección';
+                if (!grouped[sec]) grouped[sec] = [];
+                grouped[sec].push(u);
+            });
+
+            Object.keys(grouped).sort().forEach(sec => {
+                const secHeader = document.createElement('div');
+                secHeader.className = 'modal-list-header';
+                secHeader.innerText = sec;
+                list.appendChild(secHeader);
+
+                grouped[sec].forEach(u => {
+                    const owner = (u.residents && u.residents.length > 0) ? u.residents[0] : null;
+                    const headStr = owner ? owner.name : 'Sin Asignar';
+                    
+                    const div = document.createElement('div');
+                    div.className = 'modal-list-item';
+                    div.innerText = `${u.unit_number} - ${headStr}`;
+                    
+                    div.addEventListener('click', () => {
+                        document.querySelectorAll('.modal-list-item').forEach(el => el.classList.remove('selected'));
+                        div.classList.add('selected');
+                        const finalName = owner ? owner.name : 'Sin Asignar';
+                        selectedUnitObj = { id: u.id, text: `${u.unit_number} - ${finalName}` };
+
+                        // Auto-confirm after selection
+                        setTimeout(() => {
+                            if (selectedUnitObj) {
+                                parcelState.unitId = selectedUnitObj.id;
+                                parcelState.unitDisplay = selectedUnitObj.text;
+                                document.getElementById('selectedUnitId').value = selectedUnitObj.id;
+
+                                const valueEl = document.getElementById('unitValue');
+                                valueEl.innerHTML = `
+                                    <span>${selectedUnitObj.text}</span>
+                                    <svg class="chevron" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                `;
+                                valueEl.classList.add('filled');
+
+                                document.getElementById('modalUnits').style.display = 'none';
+                                updateValidation();
+                            }
+                        }, 200);
+                    });
+                    
+                    list.appendChild(div);
+                });
+            });
+        };
+
+        document.getElementById('searchUnit').addEventListener('input', (e) => {
+            const q = e.target.value.toLowerCase();
+            const filtered = allUnits.filter(u => {
+                const searchStr = u.search_string || '';
+                return searchStr.toLowerCase().includes(q) || u.unit_number.toLowerCase().includes(q);
+            });
+            renderUnits(filtered);
+        });
+
+        document.getElementById('rowUnit').addEventListener('click', () => openUnitModal());
+
+        document.getElementById('btnCancelUnit').addEventListener('click', () => {
+            document.getElementById('modalUnits').style.display = 'none';
+        });
+
+        // ============================
+        // SUBMIT
+        // ============================
+        document.getElementById('btnSubmit').addEventListener('click', async () => {
+            // Validate
+            if (!parcelState.photoFile) {
+                showMsg('La foto del paquete es obligatoria', 'error');
+                return;
+            }
+            if (!parcelState.courier) {
+                showMsg('Selecciona un proveedor de paquetería', 'error');
+                return;
+            }
+            if (!parcelState.unitId) {
+                showMsg('Selecciona una unidad destino', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('btnSubmit');
+            const originalText = btn.innerText;
+            btn.innerText = 'Registrando...';
+            btn.disabled = true;
+
+            try {
+                const fd = new FormData();
+                fd.append('unit_id', parcelState.unitId);
+                fd.append('courier', parcelState.courier);
+                fd.append('quantity', parcelState.quantity);
+                fd.append('parcel_type', parcelState.parcelType);
+                fd.append('photo', parcelState.photoFile);
+
+                const token = Auth.getToken();
+                const resRaw = await fetch(`${CONFIG.API_URL}/security/parcels`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: fd
+                });
+                const res = await resRaw.json();
+
+                if (resRaw.ok && res && res.status === 'success') {
+                    sessionStorage.setItem('toast_parcel', 'Paquete registrado exitosamente');
+                    window.location.href = 'paqueteria.html';
+                } else {
+                    showMsg(res ? res.message : 'Error en servidor', 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showMsg('Error de conexión', 'error');
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        });
+
+        const showMsg = (text, type) => {
+            const msg = document.getElementById('msg');
+            msg.className = `alert ${type}`;
+            msg.innerText = text;
+            msg.style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+    </script>
+</body>
+</html>

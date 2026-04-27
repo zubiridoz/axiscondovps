@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Registro de paquetería - AxisCondo</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="manifest" href="manifest.json">
+    <style>
+        .content { padding-bottom: 100px; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header style="justify-content: flex-start; position: relative;">
+            <a href="paqueteria.html" style="color:var(--navy); text-decoration:none; display:flex; align-items:center; gap:4px; font-weight:500; font-size:16px;">
+                <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+                Atrás
+            </a>
+            <span style="position:absolute; left:50%; transform:translateX(-50%); font-weight:700; font-size:17px; color:var(--navy);">
+                Registro de paquetería
+            </span>
+        </header>
+
+        <div class="content">
+            <!-- Search Bar -->
+            <div class="search-bar-wrapper">
+                <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input type="text" id="searchLog" placeholder="Buscar paquetes por unidad, residente o transportista">
+            </div>
+
+            <!-- Month/Year Picker -->
+            <div class="month-year-picker">
+                <button class="nav-btn" id="btnPrevMonth">
+                    <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </button>
+                <select id="monthSelect"></select>
+                <select id="yearSelect"></select>
+                <button class="nav-btn" id="btnNextMonth">
+                    <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
+            </div>
+
+            <!-- Parcel Log List -->
+            <div id="logList">
+                <div style="padding:40px; text-align:center; color:#94a3b8;">Cargando...</div>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <div class="bottom-nav">
+            <a href="unidades.html">
+                <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                Unidades
+            </a>
+            <a href="entradas.html">
+                <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                Entradas
+            </a>
+            <a href="paqueteria.html" class="active">
+                <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                Paquetería
+            </a>
+            <a href="configuracion.html">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                Configuración
+            </a>
+        </div>
+    </div>
+
+    <!-- Parcel Detail Modal -->
+    <div class="deliver-modal" id="detailModal">
+        <div class="deliver-modal-header">
+            <span class="title" id="detailModalTitle">Paquete entregado</span>
+            <span class="close-btn" id="btnCloseDetail">Cerrar</span>
+        </div>
+        <div class="deliver-modal-body">
+            <img class="deliver-photo" id="detailPhoto" src="" alt="Paquete">
+
+            <div class="deliver-details-card" id="detailCard">
+                <!-- Populated by JS -->
+            </div>
+
+            <button class="btn-close-modal" id="btnCloseDetailBottom">Cerrar</button>
+        </div>
+    </div>
+
+    <script src="assets/js/app.js"></script>
+    <script>
+        Auth.checkProtected();
+
+        const MONTHS = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+        let currentMonth = new Date().getMonth() + 1;
+        let currentYear = new Date().getFullYear();
+        let allParcels = [];
+
+        // ============================
+        // UTILITIES
+        // ============================
+        const getPhotoUrl = (photoPath) => {
+            if (!photoPath) return '';
+            const fileName = photoPath.split('/').pop();
+            return `${CONFIG.API_URL}/security/parcel-photo/${fileName}`;
+        };
+
+        const formatLogTime = (dateStr) => {
+            const d = new Date(dateStr);
+            const now = new Date();
+            const isToday = d.toDateString() === now.toDateString();
+            const hours = d.getHours().toString().padStart(2, '0');
+            const mins = d.getMinutes().toString().padStart(2, '0');
+            if (isToday) return `Hoy ${hours}:${mins}`;
+            const day = d.getDate();
+            const months = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+            return `${day} ${months[d.getMonth()]} ${hours}:${mins}`;
+        };
+
+        const formatFullDate = (dateStr) => {
+            if (!dateStr) return '—';
+            const d = new Date(dateStr);
+            const day = d.getDate();
+            const months = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+            const hours = d.getHours().toString().padStart(2, '0');
+            const mins = d.getMinutes().toString().padStart(2, '0');
+            return `${day} de ${months[d.getMonth()]} de ${d.getFullYear()} ${hours}:${mins}`;
+        };
+
+        // ============================
+        // MONTH/YEAR PICKER
+        // ============================
+        const monthSelect = document.getElementById('monthSelect');
+        const yearSelect = document.getElementById('yearSelect');
+
+        // Populate months
+        MONTHS.forEach((m, i) => {
+            const opt = document.createElement('option');
+            opt.value = i + 1;
+            opt.textContent = m;
+            monthSelect.appendChild(opt);
+        });
+        monthSelect.value = currentMonth;
+
+        // Populate years (last 3 years)
+        const cy = new Date().getFullYear();
+        for (let y = cy; y >= cy - 2; y--) {
+            const opt = document.createElement('option');
+            opt.value = y;
+            opt.textContent = y;
+            yearSelect.appendChild(opt);
+        }
+        yearSelect.value = currentYear;
+
+        monthSelect.addEventListener('change', function() {
+            currentMonth = parseInt(this.value);
+            loadHistory();
+        });
+
+        yearSelect.addEventListener('change', function() {
+            currentYear = parseInt(this.value);
+            loadHistory();
+        });
+
+        document.getElementById('btnPrevMonth').addEventListener('click', () => {
+            currentMonth--;
+            if (currentMonth < 1) {
+                currentMonth = 12;
+                currentYear--;
+            }
+            monthSelect.value = currentMonth;
+            yearSelect.value = currentYear;
+            loadHistory();
+        });
+
+        document.getElementById('btnNextMonth').addEventListener('click', () => {
+            currentMonth++;
+            if (currentMonth > 12) {
+                currentMonth = 1;
+                currentYear++;
+            }
+            monthSelect.value = currentMonth;
+            yearSelect.value = currentYear;
+            loadHistory();
+        });
+
+        // ============================
+        // LOAD HISTORY
+        // ============================
+        const loadHistory = async () => {
+            const container = document.getElementById('logList');
+            container.innerHTML = '<div style="padding:40px; text-align:center; color:#94a3b8;">Cargando...</div>';
+
+            try {
+                const res = await ApiClient.request(`/security/parcels/history?month=${currentMonth}&year=${currentYear}`, 'GET');
+                
+                if (res && res.status === 'success') {
+                    allParcels = res.data.parcels || [];
+                    renderLogList(allParcels);
+                }
+            } catch (e) {
+                console.error(e);
+                container.innerHTML = '<div style="padding:40px; text-align:center; color:red;">Error al cargar</div>';
+            }
+        };
+
+        const renderLogList = (parcels) => {
+            const container = document.getElementById('logList');
+
+            if (!parcels || parcels.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                        </svg>
+                        <h3>Sin registros</h3>
+                        <p>No hay registros de paquetería para este periodo.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = '';
+            parcels.forEach(p => {
+                const item = document.createElement('div');
+                item.className = 'log-item';
+                
+                const statusLabel = p.status === 'delivered_to_resident' ? p.picked_up_name || 'Entregado' : 'En caseta';
+
+                item.innerHTML = `
+                    <div class="log-icon">
+                        <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                            <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                        </svg>
+                    </div>
+                    <div class="log-info">
+                        <div class="log-title">${p.section_name ? p.section_name + ' ' : ''}${p.unit_number || 'N/A'}</div>
+                        <div class="log-subtitle">${statusLabel}</div>
+                    </div>
+                    <span class="log-time">${formatLogTime(p.created_at)}</span>
+                `;
+
+                item.addEventListener('click', () => openDetailModal(p));
+                container.appendChild(item);
+            });
+        };
+
+        // ============================
+        // SEARCH FILTER
+        // ============================
+        document.getElementById('searchLog').addEventListener('input', (e) => {
+            const q = e.target.value.toLowerCase();
+            if (!q) {
+                renderLogList(allParcels);
+                return;
+            }
+            const filtered = allParcels.filter(p => {
+                const str = `${p.unit_number} ${p.courier} ${p.picked_up_name || ''} ${p.resident_names} ${p.section_name}`.toLowerCase();
+                return str.includes(q);
+            });
+            renderLogList(filtered);
+        });
+
+        // ============================
+        // DETAIL MODAL
+        // ============================
+        const detailModal = document.getElementById('detailModal');
+
+        const openDetailModal = (parcel) => {
+            const photoUrl = getPhotoUrl(parcel.photo_url);
+            document.getElementById('detailPhoto').src = photoUrl || '';
+
+            const isDelivered = parcel.status === 'delivered_to_resident';
+            document.getElementById('detailModalTitle').textContent = isDelivered ? 'Paquete entregado' : 'Paquete en caseta';
+
+            let html = `
+                <div class="deliver-detail-row">
+                    <span class="dd-label">Unidad</span>
+                    <span class="dd-value filled">${parcel.unit_number || 'N/A'}</span>
+                </div>
+                <div class="deliver-detail-row">
+                    <span class="dd-label">Cantidad</span>
+                    <span class="dd-value filled">${parcel.quantity || 1}</span>
+                </div>
+                <div class="deliver-detail-row">
+                    <span class="dd-label">Proveedor de paquetería</span>
+                    <span class="dd-value filled">${parcel.courier || '—'}</span>
+                </div>
+                <div class="deliver-detail-row">
+                    <span class="dd-label">Fecha de llegada</span>
+                    <span class="dd-value filled">${formatFullDate(parcel.created_at)}</span>
+                </div>
+            `;
+
+            if (isDelivered) {
+                html += `
+                    <div class="deliver-detail-row">
+                        <span class="dd-label">Fecha de recogida</span>
+                        <span class="dd-value filled">${formatFullDate(parcel.delivered_at)}</span>
+                    </div>
+                    <div class="deliver-detail-row">
+                        <span class="dd-label">Recogido por</span>
+                        <span class="dd-value filled">${parcel.picked_up_name || '—'}</span>
+                    </div>
+                `;
+
+                // Signature
+                if (parcel.signature_url) {
+                    const sigUrl = getPhotoUrl(parcel.signature_url);
+                    html += `
+                        <div class="deliver-detail-row" style="flex-direction:column; align-items:flex-start; gap:10px;">
+                            <span class="dd-label">Firma</span>
+                            <img class="signature-preview" src="${sigUrl}" alt="Firma">
+                        </div>
+                    `;
+                }
+            }
+
+            document.getElementById('detailCard').innerHTML = html;
+            detailModal.classList.add('active');
+        };
+
+        document.getElementById('btnCloseDetail').addEventListener('click', () => {
+            detailModal.classList.remove('active');
+        });
+        document.getElementById('btnCloseDetailBottom').addEventListener('click', () => {
+            detailModal.classList.remove('active');
+        });
+
+        // ============================
+        // INIT
+        // ============================
+        loadHistory();
+    </script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#4F46E5">
+    <title>Anuncios — AxisCondo</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <div class="header-inner">
+                <a href="dashboard.html" style="color:white; text-decoration:none; font-size:20px; line-height:1;">←</a>
+                <span class="header-title">Muro de Avisos</span>
+                <div style="width:20px;"></div>
+            </div>
+        </header>
+
+        <div class="content" id="announcements-list">
+            <div class="card" style="height:80px;"><div class="skeleton" style="width:60%;height:14px;margin-bottom:10px;"></div><div class="skeleton" style="width:90%;height:12px;"></div></div>
+            <div class="card" style="height:80px;"><div class="skeleton" style="width:50%;height:14px;margin-bottom:10px;"></div><div class="skeleton" style="width:80%;height:12px;"></div></div>
+        </div>
+    </div>
+
+    <script src="assets/js/app.js"></script>
+    <script>
+        Auth.checkProtected();
+
+        async function loadAnnouncements() {
+            const res = await ApiClient.request('/resident/announcements');
+            const list = document.getElementById('announcements-list');
+            
+            if (res && res.status === 'success') {
+                if(res.data.announcements.length === 0) {
+                    list.innerHTML = `
+                        <div class="empty-state">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 13v-2z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>
+                            <p>No hay anuncios comunitarios.</p>
+                        </div>`;
+                    return;
+                }
+
+                let html = '';
+                res.data.announcements.forEach(a => {
+                    const badge = a.type === 'urgent' 
+                        ? '<span class="badge urgent">URGENTE</span>' 
+                        : '<span class="badge info">Aviso</span>';
+
+                    html += `
+                        <div class="card">
+                            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+                                ${badge}
+                                <small class="text-muted">${a.created_at.substring(0,10)}</small>
+                            </div>
+                            <h4 style="font-size:16px; font-weight:600; margin-bottom:8px; color:var(--text-primary);">${a.title}</h4>
+                            <p style="font-size:14px; line-height:1.6; color:var(--text-secondary);">${a.content}</p>
+                        </div>
+                    `;
+                });
+                list.innerHTML = html;
+            } else {
+                list.innerHTML = `<div class="empty-state"><p>No se pudieron obtener los anuncios.</p></div>`;
+            }
+        }
+
+        window.onload = loadAnnouncements;
+    </script>
+</body>
+</html>

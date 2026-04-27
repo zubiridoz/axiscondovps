@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Login Guardia - AxisCondo</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="manifest" href="manifest.json">
+    <style>
+        .login-hero {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+            height: 35vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            color: white;
+            border-bottom-left-radius: 30px;
+            border-bottom-right-radius: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: -40px;
+        }
+        .login-hero svg {
+            width: 80px; height: 80px; margin-bottom: 10px; stroke: currentColor; stroke-width: 1.5; fill: none;
+        }
+        .login-form-container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px 20px;
+            margin: 0 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            position: relative;
+        }
+        .login-form-container h2 {
+            margin: 0 0 20px;
+            color: var(--navy);
+            text-align: center;
+            font-size: 22px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-hero">
+        <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+        <h1 style="margin:0; font-size:28px;">AxisCondo</h1>
+        <p style="margin:5px 0 0; opacity:0.8;">PWA Caseta</p>
+    </div>
+
+    <div class="content" style="padding-top: 0;">
+        <div class="login-form-container">
+            <h2>Acceso de Guardia</h2>
+            
+            <div id="login-error" class="alert error text-center">Credenciales incorrectas</div>
+            
+            <form id="login-form">
+                <div class="form-group">
+                    <label>Correo Electrónico</label>
+                    <input type="email" id="email" required placeholder="guardia@axiscondo.com">
+                </div>
+                <div class="form-group">
+                    <label>Contraseña</label>
+                    <input type="password" id="password" required placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn" id="btn-login" style="margin-top:20px;">ENTRAR A CASETA</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="assets/js/app.js"></script>
+    <script>
+        if (Auth.getToken()) {
+            window.location.replace('entradas.html'); 
+        }
+
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-login');
+            const err = document.getElementById('login-error');
+            
+            btn.disabled = true;
+            btn.innerText = 'Verificando...';
+            err.style.display = 'none';
+
+            const email = document.getElementById('email').value;
+            const res = await Auth.login(email, document.getElementById('password').value);
+            
+            if (res.success) {
+                localStorage.setItem('guard_email', email); // Para Configuración
+                window.location.replace('entradas.html');
+            } else {
+                err.innerText = res.message;
+                err.style.display = 'block';
+                btn.disabled = false;
+                btn.innerText = 'ENTRAR A CASETA';
+            }
+        });
+    </script>
+</body>
+</html>

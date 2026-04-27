@@ -1,0 +1,440 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Unidades - AxisCondo</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="manifest" href="manifest.json">
+    <style>
+        .search-pill {
+            cursor: text;
+        }
+
+        .search-pill-input {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+            outline: none;
+            background: transparent;
+            opacity: 0;
+            color: transparent;
+            caret-color: transparent;
+            font-size: 16px;
+            z-index: 1;
+        }
+
+        .header-action {
+            cursor: pointer;
+        }
+
+        .header-action.active {
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Main View -->
+        <div id="main-view">
+            <header>
+                <div style="display: flex; gap:16px; align-items: center;">
+                    <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                </div>
+                <div class="header-action" id="btn-view-all" role="button" tabindex="0">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    Ver todas
+                </div>
+            </header>
+
+            <div class="content">
+                <div class="section-selector" onclick="openSectionModal()" style="cursor: pointer;">
+                    <svg viewBox="0 0 24 24" width="24" height="24" stroke="var(--navy)" stroke-width="1.5" fill="none"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><path d="M9 22v-4h6v4"></path><path d="M8 6h.01"></path><path d="M16 6h.01"></path><path d="M12 6h.01"></path><path d="M12 10h.01"></path><path d="M12 14h.01"></path><path d="M16 10h.01"></path><path d="M16 14h.01"></path><path d="M8 10h.01"></path><path d="M8 14h.01"></path></svg>
+                    <div class="details">
+                        <span>Sección</span>
+                        <strong id="display-section">Todas las Secciones</strong>
+                    </div>
+                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="var(--text-muted)" stroke-width="2" fill="none"><polyline points="8 9 12 13 16 9"></polyline></svg>
+                </div>
+
+                <div class="search-pill">
+                    <span id="display-query">Buscar unidad</span>
+                    <input id="search-input" class="search-pill-input" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Buscar unidad">
+                    <span class="clear-btn" id="btn-clear" style="display:none;">&times;</span>
+                </div>
+
+                <!-- Results Area -->
+                <div id="results-area" style="display: none; padding-bottom: 20px;">
+                    <!-- Las tarjetas renderizadas se insertarán aquí -->
+                </div>
+
+                <!-- Keypad Area -->
+                <div id="keypad-area" class="keypad-wrapper">
+                    <div class="keypad-divider"><span>Letras</span></div>
+                    <div class="keypad-grid-letters" id="keyboard-letters"></div>
+
+                    <div class="keypad-divider"><span>Números</span></div>
+                    <div class="keypad-grid-numbers">
+                        <button class="key-btn number" data-val="1">1</button>
+                        <button class="key-btn number" data-val="2">2</button>
+                        <button class="key-btn number" data-val="3">3</button>
+                        <button class="key-btn number" data-val="4">4</button>
+                        <button class="key-btn number" data-val="5">5</button>
+                        <button class="key-btn number" data-val="6">6</button>
+                        <button class="key-btn number" data-val="7">7</button>
+                        <button class="key-btn number" data-val="8">8</button>
+                        <button class="key-btn number" data-val="9">9</button>
+                        <button class="key-btn action gray" id="btn-space" style="font-size: 14px; padding:0;">Esp.</button>
+                        <button class="key-btn number" data-val="0">0</button>
+                        <button class="key-btn action red" id="btn-del" style="font-size: 14px; padding:0;">Borrar</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Navigation -->
+            <div class="bottom-nav">
+                <a href="unidades.html" class="active">
+                    <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                    Unidades
+                </a>
+                <a href="entradas.html">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    Entradas
+                </a>
+                <a href="paqueteria.html">
+                    <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                    Paquetería
+                </a>
+                <a href="configuracion.html">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                    Configuración
+                </a>
+            </div>
+        </div>
+
+        <!-- Detail Layout (Overlay Modal) -->
+        <div id="unit-detail-modal" class="modal-overlay">
+            <header class="modal-header">
+                <span id="modal-title">A-100</span>
+                <span class="modal-close" id="btn-close-modal">&times;</span>
+            </header>
+            
+            <div style="flex:1; overflow-y:auto; padding-bottom: 30px;">
+                <h2 class="section-title" style="margin-top: 20px;">Detalles de la unidad</h2>
+                <div class="detail-block">
+                    <div class="detail-row">
+                        <span class="label">
+                            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+                            Número de unidad
+                        </span>
+                        <span class="value pill" id="dt-num">A-100</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">
+                            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><path d="M9 22v-4h6v4"></path></svg>
+                            Sección
+                        </span>
+                        <span class="value pill" id="dt-sec">TORRE A</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">
+                            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+                            Piso
+                        </span>
+                        <span class="value" id="dt-floor">1</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">
+                            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                            Total de Residentes
+                        </span>
+                        <span class="value pill" id="dt-total">2</span>
+                    </div>
+                </div>
+
+                <div class="avatar-list-title" id="dt-prop-title">PROPIETARIOS (2)</div>
+                <div id="avatar-container">
+                    <!-- Avatares Dinámicos -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Section Selection Modal -->
+        <div id="section-modal" class="modal-overlay">
+            <header class="modal-header">
+                <span>Seleccionar Sección</span>
+                <span class="modal-close" onclick="closeSectionModal()">&times;</span>
+            </header>
+            <div style="flex:1; overflow-y:auto; padding: 20px;">
+                <div class="card-list" id="section-list">
+                    <!-- Dinamizado por JS -->
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="assets/js/app.js"></script>
+    <script>
+        Auth.checkProtected();
+
+        // Letras Keypad
+        const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+        const letterGrid = document.getElementById('keyboard-letters');
+        letters.forEach(l => {
+            const btn = document.createElement('button');
+            btn.className = 'key-btn letter';
+            btn.innerText = l;
+            btn.dataset.val = l;
+            letterGrid.appendChild(btn);
+        });
+
+        // Search logic
+        let query = "";
+        let directoryData = [];
+        let selectedSection = null;
+        let showAllUnits = false;
+        let searchFocused = false;
+
+        async function fetchDirectory() {
+            // Load cache or API
+            const res = await ApiClient.request('/security/units_directory', 'GET');
+            if (res && res.status === 'success') {
+                directoryData = res.data;
+                populateSections();
+            }
+        }
+
+        function populateSections() {
+            const secNames = [...new Set(directoryData.map(u => u.section_name).filter(Boolean))];
+            const secList = document.getElementById('section-list');
+            
+            secList.innerHTML = `<div class="card-list-item" onclick="selectSection(null)" style="cursor:pointer;">
+                <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg> 
+                Todas las Secciones
+            </div>`;
+            
+            secNames.sort().forEach(s => {
+                secList.innerHTML += `<div class="card-list-item" onclick="selectSection('${s}')" style="cursor:pointer;">
+                    <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><path d="M9 22v-4h6v4"></path></svg>
+                    ${s}
+                </div>`;
+            });
+        }
+
+        function selectSection(sName) {
+            selectedSection = sName;
+            showAllUnits = false;
+            document.getElementById('display-section').innerText = sName ? sName : 'Todas las Secciones';
+            closeSectionModal();
+            updateQuery(); // Trigger refresh on view logic
+        }
+
+        function openSectionModal() {
+            document.getElementById('section-modal').style.display = 'flex';
+        }
+
+        function closeSectionModal() {
+            document.getElementById('section-modal').style.display = 'none';
+        }
+
+        const displayLabel = document.getElementById('display-query');
+        const searchInput = document.getElementById('search-input');
+        const btnClear = document.getElementById('btn-clear');
+        const btnViewAll = document.getElementById('btn-view-all');
+        const resultsArea = document.getElementById('results-area');
+        const keypadArea = document.getElementById('keypad-area');
+        const searchPill = document.querySelector('.search-pill');
+
+        function setSearchInputValue() {
+            if (searchInput.value !== query) {
+                searchInput.value = query;
+            }
+        }
+
+        function activateSearch() {
+            searchInput.focus({ preventScroll: true });
+            const len = searchInput.value.length;
+            searchInput.setSelectionRange(len, len);
+        }
+
+        function setViewAllIndicator() {
+            btnViewAll.classList.toggle('active', showAllUnits);
+        }
+
+        function updateQuery() {
+            const hasQuery = query.trim().length > 0;
+            const hasSection = selectedSection !== null;
+            const hasFilters = hasQuery || hasSection || showAllUnits;
+
+            if (hasFilters) {
+                if (hasQuery) {
+                    displayLabel.innerText = query;
+                } else if (showAllUnits) {
+                    displayLabel.innerText = "Todas las unidades";
+                } else {
+                    displayLabel.innerText = "Todos los números";
+                }
+
+                displayLabel.style.color = "var(--navy)";
+                displayLabel.style.fontSize = hasQuery ? "32px" : "24px";
+                btnClear.style.display = hasQuery ? 'block' : 'none';
+
+                keypadArea.style.display = searchFocused ? 'none' : 'block';
+                resultsArea.style.display = 'block';
+                renderResults();
+            } else {
+                displayLabel.innerText = "Buscar unidad";
+                displayLabel.style.color = "var(--text-muted)";
+                displayLabel.style.fontSize = "20px";
+                btnClear.style.display = 'none';
+
+                keypadArea.style.display = 'block';
+                resultsArea.style.display = 'none';
+            }
+
+            setSearchInputValue();
+            setViewAllIndicator();
+        }
+
+        function renderResults() {
+            resultsArea.innerHTML = "";
+            const lowerQuery = query.toLowerCase();
+            const filtered = directoryData.filter(u => {
+                const searchString = String(u.search_string || '').toLowerCase();
+                const unitNumber = String(u.unit_number || '').toLowerCase();
+                const matchName = searchString ? searchString.includes(lowerQuery) : unitNumber.includes(lowerQuery);
+                const matchSec = selectedSection ? u.section_name === selectedSection : true;
+                return matchName && matchSec;
+            });
+
+            if (filtered.length === 0) {
+                resultsArea.innerHTML = "<p style='text-align:center; color:var(--text-muted); margin-top:30px;'>No se encontraron resultados</p>";
+                return;
+            }
+
+            filtered.forEach(unit => {
+                const card = document.createElement('div');
+                card.className = "unit-card";
+                
+                // Join resident names
+                const residents = Array.isArray(unit.residents) ? unit.residents : [];
+                const namesText = residents.map(r => r.name).join(", ") || "Sin Asignar";
+
+                card.innerHTML = `
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+                    <div class="info">
+                        <strong>${unit.unit_number}</strong>
+                        <span class="badge">${unit.section_name || 'SIN SECCIÓN'}</span>
+                        <span class="names">${namesText}</span>
+                    </div>
+                    <span class="count">${unit.total_residents}</span>
+                    <svg class="arrow" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                `;
+                
+                card.addEventListener('click', () => openModal(unit));
+                resultsArea.appendChild(card);
+            });
+        }
+
+        // Keypad binding
+        document.querySelectorAll('.key-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                if(btn.id === 'btn-clear') return;
+                
+                if (btn.id === 'btn-del') {
+                    query = query.slice(0, -1);
+                } else if (btn.id === 'btn-space') {
+                    if(query.length > 0) query += " ";
+                } else {
+                    query += btn.dataset.val;
+                }
+                showAllUnits = false;
+                setSearchInputValue();
+                updateQuery();
+            });
+        });
+
+        btnClear.addEventListener('click', () => {
+            query = "";
+            showAllUnits = false;
+            updateQuery();
+            activateSearch();
+        });
+
+        searchPill.addEventListener('click', () => {
+            activateSearch();
+        });
+
+        searchInput.addEventListener('focus', () => {
+            searchFocused = true;
+            updateQuery();
+        });
+
+        searchInput.addEventListener('blur', () => {
+            searchFocused = false;
+            updateQuery();
+        });
+
+        searchInput.addEventListener('input', (event) => {
+            query = event.target.value.toUpperCase();
+            showAllUnits = false;
+            updateQuery();
+        });
+
+        btnViewAll.addEventListener('click', () => {
+            selectedSection = null;
+            showAllUnits = true;
+            query = "";
+            document.getElementById('display-section').innerText = 'Todas las Secciones';
+            updateQuery();
+        });
+
+        btnViewAll.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                btnViewAll.click();
+            }
+        });
+
+        // Detail Modal Logic
+        const modal = document.getElementById('unit-detail-modal');
+        function openModal(u) {
+            document.getElementById('modal-title').innerText = u.unit_number;
+            document.getElementById('dt-num').innerText = u.unit_number;
+            document.getElementById('dt-sec').innerText = u.section_name || 'N/A';
+            document.getElementById('dt-floor').innerText = u.floor || '1';
+            document.getElementById('dt-total').innerText = u.total_residents;
+            
+            const modalResidents = Array.isArray(u.residents) ? u.residents : [];
+            const avatarsHtml = modalResidents.map(r => `
+                <div class="avatar-card">
+                    <div class="avatar">${r.initials}</div>
+                    <div class="info">
+                        <strong>${r.name}</strong>
+                        <span class="role-badge">${r.type_label}</span>
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('dt-prop-title').innerText = `PROPIETARIOS (${u.total_residents})`;
+            document.getElementById('avatar-container').innerHTML = avatarsHtml || '<p style="margin:20px; color:var(--text-muted);">Unidad deshabitada o sin propietarios registrados.</p>';
+            
+            modal.style.display = 'flex';
+        }
+
+        document.getElementById('btn-close-modal').addEventListener('click', () => {
+             modal.style.display = 'none';
+        });
+
+        // Boot
+        window.onload = () => {
+            fetchDirectory();
+            updateQuery();
+        }
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#4F46E5">
+    <title>Votaciones — AxisCondo</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <div class="header-inner">
+                <a href="dashboard.html" style="color:white; text-decoration:none; font-size:20px; line-height:1;">←</a>
+                <span class="header-title">Votaciones Abiertas</span>
+                <div style="width:20px;"></div>
+            </div>
+        </header>
+
+        <div class="content" id="polls-list">
+            <div class="card" style="height:100px;"><div class="skeleton" style="width:60%;height:14px;margin-bottom:10px;"></div><div class="skeleton" style="width:90%;height:12px;margin-bottom:8px;"></div><div class="skeleton" style="width:40%;height:12px;"></div></div>
+        </div>
+    </div>
+
+    <script src="assets/js/app.js"></script>
+    <script>
+        Auth.checkProtected();
+
+        async function loadPolls() {
+            const res = await ApiClient.request('/resident/polls');
+            const list = document.getElementById('polls-list');
+            
+            if (res && res.status === 'success') {
+                if(res.data.polls.length === 0) {
+                    list.innerHTML = `
+                        <div class="empty-state">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                            <p>No hay votaciones activas en tu condominio.</p>
+                        </div>`;
+                    return;
+                }
+
+                let html = '';
+                res.data.polls.forEach(p => {
+                    html += `
+                        <div class="card">
+                            <h4 style="font-size:15px; font-weight:600; margin-bottom:8px;">${p.title}</h4>
+                            <p class="text-sm" style="color:var(--text-secondary); line-height:1.5; margin-bottom:12px;">${p.description}</p>
+                            <div style="background:var(--bg); padding:10px 14px; border-radius:var(--radius-sm); font-size:12px; color:var(--text-muted);">
+                                Válida hasta: <strong style="color:var(--text-primary);">${p.end_date}</strong>
+                            </div>
+                            <button class="btn btn-secondary" style="margin-top:12px;" onclick="alert('Funcionalidad de votación próximamente')">Participar</button>
+                        </div>
+                    `;
+                });
+                list.innerHTML = html;
+            } else {
+                list.innerHTML = `<div class="empty-state"><p>No se pudieron cargar las votaciones.</p></div>`;
+            }
+        }
+
+        window.onload = loadPolls;
+    </script>
+</body>
+</html>

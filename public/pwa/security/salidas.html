@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Registrar Salidas - AxisCondo</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="manifest" href="manifest.json">
+    <style>
+        /* ===== DETAIL OVERLAY ===== */
+        .exit-detail-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 2000;
+            background: var(--bg-main);
+            display: none;
+            flex-direction: column;
+            animation: slideUp 0.3s ease;
+        }
+
+        .exit-detail-overlay.active {
+            display: flex;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .exit-detail-header {
+            background: white;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--navy);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .exit-detail-header .close-btn {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--navy);
+            font-weight: 500;
+            font-size: 16px;
+            background: none;
+            border: none;
+        }
+
+        .exit-detail-body {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 100px;
+        }
+
+        /* Big exit button */
+        .btn-exit-big {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: linear-gradient(135deg, #183E62, #112E48);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            margin: 16px 20px;
+            padding: 16px;
+            width: calc(100% - 40px);
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(30, 58, 138, 0.3);
+            transition: all 0.2s;
+        }
+
+        .btn-exit-big:active {
+            transform: scale(0.97);
+        }
+
+        .btn-exit-big svg {
+            width: 22px;
+            height: 22px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+        }
+
+        /* Detail card */
+        .exit-info-card {
+            background: white;
+            border-radius: 12px;
+            margin: 0 20px 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+        }
+
+        .exit-info-card .card-title {
+            padding: 14px 16px 0;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--navy);
+        }
+
+        .exit-info-row {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            gap: 12px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .exit-info-row:last-child {
+            border-bottom: none;
+        }
+
+        .exit-info-row svg {
+            width: 20px;
+            height: 20px;
+            stroke: var(--text-muted);
+            fill: none;
+            stroke-width: 2;
+            flex-shrink: 0;
+        }
+
+        .exit-info-row .label {
+            flex: 1;
+            font-size: 15px;
+            color: var(--text-main);
+        }
+
+        .exit-info-row .value {
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--navy);
+        }
+
+        .exit-info-row .value.accent {
+            color: #dc2626;
+        }
+
+        .exit-info-row .value.pill {
+            background: #dbeafe;
+            color: var(--primary);
+            padding: 3px 10px;
+            border-radius: 10px;
+            font-size: 13px;
+        }
+
+        /* Photo gallery */
+        .exit-photo-section {
+            background: white;
+            border-radius: 12px;
+            margin: 0 20px 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+        }
+
+        .exit-photo-section .photo-title {
+            padding: 14px 16px 10px;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--navy);
+        }
+
+        .exit-photo-section img {
+            width: calc(100% - 32px);
+            margin: 0 16px 16px;
+            border-radius: 10px;
+            object-fit: cover;
+            max-height: 300px;
+        }
+
+        .photo-label-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px 8px;
+            font-size: 13px;
+        }
+
+        .photo-label-row .label-text {
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .photo-label-row .label-text svg {
+            width: 16px;
+            height: 16px;
+            stroke: var(--text-muted);
+            fill: none;
+            stroke-width: 2;
+        }
+
+        .photo-label-row .label-badge {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* ===== EXIT SHEET (Bottom-Sheet Premium) ===== */
+        .exit-sheet-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 3000;
+            background: rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(6px);
+            display: none;
+            align-items: flex-end;
+            justify-content: center;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .exit-sheet-overlay.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .exit-sheet {
+            background: #f8fafc;
+            border-radius: 20px 20px 0 0;
+            width: 100%;
+            max-width: 480px;
+            padding: 0 0 env(safe-area-inset-bottom, 0);
+            box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.12);
+            animation: sheetSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes sheetSlideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .exit-sheet-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            padding: 20px 24px 12px;
+        }
+
+        .exit-sheet-header .sheet-title-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .exit-sheet-header .sheet-icon {
+            color: #ef4444;
+            display: flex;
+        }
+
+        .exit-sheet-header .sheet-icon svg {
+            width: 22px;
+            height: 22px;
+            stroke: #ef4444;
+            fill: none;
+            stroke-width: 2;
+        }
+
+        .exit-sheet-header h3 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 700;
+            color: #ef4444;
+        }
+
+        .exit-sheet-header .sheet-subtitle {
+            font-size: 14px;
+            color: var(--text-main);
+            margin: 2px 0 0;
+        }
+
+        .exit-sheet-header .sheet-subtitle strong {
+            font-weight: 700;
+            color: var(--navy);
+        }
+
+        .exit-sheet-close {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            color: var(--text-muted);
+            display: flex;
+        }
+
+        .exit-sheet-close svg {
+            width: 22px;
+            height: 22px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+        }
+
+        /* Photo Capture Zone */
+        .exit-photo-capture {
+            margin: 8px 24px 20px;
+            background: white;
+            border-radius: 14px;
+            border: 2px dashed #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 28px 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-height: 120px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .exit-photo-capture:active {
+            transform: scale(0.98);
+        }
+
+        .exit-photo-capture.has-photo {
+            border-color: #22c55e;
+            border-style: solid;
+            padding: 0;
+        }
+
+        .exit-photo-capture .capture-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: #fef2f2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        .exit-photo-capture .capture-icon svg {
+            width: 24px;
+            height: 24px;
+            stroke: #ef4444;
+            fill: none;
+            stroke-width: 1.8;
+        }
+
+        .exit-photo-capture .capture-label {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .exit-photo-capture .capture-label strong {
+            color: #ef4444;
+        }
+
+        .exit-photo-capture .exit-preview-img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 12px;
+        }
+
+        .exit-photo-capture .retake-badge {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 5px 12px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .exit-photo-capture .retake-badge svg {
+            width: 14px;
+            height: 14px;
+            stroke: white;
+            fill: none;
+            stroke-width: 2;
+        }
+
+        /* CTA Button */
+        .btn-exit-cta {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin: 0 24px 24px;
+            padding: 16px;
+            border-radius: 14px;
+            border: none;
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            width: calc(100% - 48px);
+            transition: all 0.25s;
+        }
+
+        .btn-exit-cta.disabled {
+            background: #e2e8f0;
+            color: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        .btn-exit-cta.ready {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.35);
+        }
+
+        .btn-exit-cta.ready:active {
+            transform: scale(0.97);
+        }
+
+        .btn-exit-cta svg {
+            width: 20px;
+            height: 20px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+        }
+
+        /* Empty State */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 40px 30px;
+            margin-top: 20px;
+        }
+
+        .empty-state .icon-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: #f0fdf4;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+            position: relative;
+        }
+
+        .empty-state .icon-circle svg {
+            width: 56px;
+            height: 56px;
+            stroke: #22c55e;
+            fill: none;
+            stroke-width: 1.5;
+        }
+
+        .empty-state .icon-circle .check-badge {
+            position: absolute;
+            bottom: 4px;
+            right: 4px;
+            width: 32px;
+            height: 32px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .empty-state .check-badge svg {
+            width: 20px;
+            height: 20px;
+            stroke: #22c55e;
+        }
+
+        .empty-state h2 {
+            margin: 0 0 12px;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--navy);
+        }
+
+        .empty-state p {
+            margin: 0 0 24px;
+            font-size: 15px;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .empty-state .status-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .empty-state .status-row .dot {
+            width: 10px;
+            height: 10px;
+            background: #22c55e;
+            border-radius: 50%;
+        }
+
+        .empty-state .status-row .icon-small {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .empty-state .status-row .icon-small svg {
+            width: 16px;
+            height: 16px;
+            stroke: var(--text-muted);
+            fill: none;
+            stroke-width: 2;
+        }
+
+        /* Toast enhanced */
+        .toast-exit {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 5000;
+            background: #22c55e;
+            color: white;
+            padding: 16px 20px;
+            font-weight: 600;
+            font-size: 16px;
+            transform: translateY(-100%);
+            transition: transform 0.4s ease;
+        }
+
+        .toast-exit.show {
+            transform: translateY(0);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Toast -->
+        <div class="toast-exit" id="toast-exit">Salida registrada exitosamente</div>
+
+        <header>
+            <a href="entradas.html"
+                style="color:var(--navy); text-decoration:none; font-size:16px; display:flex; align-items:center; gap:4px;">
+                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+                Atrás
+            </a>
+            <span>Registrar Salidas</span>
+            <div style="width:50px;"></div>
+        </header>
+
+        <div class="content" style="padding-top: 20px;">
+            <div id="visitors-list">
+                <p style="text-align:center; color:var(--text-muted); margin-top:60px;" id="empty-msg">Cargando...</p>
+            </div>
+        </div>
+
+        <!-- ===== DETAIL OVERLAY ===== -->
+        <div class="exit-detail-overlay" id="detailOverlay">
+            <div class="exit-detail-header">
+                <button class="close-btn" onclick="closeDetail()">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                    Cerrar
+                </button>
+            </div>
+            <div class="exit-detail-body" id="detailBody"></div>
+        </div>
+
+        <!-- ===== EXIT SHEET (Bottom-Sheet Premium) ===== -->
+        <div class="exit-sheet-overlay" id="exitSheetOverlay">
+            <div class="exit-sheet">
+                <div class="exit-sheet-header">
+                    <div>
+                        <div class="sheet-title-group">
+                            <span class="sheet-icon">
+                                <svg viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
+                            </span>
+                            <h3>Registrar Salida</h3>
+                        </div>
+                        <div class="sheet-subtitle">Visitante: <strong id="exitSheetName">---</strong></div>
+                    </div>
+                    <button class="exit-sheet-close" onclick="closeExitSheet()">
+                        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                </div>
+
+                <input type="file" id="exitPhotoInput" accept="image/*" capture="environment" style="display:none;">
+
+                <div class="exit-photo-capture" id="exitPhotoZone" onclick="document.getElementById('exitPhotoInput').click()">
+                    <div class="capture-icon">
+                        <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                    </div>
+                    <span class="capture-label">Evidencia de Salida <strong>*</strong></span>
+                </div>
+
+                <button class="btn-exit-cta disabled" id="btnExitCta" disabled>
+                    Cerrar Acceso
+                    <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <div class="bottom-nav" id="bottomNav">
+            <a href="unidades.html">
+                <svg viewBox="0 0 24 24">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                Unidades
+            </a>
+            <a href="entradas.html" class="active">
+                <svg viewBox="0 0 24 24">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+                Entradas
+            </a>
+            <a href="paqueteria.html">
+                <svg viewBox="0 0 24 24">
+                    <path
+                        d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
+                    </path>
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                </svg>
+                Paquetería
+            </a>
+            <a href="configuracion.html">
+                <svg viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path
+                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                    </path>
+                </svg>
+                Configuración
+            </a>
+        </div>
+    </div>
+
+    <script src="assets/js/app.js"></script>
+    <script>
+        Auth.checkProtected();
+
+        let allVisitors = [];
+        let selectedVisitor = null;
+        const basePath = window.location.origin + window.location.pathname.substring(0, window.location.pathname.indexOf('/public/')) + '/public/';
+
+        function timeAgo(dateStr) {
+            const now = new Date();
+            const then = new Date(dateStr);
+            const diffMs = now - then;
+            const diffMin = Math.floor(diffMs / 60000);
+            if (diffMin < 1) return 'ahora mismo';
+            if (diffMin < 60) return `hace ${diffMin} min`;
+            const diffHrs = Math.floor(diffMin / 60);
+            if (diffHrs < 24) return `hace ~${diffHrs}h`;
+            return `hace ${Math.floor(diffHrs / 24)}d`;
+        }
+
+        function durationLabel(dateStr) {
+            const now = new Date();
+            const then = new Date(dateStr);
+            const diffMs = now - then;
+            const diffMin = Math.floor(diffMs / 60000);
+            if (diffMin < 60) return `hace ~${diffMin}min`;
+            const h = Math.floor(diffMin / 60);
+            const m = diffMin % 60;
+            return `hace ~${h}h`;
+        }
+
+        function formatTime(dateStr) {
+            if (!dateStr) return '--:--';
+            const d = new Date(dateStr);
+            const today = new Date();
+            const isToday = d.toDateString() === today.toDateString();
+            const time = dateStr.substring(11, 16);
+            return isToday ? `Hoy ${time}` : time;
+        }
+
+        function getPhotoUrl(path) {
+            if (!path) return '';
+            const filename = path.split('/').pop();
+            return CONFIG.API_URL + '/security/photo/' + filename;
+        }
+
+        // ===================
+        // LOAD VISITORS
+        // ===================
+        async function loadVisitors() {
+            const res = await ApiClient.request('/security/active_visitors', 'GET');
+            const container = document.getElementById('visitors-list');
+
+            if (!res || res.status !== 'success' || res.data.length === 0) {
+                showEmptyState(container);
+                return;
+            }
+
+            allVisitors = res.data;
+            container.innerHTML = '';
+            res.data.forEach(v => {
+                const entryTime = v.created_at ? v.created_at.substring(11, 16) : '--:--';
+                const ago = v.created_at ? timeAgo(v.created_at) : '';
+                const photoSrc = v.photo_url ? getPhotoUrl(v.photo_url) : '';
+                const visitType = v.visit_type || 'Visita';
+
+                const card = document.createElement('div');
+                card.className = 'salida-card';
+                card.style.cursor = 'pointer';
+                card.onclick = () => openDetail(v);
+                card.innerHTML = `
+                    <div class="salida-header">
+                        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        <strong>${v.visitor_name}</strong>
+                        ${photoSrc ? `<img src="${photoSrc}" class="photo-thumb" alt="ID">` : ''}
+                    </div>
+                    <div class="salida-meta">
+                        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+                        <span class="unit-link">${v.unit_number || 'N/A'}</span>
+                        <span class="type-badge">${visitType}</span>
+                    </div>
+                    <div class="salida-time">
+                        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                        Entrada: ${entryTime} &nbsp;·&nbsp; ${ago}
+                    </div>
+                    <button class="btn-exit" onclick="event.stopPropagation(); openDetail(allVisitors.find(x=>x.id==${v.id}))">Ver detalles →</button>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function showEmptyState(container) {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="icon-circle">
+                        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        <div class="check-badge">
+                            <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                        </div>
+                    </div>
+                    <h2>No hay visitantes esperando para salir</h2>
+                    <p>Todos los visitantes han sido registrados de salida exitosamente. Las nuevas entradas aparecerán aquí.</p>
+                    <a href="access-log.html" style="display:flex;align-items:center;justify-content:center;gap:8px;background:var(--primary);color:white;border:none;border-radius:12px;padding:14px 24px;font-size:15px;font-weight:600;cursor:pointer;text-decoration:none;margin-bottom:20px;width:calc(100% - 60px);">
+                        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                        Ver Registros de Seguridad
+                    </a>
+                    <div class="status-row">
+                        <div class="dot"></div>
+                        <span>Sistema Activo</span>
+                        <div class="icon-small">
+                            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                            <span>${timeStr}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ===================
+        // DETAIL VIEW
+        // ===================
+        function openDetail(v) {
+            selectedVisitor = v;
+            const overlay = document.getElementById('detailOverlay');
+            const body = document.getElementById('detailBody');
+
+            const photoIdSrc = v.photo_url ? getPhotoUrl(v.photo_url) : '';
+            const photoPlateSrc = v.photo_plate_url ? getPhotoUrl(v.photo_plate_url) : '';
+            const visitType = v.visit_type || 'Visita';
+            const vehicleType = v.vehicle_type || '';
+
+            let html = `
+                <button class="btn-exit-big" onclick="openExitSheet()">
+                    <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                    Registrar Salida
+                </button>
+
+                <div class="exit-info-card">
+                    <div class="card-title">Detalles del Visitante</div>
+                    <div class="exit-info-row">
+                        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        <span class="label">Nombre</span>
+                        <span class="value">${v.visitor_name}</span>
+                    </div>
+                    <div class="exit-info-row">
+                        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+                        <span class="label">Unidad</span>
+                        <span class="value">${v.unit_number || 'N/A'}</span>
+                    </div>
+                    <div class="exit-info-row">
+                        <svg viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
+                        <span class="label">Hora de entrada</span>
+                        <span class="value">${formatTime(v.created_at)}</span>
+                    </div>
+                    <div class="exit-info-row">
+                        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                        <span class="label">Duración</span>
+                        <span class="value accent">${durationLabel(v.created_at)}</span>
+                    </div>
+                    <div class="exit-info-row">
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                        <span class="label">Propósito</span>
+                        <span class="value pill">${visitType}</span>
+                    </div>
+                </div>
+            `;
+
+            // Photo sections
+            if (photoIdSrc) {
+                html += `
+                <div class="exit-photo-section">
+                    <div class="photo-title">Foto del Visitante</div>
+                    <img src="${photoIdSrc}" alt="ID del visitante" )">
+                </div>`;
+            }
+
+            if (photoPlateSrc) {
+                html += `
+                <div class="exit-photo-section">
+                    <div class="photo-label-row">
+                        <span class="label-text">
+                            <svg viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                            Placa
+                        </span>
+                        <span class="label-badge">${vehicleType || 'Auto'}</span>
+                    </div>
+                    <img src="${photoPlateSrc}" alt="Placa del vehículo" )">
+                </div>`;
+            }
+
+            body.innerHTML = html;
+            overlay.classList.add('active');
+            document.getElementById('bottomNav').style.display = 'none';
+        }
+
+        function closeDetail() {
+            document.getElementById('detailOverlay').classList.remove('active');
+            document.getElementById('bottomNav').style.display = 'flex';
+        }
+
+        // ===================
+        // EXIT SHEET (Premium Bottom-Sheet)
+        // ===================
+        let exitPhotoFile = null;
+
+        function openExitSheet() {
+            if (!selectedVisitor) return;
+            exitPhotoFile = null;
+            resetExitPhotoZone();
+            document.getElementById('exitSheetName').innerText = selectedVisitor.visitor_name || 'Visitante';
+            document.getElementById('exitSheetOverlay').classList.add('active');
+            updateExitCta();
+        }
+
+        function closeExitSheet() {
+            document.getElementById('exitSheetOverlay').classList.remove('active');
+        }
+
+        function resetExitPhotoZone() {
+            const zone = document.getElementById('exitPhotoZone');
+            zone.classList.remove('has-photo');
+            zone.innerHTML = `
+                <div class="capture-icon">
+                    <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                </div>
+                <span class="capture-label">Evidencia de Salida <strong>*</strong></span>
+            `;
+        }
+
+        function updateExitCta() {
+            const btn = document.getElementById('btnExitCta');
+            if (exitPhotoFile) {
+                btn.disabled = false;
+                btn.classList.remove('disabled');
+                btn.classList.add('ready');
+            } else {
+                btn.disabled = true;
+                btn.classList.add('disabled');
+                btn.classList.remove('ready');
+            }
+        }
+
+        // Photo capture handler
+        document.getElementById('exitPhotoInput').addEventListener('change', async function(e) {
+            if (!e.target.files || !e.target.files[0]) return;
+
+            // Comprimir imagen
+            const original = e.target.files[0];
+            exitPhotoFile = await ImageCompressor.compress(original);
+
+            // Mostrar preview
+            const zone = document.getElementById('exitPhotoZone');
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                zone.classList.add('has-photo');
+                zone.innerHTML = `
+                    <img src="${ev.target.result}" class="exit-preview-img" alt="Evidencia">
+                    <span class="retake-badge">
+                        <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                        Cambiar
+                    </span>
+                `;
+                updateExitCta();
+            };
+            reader.readAsDataURL(exitPhotoFile);
+
+            // Reset input para permitir recaptura
+            e.target.value = '';
+        });
+
+        // Submit exit with photo
+        document.getElementById('btnExitCta').addEventListener('click', async function () {
+            if (!selectedVisitor || !exitPhotoFile || this.disabled) return;
+            this.disabled = true;
+            const originalHtml = this.innerHTML;
+            this.innerHTML = '<span class="spinner-loading">Registrando...</span>';
+
+            try {
+                const fd = new FormData();
+                fd.append('entry_log_id', selectedVisitor.id);
+                fd.append('photo_exit', exitPhotoFile);
+
+                const response = await fetch(`${CONFIG.API_URL}/security/exit`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${Auth.getToken()}` },
+                    body: fd
+                });
+                const res = await response.json();
+
+                if (res && res.status === 'success') {
+                    closeExitSheet();
+                    closeDetail();
+
+                    const toast = document.getElementById('toast-exit');
+                    toast.classList.add('show');
+
+                    sessionStorage.setItem('toast_exit_registered', '1');
+                    setTimeout(() => {
+                        toast.classList.remove('show');
+                        window.location.href = 'access-log.html';
+                    }, 1500);
+                } else {
+                    alert(res ? res.message : 'Error registrando salida');
+                    this.disabled = false;
+                    this.innerHTML = originalHtml;
+                }
+            } catch (err) {
+                alert('Error de conexión');
+                this.disabled = false;
+                this.innerHTML = originalHtml;
+            }
+        });
+
+        window.onload = async () => {
+            await loadVisitors();
+
+            // Si viene de un re-escaneo de QR, abrir directamente el detalle
+            const params = new URLSearchParams(window.location.search);
+            const exitEntryId = params.get('exit_entry_id');
+            if (exitEntryId) {
+                // Intentar encontrar al visitante en la lista cargada
+                const visitor = allVisitors.find(v => v.id == exitEntryId);
+                if (visitor) {
+                    openDetail(visitor);
+                } else {
+                    // Si no está en la lista (edge case), usar los datos de sessionStorage
+                    const storedData = sessionStorage.getItem('exit_entry_data');
+                    if (storedData) {
+                        const parsed = JSON.parse(storedData);
+                        sessionStorage.removeItem('exit_entry_data');
+                        openDetail(parsed);
+                    }
+                }
+                // Limpiar URL
+                window.history.replaceState({}, '', 'salidas.html');
+            }
+        };
+    </script>
+</body>
+
+</html>
