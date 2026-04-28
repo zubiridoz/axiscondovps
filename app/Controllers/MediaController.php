@@ -103,4 +103,116 @@ class MediaController extends Controller
         return $this->response;
     }
 
+    /**
+     * Servir archivos de video con soporte para HTTP 206 Range Requests
+     * 
+     * Esto permite que Flutter video_player pueda hacer streaming efectivo
+     * al soportar "byte-range requests" (descarga en segmentos).
+     * 
+     * Rutas:
+     * - /media/video/announcements/video.mp4
+     * - /media/video/tickets/comment_video.mov
+     * 
+     * @param string ...$segments Segmentos de la ruta del archivo
+     * @return mixed
+     */
+    public function video(string ...$segments)
+    {
+        if (count($segments) === 1 && strpos($segments[0], "/") !== false) {
+            $segments = explode("/", $segments[0]);
+        }
+
+        if (empty($segments)) {
+            return $this->response->setStatusCode(404);
+        }
+
+        $filename = implode("/", $segments);
+        $filename = str_replace(["..", "\\"], "", $filename);
+        
+        $fullPath = WRITEPATH . "uploads" . DIRECTORY_SEPARATOR . $filename;
+        
+        $realPath = realpath(dirname($fullPath));
+        $uploadsPath = realpath(WRITEPATH . "uploads");
+        
+        if ($realPath === false || strpos($realPath, $uploadsPath) !== 0 || !is_file($fullPath)) {
+            return $this->response->setStatusCode(404);
+        }
+
+        $ext = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION));
+        $valid_exts = ["mp4" => "video/mp4", "mov" => "video/quicktime", "webm" => "video/webm", "avi" => "video/x-msvideo"];
+        
+        if (!array_key_exists($ext, $valid_exts)) {
+            return $this->response->setStatusCode(403);
+        }
+        
+        $mime = $valid_exts[$ext];
+        $filesize = filesize($fullPath);
+        
+        // Manejo de HTTP 206 Range Requests para streaming
+        $this->response->setHeader("Accept-Ranges", "bytes");
+        $this->response->setHeader("Content-Type", $mime);
+        $this->response->setHeader("Content-Disposition", "inline; filename=\"" . basename($fullPath) . "\"");
+        $this->response->setHeader("Cache-Control", "public, max-age=604800");
+        
+        $start = 0;
+        $end = $filesize - 1;
+        $status = 200;
+        
+        // Procesar Range Request (HTTP 206)
+        if ($this->request->getServer('HTTP_RANGE')) {
+            $range = $this->request->getServer('HTTP_RANGE');
+            
+            if (preg_match('/bytes=(\d+)-(\d*)/', $range, $matches)) {
+                $start = intval($matches[1]);
+                $end = ($matches[2] === '') ? $filesize - 1 : intval($matches[2]);
+                
+                if ($start > $end || $start >= $filesize) {
+                    $this->response->setStatusCode(416);
+                    $this->response->setHeader("Content-Range", "bytes */" . $filesize);
+                    return $this->response;
+                }
+                
+                $status = 206;
+                $length = $end - $start + 1;
+                
+                $this->response->setHeader("Content-Range", "bytes " . $start . "-" . $end . "/" . $filesize);
+                $this->response->setHeader("Content-Length", (string) $length);
+            }
+        }
+        
+        if ($status === 200) {
+            $this->response->setHeader("Content-Length", (string) $filesize);
+        }
+        
+        $this->response->setStatusCode($status);
+        
+        // Enviar el archivo (o rango solicitado)
+        $fp = fopen($fullPath, 'rb');
+        if ($fp === false) {
+            return $this->response->setStatusCode(500);
+        }
+        
+        if ($start > 0) {
+            fseek($fp, $start);
+        }
+        
+        $chunkSize = 1024 * 1024; // 1MB chunks
+        $remainingBytes = $end - $start + 1;
+        
+        while ($remainingBytes > 0) {
+            $readSize = min($chunkSize, $remainingBytes);
+            $chunk = fread($fp, $readSize);
+            if ($chunk === false || $chunk === '') {
+                break;
+            }
+            echo $chunk;
+            $remainingBytes -= strlen($chunk);
+        }
+        
+        fclose($fp);
+        
+        // Enviar respuesta sin body adicional (ya enviamos el contenido)
+        return $this->response;
+    }
+
     }

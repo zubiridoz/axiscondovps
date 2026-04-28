@@ -47,6 +47,45 @@ class AnnouncementController extends ResourceController
     }
 
     /**
+     * Construye la URL completa de un attachment
+     * Retorna la URL con el endpoint correcto (image o video)
+     */
+    private function getAttachmentUrl($attachment)
+    {
+        if (empty($attachment['file_name'])) {
+            return null;
+        }
+        
+        $fileName = basename($attachment['file_name']); // Solo el nombre sin path
+        $fileType = $attachment['file_type'] ?? 'image';
+        
+        // Detectar si es video
+        if ($fileType === 'video') {
+            $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+            // Si no tiene extensión de video válida, asumir que es imagen
+            if (!in_array($ext, ['mp4', 'mov', 'webm', 'avi', 'm4v', 'flv'])) {
+                $fileType = 'image';
+            }
+        }
+        
+        // Usar endpoint correcto
+        $endpoint = ($fileType === 'video') ? 'media/video/' : 'media/image/';
+        
+        // Buscar el archivo en subdirectorios para construir la ruta completa
+        $uploadPath = WRITEPATH . "uploads/";
+        $dirs = ["announcements", "tickets", "staff", "avatars", "vehicles", "access", "payments"];
+        
+        foreach ($dirs as $dir) {
+            if (is_file($uploadPath . $dir . "/" . $fileName)) {
+                return base_url($endpoint . $dir . "/" . $fileName);
+            }
+        }
+        
+        // Fallback: simplemente devolver con el endpoint
+        return base_url($endpoint . $fileName);
+    }
+
+    /**
      * GET /api/v1/announcements
      * Listar avisos paginados con Eager Loading simulado para mitigar consultas N+1
      */
@@ -125,6 +164,12 @@ class AnnouncementController extends ResourceController
             $a['id'] = (int)$a['id'];
             $a['user_id'] = (int)($a['created_by'] ?? 0); // Alias para que Flutter identifique al autor
             $a['attachments'] = $attachmentsMapped[$aId] ?? [];
+            
+            // Agregar URLs completas a los attachments
+            foreach ($a['attachments'] as &$att) {
+                $att['url'] = $this->getAttachmentUrl($att);
+            }
+            
             $a['like_count'] = (int)($likesCountMapped[$aId] ?? 0);
             $a['comment_count'] = (int)($commentsCountMapped[$aId] ?? 0);
             $a['user_liked'] = in_array($aId, $userLikesMapped);
@@ -136,7 +181,7 @@ class AnnouncementController extends ResourceController
             $a['cover_file'] = null;
             foreach ($a['attachments'] as $att) {
                 if (in_array($att['file_type'], ['image', 'video'])) {
-                    $a['cover_file'] = $att['file_name'];
+                    $a['cover_file'] = $att['url'] ?? $att['file_name']; // Usar URL completa si disponible
                     break;
                 }
             }
@@ -186,6 +231,11 @@ class AnnouncementController extends ResourceController
 
         $attachModel = new AnnouncementAttachmentModel();
         $ann['attachments'] = $attachModel->where('announcement_id', $id)->orderBy('id', 'ASC')->findAll();
+        
+        // Agregar URLs completas a los attachments
+        foreach ($ann['attachments'] as &$att) {
+            $att['url'] = $this->getAttachmentUrl($att);
+        }
 
         $likeModel = new AnnouncementLikeModel();
         

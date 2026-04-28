@@ -65,6 +65,7 @@ $routes->group('superadmin', ['namespace' => 'App\Controllers\SuperAdmin', 'filt
 // PUBLIC MEDIA ASSETS (sin auth)
 // ==========================================
 $routes->get('media/image/(.*)', 'MediaController::image/$1');
+$routes->get('media/video/(.*)', 'MediaController::video/$1');
 
 // Temporario para sync
 $routes->get('sync-notifications', 'App\Controllers\Admin\NotificationController::syncTemp');
