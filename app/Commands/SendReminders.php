@@ -138,9 +138,11 @@ class SendReminders extends BaseCommand
                             ->where('reminder_id', $reminder['id'])
                             ->where('user_id', $resident['user_id'])
                             ->where('sent_date', $todayStr)
-                            ->first();
+                            ->limit(1)
+                            ->get()
+                            ->getRowArray();
 
-                        if (!$alreadySent) {
+                        if (empty($alreadySent)) {
                             $messageBody = str_replace('{x}', $reminder['trigger_value'], $reminder['message_body']);
                             
                             try {
