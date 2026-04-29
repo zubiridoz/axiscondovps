@@ -241,6 +241,24 @@ class ResidentInvitationsController extends BaseController
             return $this->response->setJSON(['success' => false, 'message' => 'Invitación no encontrada.']);
         }
 
+        // Obtener el nombre del condominio
+        $condoModel = new \App\Models\Tenant\CondominiumModel();
+        $condo = $condoModel->find($invitation['condominium_id']);
+        $condoName = $condo ? $condo['name'] : 'tu comunidad';
+
+        // Reenviar el correo real
+        $emailService = new \App\Services\EmailService();
+        $emailSent = $emailService->sendResidentInvitation(
+            $invitation['email'],
+            $invitation['name'],
+            $condoName,
+            $invitation['token']
+        );
+
+        if (!$emailSent) {
+            return $this->response->setJSON(['success' => false, 'message' => 'No se pudo enviar el correo. Verifica la configuración SMTP.']);
+        }
+
         $nuevoFecha = date('Y-m-d H:i:s');
         $data = [
             'invited_at' => $nuevoFecha,

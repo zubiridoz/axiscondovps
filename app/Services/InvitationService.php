@@ -73,6 +73,7 @@ class InvitationService
 
             if (!$emailSent) {
                 log_message('error', 'Invitación generada pero el correo no pudo ser enviado a ' . $data['email']);
+                return 'La invitación se generó, pero no pudimos enviar el correo. Verifica tu configuración SMTP.';
             }
         }
 

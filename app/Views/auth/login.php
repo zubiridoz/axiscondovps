@@ -361,6 +361,19 @@
         if (pass !== confirm) { e.preventDefault(); alert('Las contraseñas no coinciden.'); }
         else if (pass.length < 6) { e.preventDefault(); alert('La contraseña debe tener al menos 6 caracteres.'); }
     });
+
+    // Abrir pestaña de residente automáticamente si viene desde el correo
+    document.addEventListener("DOMContentLoaded", function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        if (token || window.location.hash === '#activar') {
+            switchTab('resident-register');
+            if (token) {
+                const tokenInput = document.querySelector('#residentRegisterForm input[name="token"]');
+                if (tokenInput) tokenInput.value = token;
+            }
+        }
+    });
 </script>
 </body>
 </html>
