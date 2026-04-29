@@ -107,8 +107,22 @@ class AnnouncementController extends ResourceController
             ->orderBy('announcements.created_at', 'DESC')
             ->findAll($limit, $offset);
 
+        // Obtener metadatos requeridos por la app móvil incluso cuando la lista está vacía
+        $condoModel = new \App\Models\Tenant\CondominiumModel();
+        $condo = $condoModel->first();
+        $globalAllowComments = (int)($condo['allow_post_comments'] ?? 1);
+        $allowResidentPost = (int)($condo['allow_resident_posts'] ?? 0);
+        $userIsAdmin = $this->isAdmin($userId);
+
         if (empty($announcements)) {
-            return $this->respondSuccess(['announcements' => [], 'has_more' => false, 'total' => 0]);
+            return $this->respondSuccess([
+                'announcements'       => [], 
+                'has_more'            => false, 
+                'total'               => 0,
+                'allow_resident_post' => $allowResidentPost,
+                'allow_post_comments' => $globalAllowComments,
+                'user_is_admin'       => $userIsAdmin,
+            ]);
         }
 
         // Extraer IDs para eager loading
@@ -153,11 +167,6 @@ class AnnouncementController extends ResourceController
             $commentsCountMapped[$cr['announcement_id']] = (int) $cr['total'];
         }
 
-        // Obtener configuración global de comentarios ANTES de enriquecer
-        $condoModel = new \App\Models\Tenant\CondominiumModel();
-        $condo = $condoModel->first();
-        $globalAllowComments = (int)($condo['allow_post_comments'] ?? 1);
-
         // Enriquecer el arreglo en memoria
         foreach ($announcements as &$a) {
             $aId = $a['id'];
@@ -190,9 +199,6 @@ class AnnouncementController extends ResourceController
         // Checar si hay más resultados para el infinite scroll
         $totalResults = $model->where('is_active', 1)->countAllResults();
         $hasMore = ($offset + count($announcements)) < $totalResults;
-
-        $allowResidentPost = (int)($condo['allow_resident_posts'] ?? 0);
-        $userIsAdmin = $this->isAdmin($userId);
 
         return $this->respondSuccess([
             'announcements'       => $announcements, 
