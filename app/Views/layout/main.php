@@ -717,10 +717,24 @@
                             </ul>
                         </li>
 
+                        <?php
+                        $__pendingParcelsCount = 0;
+                        $__parcelBadgeTenantId = \App\Services\TenantService::getInstance()->getTenantId();
+                        if ($__parcelBadgeTenantId) {
+                            $__pendingParcelsCount = (new \App\Models\Tenant\ParcelModel())
+                                ->where('condominium_id', $__parcelBadgeTenantId)
+                                ->whereNotIn('status', ['delivered', 'delivered_to_resident'])
+                                ->countAllResults();
+                        }
+                        ?>
                         <li class="nav-item">
                             <a href="<?= base_url('admin/paqueteria') ?>"
-                                class="nav-link <?= strpos(uri_string(), 'admin/paqueteria') === 0 ? 'active-main' : '' ?>">
+                                class="nav-link d-flex align-items-center <?= strpos(uri_string(), 'admin/paqueteria') === 0 ? 'active-main' : '' ?>">
                                 <i class="bi bi-box-seam"></i> Paquetería
+                                <?php if ($__pendingParcelsCount > 0): ?>
+                                    <span class="badge bg-warning rounded-pill ms-auto"
+                                        style="font-size:0.6rem;"><?= $__pendingParcelsCount ?></span>
+                                <?php endif; ?>
                             </a>
                         </li>
 
