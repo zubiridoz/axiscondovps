@@ -144,7 +144,20 @@ class MonthlyChargeService
                 throw new \Exception('Transaction failed');
             }
 
-            // Notificaciones push (llamadas externas) FUERA de la transacción
+        } catch (\Throwable $e) {
+            // Si algo falla, hacemos rollback y marcamos como failed
+            $db->transRollback();
+            $db->table('monthly_charge_runs')->where('id', $run['id'])->update(['status' => 'failed', 'updated_at' => date('Y-m-d H:i:s')]);
+            log_message('error', '[MonthlyChargeService] Error para condo ' . $condominiumId . ': ' . $e->getMessage());
+            return;
+        }
+
+        // Notificaciones push (llamadas externas) FUERA de la transacción y del try/catch
+        // Un fallo en notificaciones NO debe marcar el run como failed
+        try {
+            // Establecer tenant para contexto CLI/CRON donde no hay sesión web
+            \App\Services\TenantService::getInstance()->setTenantId($condominiumId);
+
             foreach ($affectedUnits as $uId) {
                 $residents = $db->table('residents')
                     ->select('DISTINCT(user_id) as user_id')
@@ -166,12 +179,8 @@ class MonthlyChargeService
                     );
                 }
             }
-
         } catch (\Throwable $e) {
-            // Si algo falla, hacemos rollback y marcamos como failed
-            $db->transRollback();
-            $db->table('monthly_charge_runs')->where('id', $run['id'])->update(['status' => 'failed', 'updated_at' => date('Y-m-d H:i:s')]);
-            log_message('error', '[MonthlyChargeService] Error para condo ' . $condominiumId . ': ' . $e->getMessage());
+            log_message('warning', '[MonthlyChargeService] Notificaciones fallaron para condo ' . $condominiumId . ': ' . $e->getMessage());
         }
     }
 
