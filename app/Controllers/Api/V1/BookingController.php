@@ -42,12 +42,13 @@ class BookingController extends ResourceController
         
         $builder = $bookingModel
             ->select('bookings.*, amenities.name as amenity_name, amenities.image as amenity_image')
-            ->join('amenities', 'amenities.id = bookings.amenity_id', 'left')
-            ->where('bookings.user_id', $userId);
+            ->join('amenities', 'amenities.id = bookings.amenity_id', 'left');
 
-        // Filtrar por unidad actual — solo muestra reservas de la unidad vigente
+        // Mostrar reservas de la unidad del residente (incluye las creadas por admin)
         if ($currentUnitId) {
             $builder->where('bookings.unit_id', $currentUnitId);
+        } else {
+            $builder->where('bookings.user_id', $userId);
         }
 
         $bookings = $builder->orderBy('bookings.start_time', 'DESC')
@@ -73,12 +74,13 @@ class BookingController extends ResourceController
         
         $builder = $bookingModel
             ->select('bookings.*, amenities.name as amenity_name, amenities.image as amenity_image')
-            ->join('amenities', 'amenities.id = bookings.amenity_id', 'left')
-            ->where('bookings.user_id', $userId);
+            ->join('amenities', 'amenities.id = bookings.amenity_id', 'left');
 
-        // Filtrar por unidad actual — solo muestra reservas de la unidad vigente
+        // Mostrar reservas de la unidad del residente (incluye las creadas por admin)
         if ($currentUnitId) {
             $builder->where('bookings.unit_id', $currentUnitId);
+        } else {
+            $builder->where('bookings.user_id', $userId);
         }
 
         $bookings = $builder->whereIn('bookings.status', ['pending', 'approved', 'rejected'])
@@ -96,18 +98,50 @@ class BookingController extends ResourceController
     public function create()
     {
         $userId = $this->request->userId;
+        $tenantId = TenantService::getInstance()->getTenantId();
+
+        // Determinar si el usuario es admin del condominio
+        $db = \Config\Database::connect();
+        $userRole = $db->table('user_condominium_roles')
+            ->where('user_id', $userId)
+            ->where('condominium_id', $tenantId)
+            ->get()
+            ->getRowArray();
+
+        $isAdmin = $userRole && ((int)($userRole['role_id'] ?? 0) === 2);
 
         $residentModel = new ResidentModel();
         $resident = $residentModel->where('user_id', $userId)->first();
-        
-        if (!$resident) {
-             return $this->respondError('Debes ser residente para reservar amenidades', 403);
-        }
 
+        // Leer input
         $json = $this->request->getJSON(true);
-        $amenityId = $json['amenity_id'] ?? $this->request->getPost('amenity_id');
-        $startTime = $json['start_time'] ?? $this->request->getPost('start_time');
-        $endTime   = $json['end_time']   ?? $this->request->getPost('end_time');
+        $amenityId   = $json['amenity_id']   ?? $this->request->getPost('amenity_id');
+        $startTime   = $json['start_time']   ?? $this->request->getPost('start_time');
+        $endTime     = $json['end_time']     ?? $this->request->getPost('end_time');
+        $targetUnitId = $json['unit_id']     ?? $this->request->getPost('unit_id');
+
+        // Determinar unit_id y user_id para la reserva
+        if ($isAdmin && !empty($targetUnitId)) {
+            // Admin reservando para una unidad específica
+            $bookingUnitId = (int) $targetUnitId;
+
+            // Validar que la unidad existe en este condominio
+            $unitExists = $db->table('units')
+                ->where('id', $bookingUnitId)
+                ->where('condominium_id', $tenantId)
+                ->countAllResults();
+            if (!$unitExists) {
+                return $this->respondError('La unidad seleccionada no existe en este condominio', 404);
+            }
+
+            $bookingUserId = $userId; // La reserva se registra a nombre del admin
+        } elseif ($resident) {
+            // Residente normal (o admin que es también residente sin especificar unidad)
+            $bookingUnitId  = $resident['unit_id'];
+            $bookingUserId  = $userId;
+        } else {
+            return $this->respondError('Debes ser residente o administrador para reservar amenidades', 403);
+        }
 
         if (empty($amenityId) || empty($startTime) || empty($endTime)) {
             return $this->respondError('Faltan datos obligatorios de la reserva');
@@ -141,13 +175,13 @@ class BookingController extends ResourceController
             return $this->respondError('El horario seleccionado ya no está disponible. Por favor, selecciona otro horario.', 409);
         }
 
-        // Validar Límite Máximo de Reservas Activas
+        // Validar Límite Máximo de Reservas Activas (por unidad, incluye las de admin)
         $maxReservations = $amenity['max_active_reservations'] ?? 'unlimited';
         if ($maxReservations !== 'unlimited' && is_numeric($maxReservations)) {
             $maxAllowed = (int)$maxReservations;
             $activeCount = $bookingModel
                 ->where('amenity_id', $amenityId)
-                ->where('user_id', $userId)
+                ->where('unit_id', $bookingUnitId)
                 ->whereIn('status', ['pending', 'approved'])
                 ->where('end_time >', date('Y-m-d H:i:s'))
                 ->countAllResults();
@@ -158,14 +192,15 @@ class BookingController extends ResourceController
         }
 
         // Si la configuración "requires_approval" es 0, se aprueba en automático. Si es 1, queda pendiente.
+        // Los admin siempre se aprueban automáticamente.
         $requiresApproval = (int) ($amenity['requires_approval'] ?? 1);
-        $status = ($requiresApproval === 1) ? 'pending' : 'approved';
+        $status = ($isAdmin || $requiresApproval === 0) ? 'approved' : 'pending';
 
         $bookingModel = new BookingModel();
         $bookingId = $bookingModel->insert([
             'amenity_id' => $amenityId,
-            'unit_id'    => $resident['unit_id'],
-            'user_id'    => $userId,
+            'unit_id'    => $bookingUnitId,
+            'user_id'    => $bookingUserId,
             'start_time' => $startTime,
             'end_time'   => $endTime,
             'status'     => $status
@@ -173,27 +208,50 @@ class BookingController extends ResourceController
 
         $message = ($status === 'pending') ? 'Reserva solicitada. Pendiente de aprobación.' : 'Reserva confirmada exitosamente.';
 
-        // Notify Admins
+        // Notify Admins (solo si no es admin quien reserva)
         try {
-            $db = \Config\Database::connect();
-            $admins = $db->table('user_condominium_roles')
-                         ->where('condominium_id', $resident['condominium_id'])
-                         ->where('role_id', 2)
-                         ->get()->getResultArray();
-                         
+            $condominiumId = $resident['condominium_id'] ?? $tenantId;
+            
             $userRow = $db->table('users')->select('first_name, last_name')->where('id', $userId)->get()->getRowArray();
-            $unitRow = $db->table('units')->select('unit_number')->where('id', $resident['unit_id'])->get()->getRowArray();
+            $unitRow = $db->table('units')->select('unit_number')->where('id', $bookingUnitId)->get()->getRowArray();
             
             $resName = $userRow ? trim($userRow['first_name'] . ' ' . $userRow['last_name']) : 'Residente';
             $unitNum = $unitRow ? $unitRow['unit_number'] : 'S/N';
             $amenityName = $amenity['name'] ?? 'Amenidad';
 
-            $title = "Nueva Reserva de Amenidad";
-            $statusText = ($status === 'pending') ? "ha solicitado" : "ha agendado";
-            $body = "{$resName} de la unidad {$unitNum} {$statusText} una reserva para {$amenityName}.";
-            
-            foreach ($admins as $admin) {
-                \App\Models\Tenant\NotificationModel::notify($resident['condominium_id'], $admin['user_id'], 'amenidad', $title, $body);
+            if ($isAdmin) {
+                // Si el admin reservó para otra unidad, notificar a los residentes de esa unidad
+                if (!empty($targetUnitId)) {
+                    $unitResidents = $db->table('residents')
+                        ->select('DISTINCT(user_id) as user_id')
+                        ->where('unit_id', $bookingUnitId)
+                        ->where('condominium_id', $condominiumId)
+                        ->where('is_active', 1)
+                        ->where('user_id IS NOT NULL')
+                        ->get()->getResultArray();
+
+                    foreach ($unitResidents as $ur) {
+                        \App\Models\Tenant\NotificationModel::notify(
+                            $condominiumId, $ur['user_id'], 'amenidad',
+                            'Reserva de Amenidad',
+                            "La administración ha reservado {$amenityName} para tu unidad {$unitNum}."
+                        );
+                    }
+                }
+            } else {
+                // Notificar a los admins como antes
+                $admins = $db->table('user_condominium_roles')
+                             ->where('condominium_id', $condominiumId)
+                             ->where('role_id', 2)
+                             ->get()->getResultArray();
+
+                $title = "Nueva Reserva de Amenidad";
+                $statusText = ($status === 'pending') ? "ha solicitado" : "ha agendado";
+                $body = "{$resName} de la unidad {$unitNum} {$statusText} una reserva para {$amenityName}.";
+                
+                foreach ($admins as $admin) {
+                    \App\Models\Tenant\NotificationModel::notify($condominiumId, $admin['user_id'], 'amenidad', $title, $body);
+                }
             }
         } catch (\Exception $e) {
             // Ignorar errores de notificación para no afectar el flujo de reservas

@@ -101,16 +101,26 @@ class AmenityController extends ResourceController
             ->where('start_time <=', $endOfMonth)
             ->findAll();
 
+        // Contar reservas activas por UNIDAD (incluye las creadas por admin)
         $userId = $this->request->userId ?? 0;
         $activeReservationsCount = 0;
         if ($userId) {
+            $residentModel = new \App\Models\Tenant\ResidentModel();
+            $resident = $residentModel->where('user_id', $userId)->first();
+            $unitId = $resident['unit_id'] ?? null;
+
             $bookingModelCount = new BookingModel();
-            $activeReservationsCount = $bookingModelCount
-                ->where('amenity_id', $id)
-                ->where('user_id', $userId)
+            $bookingModelCount->where('amenity_id', $id)
                 ->whereIn('status', ['pending', 'approved'])
-                ->where('end_time >', date('Y-m-d H:i:s'))
-                ->countAllResults();
+                ->where('end_time >', date('Y-m-d H:i:s'));
+
+            if ($unitId) {
+                $bookingModelCount->where('unit_id', $unitId);
+            } else {
+                $bookingModelCount->where('user_id', $userId);
+            }
+
+            $activeReservationsCount = $bookingModelCount->countAllResults();
         }
 
         return $this->respondSuccess([
