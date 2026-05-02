@@ -37,7 +37,8 @@ class ParcelNotificationService
         string $parcelType,
         string $courier,
         string $deviceName = 'Portería',
-        ?int $parcelId = null
+        ?int $parcelId = null,
+        ?string $deliveryPin = null
     ): void {
         if (empty($unitId) || empty($condominiumId)) {
             log_message('warning', '[PARCEL_NOTIFY] Datos insuficientes para notificación de llegada');
@@ -49,6 +50,11 @@ class ParcelNotificationService
         $title = 'Tu paquete ha llegado';
         $body = "Paquete recibido en {$deviceName} vía {$courier} - Tienes {$quantity} {$parcelType} recibido(s)";
 
+        // 🔐 Incluir PIN de entrega en el body de la notificación
+        if (!empty($deliveryPin)) {
+            $body .= "\n🔐 PIN de entrega: {$deliveryPin}";
+        }
+
         $data = [
             'tipo' => 'paquete_entrada',
             'condominio_id' => $condominiumId,
@@ -56,7 +62,12 @@ class ParcelNotificationService
             'unit_id' => $unitId,
         ];
 
-        log_message('info', "[PARCEL_NOTIFY] Sending ARRIVAL notification — unit_id={$unitId}, condominium_id={$condominiumId}, qty={$quantity}, type={$parcelType}, courier={$courier}");
+        // Incluir PIN en data payload para que Flutter pueda mostrarlo
+        if (!empty($deliveryPin)) {
+            $data['delivery_pin'] = $deliveryPin;
+        }
+
+        log_message('info', "[PARCEL_NOTIFY] Sending ARRIVAL notification — unit_id={$unitId}, condominium_id={$condominiumId}, qty={$quantity}, type={$parcelType}, courier={$courier}, pin=" . ($deliveryPin ? 'YES' : 'NO'));
 
         self::sendToUnitResidents($unitId, $condominiumId, $title, $body, $data, 'parcel_arrival');
     }

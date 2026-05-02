@@ -1504,7 +1504,25 @@ $pageRows = array_slice($activeRows, $offset, $perPage);
                 html += '<div class="col-6"><div class="detail-label">TIPO</div><div class="detail-value-sm">' + (p.parcel_type || 'Paquete') + '</div></div>';
                 html += '<div class="col-6"><div class="detail-label">CANTIDAD</div><div class="detail-value-sm">' + (p.quantity || 1) + '</div></div>';
                 html += '<div class="col-6"><div class="detail-label">FECHA DE LLEGADA</div><div class="detail-value-sm" style="font-size:0.78rem;">' + createdFormatted + '</div></div>';
-                html += '</div></div>';
+                html += '</div>';
+
+                // 🔐 PIN de entrega
+                if (p.delivery_pin) {
+                    if (isPending) {
+                        html += '<div class="mt-3 p-3" style="background:#fffbeb; border:1px solid #fde68a; border-radius:0.6rem;">';
+                        html += '<div class="detail-label" style="color:#92400e;">🔐 PIN DE ENTREGA</div>';
+                        html += '<div style="font-family:SFMono-Regular,Consolas,monospace; font-size:1.6rem; font-weight:800; color:#d97706; letter-spacing:0.35em; margin-top:4px;">' + p.delivery_pin + '</div>';
+                        html += '<div style="font-size:0.72rem; color:#92400e; margin-top:4px;">El residente debe proporcionar este PIN al guardia para recoger</div>';
+                        html += '</div>';
+                    } else if (isDelivered) {
+                        html += '<div class="mt-3 p-2" style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:0.5rem; display:flex; align-items:center; gap:8px;">';
+                        html += '<i class="bi bi-shield-check" style="color:#16a34a; font-size:1rem;"></i>';
+                        html += '<span style="font-size:0.82rem; font-weight:600; color:#166534;">PIN verificado ✓</span>';
+                        html += '</div>';
+                    }
+                }
+
+                html += '</div>';
                 html += '</div>';
 
                 // Right column - Timeline

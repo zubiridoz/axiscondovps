@@ -44,6 +44,9 @@ class ParcelController extends ResourceController
 
         // Enrich with resident data (id, name)
         foreach ($parcels as &$p) {
+            // 🔐 Ocultar PIN del response — el guardia NO debe ver el PIN
+            unset($p['delivery_pin']);
+
             $residents = $db->table('residents')
                 ->select('users.id as user_id, users.first_name, users.last_name, residents.type')
                 ->join('users', 'users.id = residents.user_id')
@@ -114,6 +117,9 @@ class ParcelController extends ResourceController
 
         $userId = $this->request->userId;
 
+        // 🔐 Generar PIN de entrega de 4 dígitos
+        $deliveryPin = str_pad((string)random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+
         $parcelModel = new ParcelModel();
         $id = $parcelModel->insert([
             'unit_id'      => $unitId,
@@ -122,7 +128,8 @@ class ParcelController extends ResourceController
             'photo_url'    => $photoUrl,
             'quantity'     => $quantity,
             'parcel_type'  => $parcelType,
-            'status'       => 'at_gate'
+            'status'       => 'at_gate',
+            'delivery_pin' => $deliveryPin,
         ]);
 
         // 🔔 Notificación push al residente de la unidad
@@ -140,7 +147,7 @@ class ParcelController extends ResourceController
                 : trim($guardUser['first_name'] . ' ' . $guardUser['last_name']);
         }
         \App\Services\ParcelNotificationService::notifyArrival(
-            (int)$unitId, (int)$tenantId, $quantity, $parcelType, $courier, $deviceName, (int)$id
+            (int)$unitId, (int)$tenantId, $quantity, $parcelType, $courier, $deviceName, (int)$id, $deliveryPin
         );
 
         return $this->respondSuccess([
@@ -154,91 +161,99 @@ class ParcelController extends ResourceController
      * Registrar entrega de paquete al residente con firma
      */
     public function deliver($id = null)
-{
-    if (!$id) {
-        return $this->respondError('ID de paquete no proporcionado');
-    }
-
-    $parcelModel = new ParcelModel();
-    $parcel = $parcelModel->find($id);
-
-    if (!$parcel) {
-        return $this->respondError('Paquete no encontrado', 404);
-    }
-
-    if ($parcel['status'] !== 'at_gate') {
-        return $this->respondError('Este paquete ya fue entregado o devuelto');
-    }
-
-    // 🔥 FIX PRINCIPAL: Leer JSON correctamente
-$contentType = $this->request->getHeaderLine('Content-Type');
-
-if (str_contains($contentType, 'application/json')) {
-    $input = $this->request->getJSON(true);
-} else {
-    $input = $this->request->getPost();
-}
-
-    $pickedUpName = $input['picked_up_name'] ?? null;
-    $pickedUpBy   = $input['picked_up_by'] ?? null;
-    $signatureData = $input['signature'] ?? null;
-
-    if (empty($pickedUpName)) {
-        return $this->respondError('Se requiere indicar quién recoge el paquete');
-    }
-
-    // Process signature from base64 data URL
-    $signatureUrl = null;
-
-    if (!empty($signatureData)) {
-        // Decode base64 data URL
-        // Strip data URL prefix only if present (PWA sends data:image/..., Flutter sends raw base64)
-        if (str_starts_with($signatureData, 'data:')) {
-            $signatureData = preg_replace('/^data:image\/\w+;base64,/', '', $signatureData);
+    {
+        if (!$id) {
+            return $this->respondError('ID de paquete no proporcionado');
         }
-        $signatureData = base64_decode($signatureData);
-        
-        if ($signatureData !== false) {
-            $signatureName = 'sig_' . time() . '_' . uniqid() . '.png';
-            $signaturePath = WRITEPATH . 'uploads/parcels/' . $signatureName;
-            
-            if (!is_dir(WRITEPATH . 'uploads/parcels')) {
-                mkdir(WRITEPATH . 'uploads/parcels', 0755, true);
+
+        $parcelModel = new ParcelModel();
+        $parcel = $parcelModel->find($id);
+
+        if (!$parcel) {
+            return $this->respondError('Paquete no encontrado', 404);
+        }
+
+        if ($parcel['status'] !== 'at_gate') {
+            return $this->respondError('Este paquete ya fue entregado o devuelto');
+        }
+
+        // Leer JSON o POST según Content-Type
+        $contentType = $this->request->getHeaderLine('Content-Type');
+
+        if (str_contains($contentType, 'application/json')) {
+            $input = $this->request->getJSON(true);
+        } else {
+            $input = $this->request->getPost();
+        }
+
+        $pickedUpName  = $input['picked_up_name'] ?? null;
+        $pickedUpBy    = $input['picked_up_by'] ?? null;
+        $inputPin      = $input['delivery_pin'] ?? null;
+
+        if (empty($pickedUpName)) {
+            return $this->respondError('Se requiere indicar quién recoge el paquete');
+        }
+
+        // 🔐 Validar PIN de entrega
+        $storedPin = $parcel['delivery_pin'] ?? null;
+        if (!empty($storedPin)) {
+            // Paquete tiene PIN — validación obligatoria
+            if (empty($inputPin)) {
+                return $this->respondError('Se requiere el PIN de entrega. Solicítalo al residente.');
             }
-            
-            file_put_contents($signaturePath, $signatureData);
-            $signatureUrl = 'writable/uploads/parcels/' . $signatureName;
+            if ((string)$inputPin !== (string)$storedPin) {
+                return $this->respondError('PIN de entrega incorrecto. Verifica con el residente.');
+            }
         }
+        // Si storedPin es null → paquete legacy, se permite sin PIN
+
+        // Firma opcional (legacy support) — ya no se requiere obligatoriamente
+        $signatureUrl = null;
+        $signatureData = $input['signature'] ?? null;
+        if (!empty($signatureData)) {
+            if (str_starts_with($signatureData, 'data:')) {
+                $signatureData = preg_replace('/^data:image\/\w+;base64,/', '', $signatureData);
+            }
+            $decoded = base64_decode($signatureData);
+            if ($decoded !== false) {
+                $signatureName = 'sig_' . time() . '_' . uniqid() . '.png';
+                $signaturePath = WRITEPATH . 'uploads/parcels/' . $signatureName;
+                if (!is_dir(WRITEPATH . 'uploads/parcels')) {
+                    mkdir(WRITEPATH . 'uploads/parcels', 0755, true);
+                }
+                file_put_contents($signaturePath, $decoded);
+                $signatureUrl = 'writable/uploads/parcels/' . $signatureName;
+            }
+        }
+
+        $updateData = [
+            'status'         => 'delivered_to_resident',
+            'delivered_at'   => date('Y-m-d H:i:s'),
+            'picked_up_by'   => $pickedUpBy ?: null,
+            'picked_up_name' => $pickedUpName,
+        ];
+        if ($signatureUrl) {
+            $updateData['signature_url'] = $signatureUrl;
+        }
+
+        $parcelModel->update($id, $updateData);
+
+        // 🔔 Notificación push al residente de la unidad
+        if (!empty($parcel['unit_id'])) {
+            $tenantId = \App\Services\TenantService::getInstance()->getTenantId();
+            \App\Services\ParcelNotificationService::notifyDelivery(
+                (int)$parcel['unit_id'],
+                (int)$tenantId,
+                $parcel['parcel_type'] ?? 'Paquete',
+                $pickedUpName,
+                (int)$id
+            );
+        }
+
+        return $this->respondSuccess([
+            'message' => 'Paquete entregado exitosamente'
+        ]);
     }
-
-    if (empty($signatureUrl)) {
-        return $this->respondError('La firma del residente es obligatoria');
-    }
-
-    $parcelModel->update($id, [
-        'status'         => 'delivered_to_resident',
-        'delivered_at'   => date('Y-m-d H:i:s'),
-        'picked_up_by'   => $pickedUpBy ?: null,
-        'picked_up_name' => $pickedUpName,
-        'signature_url'  => $signatureUrl,
-    ]);
-
-    // 🔔 Notificación push al residente de la unidad
-    if (!empty($parcel['unit_id'])) {
-        $tenantId = \App\Services\TenantService::getInstance()->getTenantId();
-        \App\Services\ParcelNotificationService::notifyDelivery(
-            (int)$parcel['unit_id'],
-            (int)$tenantId,
-            $parcel['parcel_type'] ?? 'Paquete',
-            $pickedUpName,
-            (int)$id
-        );
-    }
-
-    return $this->respondSuccess([
-        'message' => 'Paquete entregado exitosamente'
-    ]);
-}
     /**
      * GET /api/v1/security/parcels/history?month=&year=
      * Historial de paquetería filtrado por mes/año
