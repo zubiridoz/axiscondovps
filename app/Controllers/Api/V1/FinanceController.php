@@ -968,8 +968,11 @@ class FinanceController extends ResourceController
         $month = (int) ($this->request->getGet('month') ?: date('n'));
         $year  = (int) ($this->request->getGet('year') ?: date('Y'));
 
-        // Simular el parametro GET que usa el Controlador Admin (YYYY-MM)
-        $_GET['month'] = sprintf('%04d-%02d', $year, $month);
+        // Inyectar el parámetro 'month' en formato YYYY-MM que espera descargarReporteMensual()
+        // Nota: en CI4, getGet() lee de un cache interno ($globals['get']),
+        // por lo que debemos usar setGlobal() para que el controlador delegado lo reciba.
+        $formattedMonth = sprintf('%04d-%02d', $year, $month);
+        $this->request->setGlobal('get', ['month' => $formattedMonth]);
 
         // Delegar la renderización del reporte corporativo al controlador de Finanzas Admin
         $adminFinanceController = new \App\Controllers\Admin\FinanceController();

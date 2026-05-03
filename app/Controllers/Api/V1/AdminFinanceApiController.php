@@ -481,7 +481,10 @@ class AdminFinanceApiController extends ResourceController
 
         $month = (int) ($this->request->getGet("month") ?: date("n"));
         $year  = (int) ($this->request->getGet("year") ?: date("Y"));
-        $_GET["month"] = sprintf("%04d-%02d", $year, $month);
+
+        // Inyectar el parámetro 'month' en formato YYYY-MM que espera descargarReporteMensual()
+        $formattedMonth = sprintf('%04d-%02d', $year, $month);
+        $this->request->setGlobal('get', ['month' => $formattedMonth]);
 
         $adminFinanceController = new \App\Controllers\Admin\FinanceController();
         $adminFinanceController->initController($this->request, $this->response, service("logger"));
