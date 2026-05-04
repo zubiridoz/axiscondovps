@@ -53,7 +53,7 @@
                                 <p style="color: #64748b; font-size: 0.95rem; margin-bottom: 2rem; max-width: 300px; margin-left: auto; margin-right: auto;">
                                     Actualmente no estás asignado a ninguna comunidad o han sido eliminadas.
                                 </p>
-                                <a href="<?= base_url('admin/onboarding') ?>" class="btn px-4 py-2" style="background: #1C2434; color: white; font-weight: 600; border-radius: 0.5rem; transition: background 0.2s;">
+                                <a href="<?= base_url('admin/onboarding') ?>" class="btn px-4 py-2" style="background: #1D4C9D; color: white; font-weight: 600; border-radius: 0.5rem; transition: background 0.2s;">
                                     <i class="bi bi-plus-lg me-2"></i> Crear nueva comunidad
                                 </a>
                             </div>

@@ -209,8 +209,8 @@
         }
 
         .btn-primary {
-            background-color: #475569; /* Gris oscuro / slate */
-            border-color: #475569;
+            background-color: #3F67AC; /* Gris oscuro / slate */
+            border-color: #3F67AC;
             font-weight: 600;
             font-size: 0.95rem;
             padding: 0.75rem;

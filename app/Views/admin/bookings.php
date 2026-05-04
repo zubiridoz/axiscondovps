@@ -61,7 +61,7 @@ $formatTimeRange = function ($start, $end) {
         margin: 0;
         font-weight: 500;
         font-size: 1.05rem;
-        color: #475569;
+        color: #3F67AC;
     }
 
     .cc-hero-divider {
@@ -111,7 +111,7 @@ $formatTimeRange = function ($start, $end) {
     }
 
     .cc-hero-btndark {
-        background: #1C2434;
+        background: #1D4C9D;
         color: #ffffff;
         border: none;
         border-radius: 0.45rem;
@@ -1300,10 +1300,10 @@ $formatTimeRange = function ($start, $end) {
             // User info
             const avatarEl = document.getElementById('detailUserAvatar');
             if (d.avatar) {
-                avatarEl.innerHTML = `<img src="${BASE}admin/configuracion/avatar/${d.avatar}" style="width:100%;height:100%;object-fit:cover">`;
+                avatarEl.innerHTML = `<img src="${BASE}media/image/avatars/${d.avatar}" style="width:100%;height:100%;object-fit:cover">`;
             } else {
                 const ini = ((d.first_name || '')[0] || '') + ((d.last_name || '')[0] || '');
-                avatarEl.innerHTML = `<span style="font-weight:600;font-size:.8rem;color:#475569">${ini.toUpperCase()}</span>`;
+                avatarEl.innerHTML = `<span style="font-weight:600;font-size:.8rem;color:#3F67AC">${ini.toUpperCase()}</span>`;
             }
             document.getElementById('detailUserName').textContent = (d.first_name || '') + ' ' + (d.last_name || '');
             const roleColor = d.role_name === 'Administrador' ? '#16a34a' : '#6366f1';
@@ -1436,8 +1436,8 @@ $formatTimeRange = function ($start, $end) {
         function userOptionHtml(u) {
             const initials = ((u.first_name || '')[0] || '') + ((u.last_name || '')[0] || '');
             const avatarContent = u.avatar
-                ? `<img src="${BASE}admin/configuracion/avatar/${u.avatar}" alt="">`
-                : `<span style="font-weight:600;font-size:.75rem;color:#475569">${initials.toUpperCase()}</span>`;
+                ? `<img src="${BASE}media/image/avatars/${u.avatar}" alt="">`
+                : `<span style="font-weight:600;font-size:.75rem;color:#3F67AC">${initials.toUpperCase()}</span>`;
             const meta = u.role_label === 'ADMIN' ? 'Administrador' : ((u.section_name || '') + (u.unit_number ? ' · ' + u.unit_number : ''));
             return `<div class="user-option" data-user-id="${u.user_id}" data-unit-id="${u.unit_id || ''}" data-name="${(u.first_name || '')} ${(u.last_name || '')}">
             <div class="user-avatar">${avatarContent}</div>

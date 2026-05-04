@@ -79,7 +79,7 @@
         .info-title {
             font-size: 0.85rem;
             font-weight: 800;
-            color: #475569;
+            color: #3F67AC;
             margin-bottom: 12px;
             letter-spacing: 0.5px;
         }

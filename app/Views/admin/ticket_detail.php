@@ -27,7 +27,7 @@
         margin: 0;
         font-weight: 500;
         font-size: 1.05rem;
-        color: #475569;
+        color: #3F67AC;
     }
 
     .cc-hero-divider {
@@ -96,7 +96,7 @@
     }
 
     .td-back-btn {
-        background: #1C2434;
+        background: #1D4C9D;
         border: none;
         color: white;
         border-radius: 0.35rem;
@@ -885,7 +885,7 @@
 
     .file-card-uploader {
         font-size: 0.78rem;
-        color: #475569;
+        color: #3F67AC;
         font-weight: 500;
         margin-bottom: 0.35rem;
     }
@@ -998,7 +998,7 @@
     }
 
     .start-work-hint i {
-        color: #1C2434;
+        color: #1D4C9D;
         flex-shrink: 0;
     }
 
@@ -1073,7 +1073,7 @@
         align-items: center;
         justify-content: center;
         font-size: 1rem;
-        color: #475569;
+        color: #3F67AC;
         flex-shrink: 0;
     }
 
@@ -1230,7 +1230,7 @@
 
     .act-btn-cancel {
         background: #fff;
-        color: #475569;
+        color: #3F67AC;
         border: 1px solid #e2e8f0;
         padding: 0.6rem 1.25rem;
         border-radius: 0.5rem;
@@ -1496,7 +1496,7 @@
                                             </div>
                                         </div>
                                     <?php elseif ($isPdf || $isDoc): ?>
-                                        <a href="<?= esc($secureUrl) ?>" target="_blank" class="d-flex align-items-center justify-content-center text-decoration-none" style="width: 80px; height: 80px; border-radius:8px; border:1px solid #e2e8f0; background: #f8fafc; color: #475569; font-size: 2rem; transition: 0.2s;" title="Abrir Documento">
+                                        <a href="<?= esc($secureUrl) ?>" target="_blank" class="d-flex align-items-center justify-content-center text-decoration-none" style="width: 80px; height: 80px; border-radius:8px; border:1px solid #e2e8f0; background: #f8fafc; color: #3F67AC; font-size: 2rem; transition: 0.2s;" title="Abrir Documento">
                                             <i class="bi <?= $isPdf ? 'bi-file-earmark-pdf text-danger' : 'bi-file-earmark-text text-primary' ?>"></i>
                                         </a>
                                     <?php else: ?>
@@ -1988,7 +1988,7 @@
                             title: 'Confirmar Cambio de Estado',
                             text: '¿Está seguro que desea reabrir este reporte?',
                             showCancelButton: true,
-                            confirmButtonColor: '#475569',
+                            confirmButtonColor: '#3F67AC',
                             confirmButtonText: 'Confirmar',
                             cancelButtonText: 'Cancelar',
                             customClass: { popup: 'act-swal-popup' }
@@ -2058,7 +2058,7 @@
                     title: 'Confirmar Cambio de Estado',
                     text: '¿Está seguro que desea cambiar el estado de "En Progreso" a "Resuelto"?',
                     showCancelButton: true,
-                    confirmButtonColor: '#475569',
+                    confirmButtonColor: '#3F67AC',
                     confirmButtonText: 'Confirmar',
                     cancelButtonText: 'Cancelar',
                     customClass: { popup: 'act-swal-popup' },
@@ -2335,12 +2335,12 @@
                             </div>`;
                         } else if (/\.pdf$/i.test(url)) {
                             html += `
-                            <a href="${escHtml(url)}" target="_blank" class="d-flex align-items-center justify-content-center text-decoration-none" style="width: 140px; height: 100px; border-radius:12px; border:2px solid #e2e8f0; background: #f8fafc; color: #475569; font-size: 2.5rem; transition: 0.2s; margin-top: 0.35rem;">
+                            <a href="${escHtml(url)}" target="_blank" class="d-flex align-items-center justify-content-center text-decoration-none" style="width: 140px; height: 100px; border-radius:12px; border:2px solid #e2e8f0; background: #f8fafc; color: #3F67AC; font-size: 2.5rem; transition: 0.2s; margin-top: 0.35rem;">
                                 <i class="bi bi-file-earmark-pdf text-danger"></i>
                             </a>`;
                         } else if (/\.(doc|docx|xls|xlsx|ppt|pptx|txt)$/i.test(url)) {
                             html += `
-                            <a href="${escHtml(url)}" target="_blank" class="d-flex align-items-center justify-content-center text-decoration-none" style="width: 140px; height: 100px; border-radius:12px; border:2px solid #e2e8f0; background: #f8fafc; color: #475569; font-size: 2.5rem; transition: 0.2s; margin-top: 0.35rem;">
+                            <a href="${escHtml(url)}" target="_blank" class="d-flex align-items-center justify-content-center text-decoration-none" style="width: 140px; height: 100px; border-radius:12px; border:2px solid #e2e8f0; background: #f8fafc; color: #3F67AC; font-size: 2.5rem; transition: 0.2s; margin-top: 0.35rem;">
                                 <i class="bi bi-file-earmark-text text-primary"></i>
                             </a>`;
                         } else {

@@ -31,7 +31,7 @@
 
     .process-text-premium {
         font-size: 0.875rem;
-        color: #475569;
+        color: #3F67AC;
         line-height: 1.5;
     }
 

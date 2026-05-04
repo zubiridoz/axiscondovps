@@ -20,7 +20,7 @@
 .ob-help{font-size:.72rem;color:#94a3b8;margin-top:.25rem}
 .ob-btn{border:none;border-radius:10px;padding:.7rem 2rem;font-weight:600;font-size:.9rem;cursor:pointer;transition:all .2s}
 .ob-btn-primary{background:#3b82f6;color:#fff}.ob-btn-primary:hover{background:#2563eb}
-.ob-btn-secondary{background:#f1f5f9;color:#475569}.ob-btn-secondary:hover{background:#e2e8f0}
+.ob-btn-secondary{background:#f1f5f9;color:#3F67AC}.ob-btn-secondary:hover{background:#e2e8f0}
 .ob-btn-success{background:#10b981;color:#fff}.ob-btn-success:hover{background:#059669}
 .ob-footer{display:flex;justify-content:space-between;align-items:center;margin-top:2rem;padding-top:1.5rem;border-top:1px solid #f1f5f9}
 .step-panel{display:none}.step-panel.active{display:block}
@@ -30,7 +30,7 @@
 .ob-upload-zone:hover{border-color:#3b82f6;background:#f0f7ff}
 .ob-upload-zone.dragover{border-color:#3b82f6;background:#eff6ff}
 .ob-table{width:100%;border-collapse:separate;border-spacing:0;font-size:.82rem}
-.ob-table th{background:#f8fafc;padding:.6rem .75rem;font-weight:600;color:#475569;border-bottom:2px solid #e2e8f0;text-align:left}
+.ob-table th{background:#f8fafc;padding:.6rem .75rem;font-weight:600;color:#3F67AC;border-bottom:2px solid #e2e8f0;text-align:left}
 .ob-table td{padding:.55rem .75rem;border-bottom:1px solid #f1f5f9;color:#334155}
 .ob-table tr:hover td{background:#fafbfc}
 .ob-badge{display:inline-flex;align-items:center;gap:.3rem;padding:.2rem .6rem;border-radius:6px;font-size:.7rem;font-weight:600}

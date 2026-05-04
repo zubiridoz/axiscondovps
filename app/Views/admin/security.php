@@ -35,7 +35,7 @@
         margin: 0;
         font-weight: 500;
         font-size: 1.05rem;
-        color: #475569;
+        color: #3F67AC;
     }
 
     .cc-hero-divider {
@@ -301,7 +301,7 @@
         cursor: pointer;
         transition: all 0.2s;
         background: #fff;
-        color: #475569;
+        color: #3F67AC;
         font-size: 0.8rem;
         height: 100%;
         text-align: center;
@@ -334,7 +334,7 @@
         border: none;
         font-size: 0.85rem;
         background: #ffffff;
-        color: #475569;
+        color: #3F67AC;
         font-weight: 500;
         transition: all 0.2s;
         cursor: pointer;
@@ -1009,7 +1009,7 @@
     }
 
     .device-mgmt-title i {
-        color: #475569;
+        color: #3F67AC;
     }
 
     .device-mgmt-input {
@@ -1059,8 +1059,8 @@
     }
 
     .device-mgmt-primary {
-        background: #475569;
-        border-color: #475569;
+        background: #3F67AC;
+        border-color: #3F67AC;
         color: #ffffff;
         font-weight: 600;
     }
@@ -4748,7 +4748,7 @@
                 </div>
             </div>
               <div class="text-end">
-                    <button type="button" class="btn btn-light border px-4 py-2 font-sans" data-bs-dismiss="modal" style="border-radius: 8px; color:#475569; border-color:#e2e8f0; font-weight: 500; font-size: 0.85rem;"><i class="bi bi-x"></i> Cerrar</button>
+                    <button type="button" class="btn btn-light border px-4 py-2 font-sans" data-bs-dismiss="modal" style="border-radius: 8px; color:#3F67AC; border-color:#e2e8f0; font-weight: 500; font-size: 0.85rem;"><i class="bi bi-x"></i> Cerrar</button>
                 </div>
            
         `;

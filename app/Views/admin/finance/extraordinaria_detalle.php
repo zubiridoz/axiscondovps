@@ -86,7 +86,7 @@ function fnDateSpanish($date, $meses)
         margin: 0;
         font-weight: 500;
         font-size: 1.05rem;
-        color: #475569;
+        color: #3F67AC;
     }
 
     .cc-hero-divider {
@@ -697,7 +697,7 @@ function fnDateSpanish($date, $meses)
 
     .ext-btn-primary {
         padding: 0.55rem 1.25rem;
-        background: #475569;
+        background: #3F67AC;
         border: none;
         color: #fff;
         border-radius: 6px;
@@ -1186,7 +1186,7 @@ function fnDateSpanish($date, $meses)
                 <div class="val" id="em-current" style="font-size:1.2rem;"></div>
             </div>
         </div>
-        <p style="font-size:0.85rem; color:#475569; margin:0 0 1rem;">Editar este monto solo afectará a esta unidad. Si
+        <p style="font-size:0.85rem; color:#3F67AC; margin:0 0 1rem;">Editar este monto solo afectará a esta unidad. Si
             en nuevo monto es menor, los pagos anteriores se reducirán para coincidir con el nuevo monto. Si el nuevo
             monto es mayor, la unidad deberá pagar el remanente.</p>
         <div class="ext-form-group">
@@ -1420,7 +1420,7 @@ function fnDateSpanish($date, $meses)
                 flatpickr("#swal-fee-start", { locale: "es", dateFormat: "Y-m-d", altInput: true, altFormat: "d \\d\\e F \\d\\e Y" });
                 flatpickr("#swal-fee-end", { locale: "es", dateFormat: "Y-m-d", altInput: true, altFormat: "d \\d\\e F \\d\\e Y" });
                 const cb = Swal.getConfirmButton(); const xb = Swal.getCancelButton();
-                cb.style.cssText = 'padding:0.6rem 1.5rem; border-radius:6px; font-weight:600; font-size:0.9rem; background:#475569; color:#fff; border:none; cursor:pointer; margin-left:10px;';
+                cb.style.cssText = 'padding:0.6rem 1.5rem; border-radius:6px; font-weight:600; font-size:0.9rem; background:#3F67AC; color:#fff; border:none; cursor:pointer; margin-left:10px;';
                 xb.style.cssText = 'padding:0.6rem 1.5rem; border-radius:6px; font-weight:600; font-size:0.9rem; background:#fff; color:#1e293b; border:1px solid #cbd5e1; cursor:pointer;';
             },
             preConfirm: () => {

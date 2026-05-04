@@ -54,7 +54,7 @@
     .ad-image-placeholder {
         display: flex; flex-direction: column;
         align-items: center; justify-content: center;
-        height: 100%; color: #475569;
+        height: 100%; color: #3F67AC;
     }
     .ad-image-placeholder i { font-size: 4rem; margin-bottom: 0.5rem; }
     .ad-image-placeholder span { font-size: 0.88rem; }
@@ -75,7 +75,7 @@
 
     /* ── DESCRIPTION ── */
     .ad-description {
-        font-size: 0.88rem; color: #475569; line-height: 1.7;
+        font-size: 0.88rem; color: #3F67AC; line-height: 1.7;
     }
 
     /* ── SIDEBAR ── */

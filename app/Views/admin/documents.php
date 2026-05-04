@@ -63,7 +63,7 @@ $documents = is_array($documents ?? null) ? $documents : [];
     }
 
     .docs-link.active {
-        background: #1C2434;
+        background: #1D4C9D;
         color: #ffffff;
         font-weight: 600;
     }
@@ -114,7 +114,7 @@ $documents = is_array($documents ?? null) ? $documents : [];
     .docs-storage-fill {
         width: 0%;
         height: 100%;
-        background: #1C2434;
+        background: #1D4C9D;
     }
 
     .docs-storage-note {
@@ -184,15 +184,15 @@ $documents = is_array($documents ?? null) ? $documents : [];
     }
 
     .docs-view-btn.active {
-        background: #1C2434;
+        background: #1D4C9D;
         color: #ffffff;
-        border-color: #1C2434;
+        border-color: #1D4C9D;
     }
 
     .docs-new-btn {
         border: none;
         border-radius: 0.42rem;
-        background: #1C2434;
+        background: #1D4C9D;
         color: #ffffff;
         font-size: 0.94rem;
         font-weight: 600;
@@ -249,7 +249,7 @@ $documents = is_array($documents ?? null) ? $documents : [];
     .docs-upload-btn {
         border: none;
         border-radius: 0.45rem;
-        background: #1C2434;
+        background: #1D4C9D;
         color: #ffffff;
         font-weight: 600;
         padding: 0.58rem 1.15rem;
@@ -473,7 +473,7 @@ $documents = is_array($documents ?? null) ? $documents : [];
         margin: 0;
         font-weight: 500;
         font-size: 1.05rem;
-        color: #475569;
+        color: #3F67AC;
     }
 
     .cc-hero-divider {

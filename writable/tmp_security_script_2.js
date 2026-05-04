@@ -303,7 +303,7 @@
                 </div>
             </div>
               <div class="text-end">
-                    <button type="button" class="btn btn-light border px-4 py-2 font-sans" data-bs-dismiss="modal" style="border-radius: 8px; color:#475569; border-color:#e2e8f0; font-weight: 500; font-size: 0.85rem;"><i class="bi bi-x"></i> Cerrar</button>
+                    <button type="button" class="btn btn-light border px-4 py-2 font-sans" data-bs-dismiss="modal" style="border-radius: 8px; color:#3F67AC; border-color:#e2e8f0; font-weight: 500; font-size: 0.85rem;"><i class="bi bi-x"></i> Cerrar</button>
                 </div>
            
         `;

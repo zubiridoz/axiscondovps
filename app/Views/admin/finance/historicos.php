@@ -47,7 +47,7 @@
         margin: 0;
         font-weight: 500;
         font-size: 1.05rem;
-        color: #475569;
+        color: #3F67AC;
     }
 
     .cc-hero-divider {
@@ -162,7 +162,7 @@
 
     .hist-action-desc {
         font-size: 0.85rem;
-        color: #475569;
+        color: #3F67AC;
         margin-bottom: 2rem;
         line-height: 1.6;
     }
@@ -642,8 +642,8 @@
     }
 
     .custom-checkbox:checked {
-        background-color: #475569;
-        border-color: #475569;
+        background-color: #3F67AC;
+        border-color: #3F67AC;
     }
 
     .custom-checkbox:checked::before {

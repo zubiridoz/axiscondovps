@@ -462,7 +462,7 @@ class FinanceController extends BaseController
         $pdf->AddPage();
 
         // ── 1. Cabecera Premium (Bordes Sutiles y Tono Dominante UI) ──
-        $pdf->SetDrawColor(28, 36, 52); // #475569borde superior
+        $pdf->SetDrawColor(28, 36, 52); // #3F67ACborde superior
         $pdf->SetLineWidth(1.2); // Fuerte detalle visual arriba (SaaS Style header accent)
         $pdf->Line(15, 14, 195, 14);
 
@@ -479,7 +479,7 @@ class FinanceController extends BaseController
         }
 
         $pdf->SetFont('helvetica', 'B', 14);
-        $pdf->SetTextColor(28, 36, 52); // #1C2434
+        $pdf->SetTextColor(28, 36, 52); // #1D4C9D
         $pdf->Cell(0, 8, 'Reporte de Morosidad ' . strtoupper($condominiumName), 0, 1, 'L');
 
         // ── 2. Fecha Generada ──
@@ -506,18 +506,18 @@ class FinanceController extends BaseController
         $htmlResumen = '
         <table border="1" cellpadding="6" cellspacing="0" style="border: 1px solid #e2e8f0;">
             <thead>
-                <tr style="background-color: #1C2434; color: #ffffff;">
+                <tr style="background-color: #1D4C9D; color: #ffffff;">
                     <th width="60%"><b>Métrica</b></th>
                     <th width="40%" align="right"><b>Valor</b></th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
-                    <td width="60%" style="color:#475569;">Total de Unidades Morosas</td>
+                    <td width="60%" style="color:#3F67AC;">Total de Unidades Morosas</td>
                     <td width="40%" align="right" style="color:#0f172a;"><b>' . $totalMorosas . '</b></td>
                 </tr>
                 <tr style="background-color: #f8fafc;">
-                    <td width="60%" style="color:#475569;">Monto Total Moroso</td>
+                    <td width="60%" style="color:#3F67AC;">Monto Total Moroso</td>
                     <td width="40%" align="right" style="color:#0f172a;"><b>MX$' . number_format($totalOverdue, 2) . '</b></td>
                 </tr>
             </tbody>
@@ -538,7 +538,7 @@ class FinanceController extends BaseController
         $htmlDetalle = '
         <table border="1" cellpadding="6" cellspacing="0" style="border: 1px solid #e2e8f0; border-collapse:collapse;">
             <thead>
-                <tr style="background-color: #1C2434; color: #ffffff;">
+                <tr style="background-color: #1D4C9D; color: #ffffff;">
                     <th width="20%"><b>Sección</b></th>
                     <th width="25%"><b>Unidad</b></th>
                     <th width="10%" align="center"><b>Piso</b></th>
@@ -3946,7 +3946,7 @@ class FinanceController extends BaseController
             .table-data th, .table-data td { padding: 8px; border-bottom: 1px solid #e2e8f0; font-size: 9pt; }
             .table-data th { background-color: #f8fafc; text-align: left; }
             
-            .table-header-green { background-color: #475569; color: white; font-weight: bold; text-align: center; }
+            .table-header-green { background-color: #3F67AC; color: white; font-weight: bold; text-align: center; }
             
             .text-success { color: #1e6c3d; font-weight: bold; }
             .text-danger { color: #dc2626; font-weight: bold; }
@@ -3969,7 +3969,7 @@ class FinanceController extends BaseController
                 </td>
             </tr>
         </table>
-        <div style="background-color: #475569; height: 3px; width: 100%;"></div>
+        <div style="background-color: #3F67AC; height: 3px; width: 100%;"></div>
        
         
         <h3 class="section-title">Resumen Ejecutivo</h3>
@@ -4013,7 +4013,7 @@ class FinanceController extends BaseController
                 <table width="100%" cellpadding="15" bgcolor="#f8fafc" style="border: 1px dashed #cbd5e1; border-radius: 8px;">
                     <tr>
                         <td align="center">
-                            <span style="font-weight: bold; font-size: 14pt; color: #475569;">Sin Datos de Ingresos</span><br><br>
+                            <span style="font-weight: bold; font-size: 14pt; color: #3F67AC;">Sin Datos de Ingresos</span><br><br>
                             <span style="font-size: 10pt; color: #64748b;">No se registraron ingresos durante este período.</span>
                         </td>
                     </tr>
@@ -4117,7 +4117,7 @@ class FinanceController extends BaseController
             .section-title { font-size: 13pt; font-weight: bold; color: #1e6c3d; margin-top: 20px; margin-bottom: 10px; }
             .table-data { width: 100%; border-collapse: collapse; border: 1px solid #e2e8f0; }
             .table-data th, .table-data td { padding: 8px; border-bottom: 1px solid #e2e8f0; font-size: 9pt; }
-            .table-header-green { background-color: #475569; color: white; font-weight: bold; text-align: center; }
+            .table-header-green { background-color: #3F67AC; color: white; font-weight: bold; text-align: center; }
             .text-success { color: #1e6c3d; font-weight: bold; }
             .text-danger { color: #dc2626; font-weight: bold; }
             .bg-success-light { background-color: #dcfce7; text-align: center; }
@@ -4135,7 +4135,7 @@ class FinanceController extends BaseController
                 <table width="100%" cellpadding="15" bgcolor="#f8fafc" style="border: 1px dashed #cbd5e1; border-radius: 8px;">
                     <tr>
                         <td align="center">
-                            <span style="font-weight: bold; font-size: 14pt; color: #475569;">Sin Datos de Gastos</span><br><br>
+                            <span style="font-weight: bold; font-size: 14pt; color: #3F67AC;">Sin Datos de Gastos</span><br><br>
                             <span style="font-size: 10pt; color: #64748b;">No se registraron gastos durante este período.</span>
                         </td>
                     </tr>
@@ -4294,7 +4294,7 @@ class FinanceController extends BaseController
         <style>
             .section-title { font-size: 13pt; font-weight: bold; color: #1e6c3d; margin-top: 20px; margin-bottom: 10px; }
             .table-data { width: 100%; border-collapse: collapse; }
-            .table-data th { background-color: #475569; color: white; font-weight: bold; text-align: center; border: 1px solid #cbd5e1; border-right: 1px solid #ffffff; padding: 10px; font-size: 9pt; }
+            .table-data th { background-color: #3F67AC; color: white; font-weight: bold; text-align: center; border: 1px solid #cbd5e1; border-right: 1px solid #ffffff; padding: 10px; font-size: 9pt; }
             .table-data th.last { border-right: 1px solid #cbd5e1; }
             .table-data td { border: 1px solid #cbd5e1; padding: 10px; font-size: 8pt; vertical-align: middle; }
             .text-success { color: #10b981; }

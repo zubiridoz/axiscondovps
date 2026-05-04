@@ -619,7 +619,7 @@ class SettingsController extends BaseController
 
         return $this->response->setJSON([
             'success' => true,
-            'url'     => base_url('admin/configuracion/avatar/' . $newName)
+            'url'     => base_url('media/image/avatars/' . $newName)
         ]);
     }
 

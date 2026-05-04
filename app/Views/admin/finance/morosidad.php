@@ -48,7 +48,7 @@
         margin: 0;
         font-weight: 500;
         font-size: 1.05rem;
-        color: #475569;
+        color: #3F67AC;
     }
 
     .cc-hero-divider {
@@ -593,7 +593,7 @@
     }
 
     .badge-completed {
-        background: #475569;
+        background: #3F67AC;
         color: white;
         padding: .25rem .75rem;
         border-radius: 20px;
@@ -734,7 +734,7 @@
 
     .ep-btn-save {
         padding: 0.55rem 1.5rem;
-        background: #475569;
+        background: #3F67AC;
         border: none;
         color: #fff;
         border-radius: 6px;
@@ -827,7 +827,7 @@
         padding: 0.5rem 1rem;
         font-size: 0.75rem;
         font-weight: 600;
-        color: #475569;
+        color: #3F67AC;
         border-bottom: 1px solid #e2e8f0;
     }
 
@@ -1472,7 +1472,7 @@
             <input type="hidden" id="rf-edit-id">
 
             <!-- Categoría (Custom Dropdown Premium) -->
-            <div style="font-size:0.8rem; color:#475569; margin-bottom:0.4rem;">Categoría</div>
+            <div style="font-size:0.8rem; color:#3F67AC; margin-bottom:0.4rem;">Categoría</div>
             <div style="position:relative; margin-bottom:1.25rem;">
                 <input type="hidden" id="rf-edit-cat">
                 <div class="rf-custom-select" id="rfCatTrigger" onclick="toggleRfCat()">
@@ -1491,7 +1491,7 @@
             <!-- Monto y Fecha (2 columnas) -->
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; margin-bottom:1.25rem;">
                 <div>
-                    <div style="font-size:0.8rem; color:#475569; margin-bottom:0.4rem;">Monto</div>
+                    <div style="font-size:0.8rem; color:#3F67AC; margin-bottom:0.4rem;">Monto</div>
                     <div style="position:relative;">
                         <span
                             style="position:absolute; left:0.75rem; top:50%; transform:translateY(-50%); color:#64748b; font-size:0.9rem;">$</span>
@@ -1500,7 +1500,7 @@
                     </div>
                 </div>
                 <div>
-                    <div style="font-size:0.8rem; color:#475569; margin-bottom:0.4rem;">Fecha de Transacción</div>
+                    <div style="font-size:0.8rem; color:#3F67AC; margin-bottom:0.4rem;">Fecha de Transacción</div>
                     <div style="position:relative;">
                         <span
                             style="position:absolute; left:0.75rem; top:50%; transform:translateY(-50%); color:#64748b;"><i
@@ -1513,13 +1513,13 @@
             </div>
 
             <!-- Descripción -->
-            <div style="font-size:0.8rem; color:#475569; margin-bottom:0.4rem;">Descripción</div>
+            <div style="font-size:0.8rem; color:#3F67AC; margin-bottom:0.4rem;">Descripción</div>
             <div style="margin-bottom:1.5rem;">
                 <textarea id="rf-edit-desc" class="ep-input" rows="3" style="resize:vertical;"></textarea>
             </div>
 
             <!-- Adjuntos -->
-            <div style="font-size:0.8rem; color:#475569; margin-bottom:0.4rem;"><i class="bi bi-paperclip"></i> Adjuntos
+            <div style="font-size:0.8rem; color:#3F67AC; margin-bottom:0.4rem;"><i class="bi bi-paperclip"></i> Adjuntos
             </div>
             <div style="margin-bottom:2rem;">
                 <input type="file" id="rf-edit-file" style="display:none;" accept="image/*,.pdf">
@@ -1528,7 +1528,7 @@
                     onmouseover="this.style.borderColor='#94a3b8'" onmouseout="this.style.borderColor='#e2e8f0'">
                     <div style="color:#94a3b8; font-size:1.5rem; margin-bottom:0.4rem;"><i
                             class="bi bi-cloud-arrow-up"></i></div>
-                    <div style="font-size:0.82rem; color:#475569;">Arrastre y suelte el archivo aquí, o haga clic para
+                    <div style="font-size:0.82rem; color:#3F67AC;">Arrastre y suelte el archivo aquí, o haga clic para
                         seleccionar</div>
                     <div style="font-size:0.72rem; color:#94a3b8; margin-top:0.25rem;">Soportado: JPG, PNG, PDF (máx
                         10MB)</div>

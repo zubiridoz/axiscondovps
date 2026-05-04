@@ -64,7 +64,7 @@
         .form-subtitle{font-size:.88rem;color:#64748b;margin-bottom:1.75rem}
 
         /* Inputs con ícono */
-        .form-label{font-size:.8rem;font-weight:600;color:#475569;margin-bottom:.35rem;text-transform:uppercase;letter-spacing:.5px}
+        .form-label{font-size:.8rem;font-weight:600;color:#3F67AC;margin-bottom:.35rem;text-transform:uppercase;letter-spacing:.5px}
         .input-icon-wrap{position:relative}
         .input-icon-wrap i.field-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:1rem;pointer-events:none}
         .input-icon-wrap .form-control{padding-left:42px}

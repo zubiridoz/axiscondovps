@@ -27,7 +27,7 @@
         margin: 0;
         font-weight: 500;
         font-size: 1.05rem;
-        color: #475569;
+        color: #3F67AC;
     }
 
     .cc-hero-divider {
@@ -112,7 +112,7 @@
     .nr-label {
         font-size: 0.85rem;
         font-weight: 500;
-        color: #475569;
+        color: #3F67AC;
         margin-bottom: 0.5rem;
         display: block;
     }
@@ -325,7 +325,7 @@
         padding: 0.4rem 0.75rem;
         font-size: 0.8rem;
         font-weight: 500;
-        color: #475569;
+        color: #3F67AC;
         cursor: pointer;
     }
 
@@ -467,7 +467,7 @@
         border-radius: 12px;
         font-size: 0.75rem;
         background: #f1f5f9;
-        color: #475569;
+        color: #3F67AC;
         cursor: pointer;
         transition: 0.2s;
         border: 1px solid transparent;
@@ -529,13 +529,13 @@
         padding: 0.1rem 0.5rem;
         border-radius: 12px;
         font-size: 0.75rem;
-        color: #475569;
+        color: #3F67AC;
     }
 
     .pc-select-group-btn {
         border: 1px solid #cbd5e1;
         background: #fff;
-        color: #475569;
+        color: #3F67AC;
         padding: 0.25rem 0.75rem;
         border-radius: 4px;
         font-size: 0.75rem;
@@ -557,7 +557,7 @@
         align-items: center;
         font-size: 0.85rem;
         font-weight: 600;
-        color: #475569;
+        color: #3F67AC;
     }
 
     .pc-month-label i {
@@ -1747,7 +1747,7 @@
 
                     return `
                     <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #f1f5f9; font-size: 0.85rem;">
-                        <span style="color: #475569;">${name}</span>
+                        <span style="color: #3F67AC;">${name}</span>
                         <span style="font-weight: 600; color: #1e293b;">$${finalMonto.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
                     </div>
                 `;
@@ -1793,7 +1793,7 @@
                     </div>
 
                     <div style="margin-top: 1.5rem; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; display: ${tipoTransaccion === 'expense' ? 'none' : 'block'};">
-                        <div style="display: flex; justify-content: space-between; padding: 0.6rem 1rem; background: #f1f5f9; color: #475569; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.025em;">
+                        <div style="display: flex; justify-content: space-between; padding: 0.6rem 1rem; background: #f1f5f9; color: #3F67AC; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.025em;">
                             <span>Unidad</span>
                             <span>Monto</span>
                         </div>

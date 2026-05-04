@@ -52,7 +52,7 @@
     .sa-btn-action {
         width: 32px; height: 32px; border-radius: 6px; border: 1px solid #e2e8f0;
         background: #fff; display: inline-flex; align-items: center; justify-content: center;
-        cursor: pointer; transition: all 0.15s; font-size: 0.8rem; color: #475569;
+        cursor: pointer; transition: all 0.15s; font-size: 0.8rem; color: #3F67AC;
     }
     .sa-btn-action:hover { background: #f1f5f9; border-color: #cbd5e1; }
     .sa-btn-action.danger:hover { background: #fef2f2; border-color: #fca5a5; color: #dc2626; }
@@ -176,7 +176,7 @@
 <div class="sa-table-card">
     <div class="card-header-sa">
         <h6 class="fw-bold mb-0" style="color:#0f172a;"><i class="bi bi-grid-3x3-gap me-2" style="color:#3b82f6;"></i>Gestión de Condominios</h6>
-        <span class="badge" style="background:#f1f5f9;color:#475569;font-size:0.75rem;"><?= count($condominiums) ?> registros</span>
+        <span class="badge" style="background:#f1f5f9;color:#3F67AC;font-size:0.75rem;"><?= count($condominiums) ?> registros</span>
     </div>
     <div class="table-responsive">
         <table class="table sa-table mb-0">
@@ -280,7 +280,7 @@ const BASE = '<?= base_url() ?>';
 function suspendCondo(id, name) {
     Swal.fire({
         title: '¿Suspender condominio?',
-        html: `<p style="color:#475569;">Estás a punto de suspender <strong>${name}</strong>.</p><div style="background:#fef3c7;border:1px solid #fcd34d;border-radius:8px;padding:12px;margin-top:12px;font-size:0.85rem;color:#92400e;"><i class="bi bi-exclamation-triangle me-1"></i> Esta acción bloqueará el acceso a <strong>todos los usuarios</strong> del condominio (admins y residentes).</div>`,
+        html: `<p style="color:#3F67AC;">Estás a punto de suspender <strong>${name}</strong>.</p><div style="background:#fef3c7;border:1px solid #fcd34d;border-radius:8px;padding:12px;margin-top:12px;font-size:0.85rem;color:#92400e;"><i class="bi bi-exclamation-triangle me-1"></i> Esta acción bloqueará el acceso a <strong>todos los usuarios</strong> del condominio (admins y residentes).</div>`,
         icon: 'warning', showCancelButton: true,
         confirmButtonColor: '#d97706', cancelButtonColor: '#94a3b8',
         confirmButtonText: 'Sí, suspender', cancelButtonText: 'Cancelar'
@@ -292,7 +292,7 @@ function suspendCondo(id, name) {
 function activateCondo(id, name) {
     Swal.fire({
         title: '¿Reactivar condominio?',
-        html: `<p style="color:#475569;">Reactivarás <strong>${name}</strong>. Todos sus usuarios recuperarán el acceso.</p>`,
+        html: `<p style="color:#3F67AC;">Reactivarás <strong>${name}</strong>. Todos sus usuarios recuperarán el acceso.</p>`,
         icon: 'question', showCancelButton: true,
         confirmButtonColor: '#16a34a', cancelButtonColor: '#94a3b8',
         confirmButtonText: 'Sí, reactivar', cancelButtonText: 'Cancelar'
@@ -304,7 +304,7 @@ function activateCondo(id, name) {
 function deleteCondo(id, name) {
     Swal.fire({
         title: '¿Eliminar condominio?',
-        html: `<p style="color:#475569;">Vas a eliminar <strong>${name}</strong>. Esta acción es irreversible desde el panel.</p><div style="background:#fee2e2;border:1px solid #fca5a5;border-radius:8px;padding:12px;margin-top:12px;font-size:0.85rem;color:#991b1b;"><i class="bi bi-exclamation-octagon me-1"></i> Se eliminará el condominio y se bloqueará el acceso a todos sus usuarios.</div>`,
+        html: `<p style="color:#3F67AC;">Vas a eliminar <strong>${name}</strong>. Esta acción es irreversible desde el panel.</p><div style="background:#fee2e2;border:1px solid #fca5a5;border-radius:8px;padding:12px;margin-top:12px;font-size:0.85rem;color:#991b1b;"><i class="bi bi-exclamation-octagon me-1"></i> Se eliminará el condominio y se bloqueará el acceso a todos sus usuarios.</div>`,
         icon: 'error', showCancelButton: true,
         confirmButtonColor: '#dc2626', cancelButtonColor: '#94a3b8',
         confirmButtonText: 'Eliminar permanentemente', cancelButtonText: 'Cancelar',
@@ -388,7 +388,7 @@ function viewDetail(id) {
             <div style="background: linear-gradient(to right, #f8fafc, #f1f5f9); border: 1px solid #e2e8f0; border-radius: 12px; padding: 1rem; margin-bottom: 1.5rem;">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <div class="detail-label mb-0" style="color:#3b82f6;"><i class="bi bi-gem me-1"></i> Suscripción Activa</div>
-                    <div class="d-flex gap-1">${pmBadge}<span class="badge" style="background:#f1f5f9;color:#475569;font-size:0.68rem;">${cycleLabel}</span></div>
+                    <div class="d-flex gap-1">${pmBadge}<span class="badge" style="background:#f1f5f9;color:#3F67AC;font-size:0.68rem;">${cycleLabel}</span></div>
                 </div>
                 <div class="d-flex justify-content-between align-items-end">
                     <div>
@@ -402,7 +402,7 @@ function viewDetail(id) {
                         <div style="font-size:0.7rem; color:#94a3b8;">${c.billing_cycle === 'yearly' ? '/año' : '/mes'}</div>
                     </div>
                 </div>
-                ${isManual ? `<div style="margin-top:0.75rem;"><button onclick="recordManualPayment(${c.id},'${p.name.replace(/'/g,"\\'")}','${c.billing_cycle}',${cost})" style="width:100%;padding:0.55rem;border-radius:8px;border:none;background:#1C2434;color:#fff;font-weight:700;font-size:0.85rem;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:0.4rem;" onmouseover="this.style.background='#334155';this.style.transform='translateY(-1px)';this.style.boxShadow='0 4px 12px rgba(28,36,52,0.2)';" onmouseout="this.style.background='#1C2434';this.style.transform='';this.style.boxShadow='none';"><i class="bi bi-cash-coin" style="margin:0;"></i> Registrar Pago Manual</button></div>` : ''}
+                ${isManual ? `<div style="margin-top:0.75rem;"><button onclick="recordManualPayment(${c.id},'${p.name.replace(/'/g,"\\'")}','${c.billing_cycle}',${cost})" style="width:100%;padding:0.55rem;border-radius:8px;border:none;background:#1D4C9D;color:#fff;font-weight:700;font-size:0.85rem;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:0.4rem;" onmouseover="this.style.background='#334155';this.style.transform='translateY(-1px)';this.style.boxShadow='0 4px 12px rgba(28,36,52,0.2)';" onmouseout="this.style.background='#1D4C9D';this.style.transform='';this.style.boxShadow='none';"><i class="bi bi-cash-coin" style="margin:0;"></i> Registrar Pago Manual</button></div>` : ''}
             </div>`;
         } else {
             planHtml = `
@@ -466,7 +466,7 @@ function recordManualPayment(condoId, planName, cycle, suggestedAmount) {
         title: '💰 Registrar Pago Manual',
         html: `
             <div style="text-align:left;">
-                <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:0.75rem;margin-bottom:1rem;font-size:0.85rem;color:#475569;">
+                <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:0.75rem;margin-bottom:1rem;font-size:0.85rem;color:#3F67AC;">
                     <strong>${planName}</strong> — Facturación ${cycleLabel}
                 </div>
                 <div style="margin-bottom:0.75rem;">
@@ -577,7 +577,7 @@ function loadPaymentHistory(condoId) {
                     </tr></thead>
                     <tbody>
                         ${d.payments.map(p => `<tr style="border-bottom:1px solid #f1f5f9;">
-                            <td style="padding:0.4rem 0.6rem;color:#475569;">${p.created_at ? p.created_at.substring(0,10) : '—'}</td>
+                            <td style="padding:0.4rem 0.6rem;color:#3F67AC;">${p.created_at ? p.created_at.substring(0,10) : '—'}</td>
                             <td style="padding:0.4rem 0.6rem;font-weight:600;color:#16a34a;">$${parseFloat(p.amount).toLocaleString('es-MX',{minimumFractionDigits:2})}</td>
                             <td style="padding:0.4rem 0.6rem;"><i class="bi ${typeIcons[p.payment_type] || 'bi-receipt'}" style="margin-right:3px;"></i>${typeLabels[p.payment_type] || p.payment_type}</td>
                             <td style="padding:0.4rem 0.6rem;color:#64748b;">${p.period_start} → ${p.period_end}</td>

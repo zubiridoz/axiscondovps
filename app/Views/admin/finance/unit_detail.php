@@ -29,8 +29,8 @@
     }
 
     .ud-nav-btn {
-        background: #1C2434;
-        border: 1px solid #1C2434;
+        background: #1D4C9D;
+        border: 1px solid #1D4C9D;
         color: white;
         width: 30px;
         height: 30px;
@@ -54,7 +54,7 @@
     }
 
     .ud-unit-select {
-        background: #1C2434;
+        background: #1D4C9D;
         border: 1px solid rgba(255, 255, 255, .2);
         color: white;
         height: 30px;
@@ -94,7 +94,7 @@
         margin: 0;
         font-weight: 500;
         font-size: 1.05rem;
-        color: #475569;
+        color: #3F67AC;
     }
 
     .cc-hero-divider {
@@ -1661,7 +1661,7 @@ $formatMXN = fn($v) => 'MX$' . number_format((float) $v, 2);
     }
 
     .ud-toast-close:hover {
-        color: #475569;
+        color: #3F67AC;
     }
 
     @keyframes toastSlideIn {
@@ -1810,7 +1810,7 @@ $formatMXN = fn($v) => 'MX$' . number_format((float) $v, 2);
             <!-- Detalles de solo lectura para aprobados/rechazados -->
             <div id="rvReadOnlyDetails" style="display:none;">
                 <div id="rvReadOnlyNotes"
-                    style="padding:.85rem 1rem; background:#f8fafc; border-radius:10px; border:1px solid #e2e8f0; font-size:.88rem; color:#475569; line-height:1.5;">
+                    style="padding:.85rem 1rem; background:#f8fafc; border-radius:10px; border:1px solid #e2e8f0; font-size:.88rem; color:#3F67AC; line-height:1.5;">
                 </div>
             </div>
 
@@ -2228,7 +2228,7 @@ $formatMXN = fn($v) => 'MX$' . number_format((float) $v, 2);
                 title.textContent = 'Comprobante Rechazado';
                 subtitle.textContent = 'Pago no válido';
             } else {
-                header.style.background = 'linear-gradient(135deg, #282F3E 0%, #2B3548 100%)';
+                header.style.background = 'linear-gradient(135deg, rgba(27, 39, 63, 1) 0%, #1D4C9D 100%)';
                 title.textContent = 'Revisar Comprobante';
                 subtitle.textContent = 'Pendiente de aprobación';
             }

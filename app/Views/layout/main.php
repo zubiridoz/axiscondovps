@@ -501,7 +501,7 @@
                                 display: flex; align-items: center; justify-content: center;
                                 font-weight: 700; font-size: 0.8rem;
                                 background: <?= $__ucIsActive ? '#3b82f6' : '#e2e8f0' ?>;
-                                color: <?= $__ucIsActive ? '#ffffff' : '#475569' ?>;
+                                color: <?= $__ucIsActive ? '#ffffff' : '#3F67AC' ?>;
                             "><?= esc($__ucInitial) ?></div>
                                 <?php endif; ?>
                                 <!-- Name + city -->
@@ -889,13 +889,8 @@
 
                     <div class="header-profile dropdown" data-bs-toggle="dropdown" aria-expanded="false">
                         <?php if ($___currentAvatar): ?>
-                            <?php if ($__isSuperAdmin ?? false): ?>
-                                <img src="<?= base_url('superadmin/settings/avatar/' . $___currentAvatar) ?>" alt="Avatar"
+                                <img src="<?= base_url('media/image/avatars/' . $___currentAvatar) ?>" alt="Avatar"
                                     class="header-avatar shadow-sm">
-                            <?php else: ?>
-                                <img src="<?= base_url('admin/configuracion/avatar/' . $___currentAvatar) ?>" alt="Avatar"
-                                    class="header-avatar shadow-sm">
-                            <?php endif; ?>
                         <?php else: ?>
                             <div class="header-avatar text-white bg-primary shadow-sm"><?= esc($___currentInitial) ?></div>
                         <?php endif; ?>
@@ -979,7 +974,7 @@
                         <option value="unread">No leídas</option>
                     </select>
                     <button class="btn btn-sm text-white d-flex align-items-center gap-2"
-                        style="background-color: #2B3548; font-size: 0.8rem; font-weight: 500; border-radius: 6px;"
+                        style="background-color: #1D4C9D; font-size: 0.8rem; font-weight: 500; border-radius: 6px;"
                         onclick="markAllNotificationsAsRead()"><i class="bi bi-check2-all"></i> Marcar todas como
                         leídas</button>
                 </div>

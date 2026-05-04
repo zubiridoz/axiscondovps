@@ -102,7 +102,7 @@
     }
 
     .role-pill {
-        background: #475569;
+        background: #3F67AC;
         color: white;
         padding: 0.15rem 0.6rem;
         border-radius: 1rem;
@@ -111,7 +111,7 @@
     }
 
     .nav-pills-premium .nav-link {
-        color: #475569;
+        color: #3F67AC;
         border-radius: 0.5rem;
         padding: 0.35rem 0.85rem;
         font-size: 0.85rem;
@@ -137,7 +137,7 @@
 
     .count-badge {
         background: #e2e8f0;
-        color: #475569;
+        color: #3F67AC;
         padding: 0.1rem 0.4rem;
         border-radius: 1rem;
         font-size: 0.7rem;
@@ -169,7 +169,7 @@
         margin: 0;
         font-weight: 500;
         font-size: 1.05rem;
-        color: #475569;
+        color: #3F67AC;
     }
 
     .cc-hero-divider {
@@ -219,7 +219,7 @@
     }
 
     .cc-hero-btndark {
-        background: #1C2434;
+        background: #1D4C9D;
         color: #ffffff;
         border: none;
         border-radius: 0.45rem;
@@ -666,7 +666,7 @@
         border: none;
         background: transparent;
         width: 100%;
-        color: #475569;
+        color: #3F67AC;
         font-size: 0.85rem;
         font-weight: 500;
         padding: 0.35rem 0.25rem;
@@ -700,7 +700,7 @@
         padding: 0.35rem 0.4rem;
         outline: none;
         font-weight: 500;
-        color: #475569;
+        color: #3F67AC;
         font-size: 0.85rem;
         width: 100%;
         min-width: 80px;
@@ -718,7 +718,7 @@
         cursor: pointer;
         background: white;
         font-size: 0.85rem;
-        color: #475569;
+        color: #3F67AC;
         font-weight: 500;
         width: 100%;
         min-width: 80px;
@@ -930,7 +930,7 @@
                                     <div class="d-flex align-items-center">
                                         <div class="resident-avatar" style="overflow: hidden; background-color: #f1f5f9; display: flex; align-items: center; justify-content: center;">
                                             <?php if (!empty($res['avatar'])): ?>
-                                                <img src="<?= base_url('admin/configuracion/avatar/' . $res['avatar']) ?>" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">
+                                                <img src="<?= base_url('media/image/avatars/' . $res['avatar']) ?>" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">
                                             <?php else: ?>
                                                 <?= strtoupper(substr($res['first_name'], 0, 1)) ?>
                                             <?php endif; ?>
@@ -1064,7 +1064,7 @@
             if (user.avatar) {
                 avatarEl.style.overflow = 'hidden';
                 avatarEl.style.padding = '0';
-                avatarEl.innerHTML = `<img src="<?= base_url('admin/configuracion/avatar/') ?>${user.avatar}" alt="Avatar" style="width:100%; height:100%; object-fit:cover;">`;
+                avatarEl.innerHTML = `<img src="<?= base_url('media/image/avatars/') ?>${user.avatar}" alt="Avatar" style="width:100%; height:100%; object-fit:cover;">`;
             } else {
                 avatarEl.style.overflow = 'visible';
                 avatarEl.innerHTML = user.first_name.charAt(0).toUpperCase();

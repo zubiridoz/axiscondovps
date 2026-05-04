@@ -44,7 +44,7 @@ $community = array_merge([
         margin: 0;
         font-weight: 500;
         font-size: 1.05rem;
-        color: #475569;
+        color: #3F67AC;
     }
 
     .cc-hero-divider {
@@ -94,7 +94,7 @@ $community = array_merge([
     }
 
     .cc-hero-btndark {
-        background: #1C2434;
+        background: #1D4C9D;
         color: #ffffff;
         border: none;
         border-radius: 0.45rem;
@@ -216,7 +216,7 @@ $community = array_merge([
         border: none;
         background: rgba(255, 255, 255, 0.85);
         backdrop-filter: blur(6px);
-        color: #475569;
+        color: #3F67AC;
         cursor: pointer;
         display: flex;
         align-items: center;
@@ -348,7 +348,7 @@ $community = array_merge([
     }
 
     .cfg-upload-note span:hover {
-        color: #475569;
+        color: #3F67AC;
         text-decoration: underline;
     }
 
@@ -700,7 +700,7 @@ $community = array_merge([
 
     .admin-role-badge {
         background: #f1f5f9;
-        color: #475569;
+        color: #3F67AC;
         font-size: 0.75rem;
         font-weight: 600;
         padding: 0.22rem 0.65rem;
@@ -1660,7 +1660,7 @@ $community = array_merge([
                         <div class="account-avatar-wrap">
                             <div class="cfg-avatar" id="myAvatarDisplay">
                                 <?php if ($me['avatar']): ?>
-                                    <img src="<?= base_url('admin/configuracion/avatar/' . $me['avatar']) ?>" alt="Avatar"
+                                    <img src="<?= base_url('media/image/avatars/' . $me['avatar']) ?>" alt="Avatar"
                                         id="myAvatarPreview">
                                 <?php else: ?>
                                     <span id="myLogoInitial"><?= esc($me['initial']) ?></span>
@@ -1879,7 +1879,7 @@ $community = array_merge([
         <div class="modal-content">
             <div class="modal-body p-4">
                 <h5 class="mb-3" style="font-weight: 500; color: #0f172a;">Eliminar Secci&oacute;n</h5>
-                <p id="deleteSectionMsg" style="color: #475569; font-size: 0.95rem;">¿Est&aacute;s seguro que deseas
+                <p id="deleteSectionMsg" style="color: #3F67AC; font-size: 0.95rem;">¿Est&aacute;s seguro que deseas
                     eliminar esta secci&oacute;n? Las unidades asignadas tendr&aacute;n su secci&oacute;n eliminada.</p>
                 <input type="hidden" id="deleteSectionId">
 
@@ -2025,7 +2025,7 @@ $community = array_merge([
                                 class="form-control border-0 bg-transparent fw-bold p-0 mb-2"
                                 style="font-size: 0.95rem; color:#0f172a;" placeholder="Título del Mensaje" required>
                             <textarea id="inputReminderMessageBody" class="form-control border-0 bg-transparent p-0"
-                                style="font-size: 0.85rem; color:#475569; resize:none;" rows="3"
+                                style="font-size: 0.85rem; color:#3F67AC; resize:none;" rows="3"
                                 placeholder="Cuerpo del mensaje..." required></textarea>
                         </div>
                         <div class="form-text mt-1">Usa {x} en el mensaje para que se reemplace por el número de días
@@ -3018,7 +3018,7 @@ $community = array_merge([
             <div class="col-6">
                 <div class="form-check d-flex align-items-center mb-1">
                     <input class="form-check-input section-unit-cb me-2" type="checkbox" value="${u.id}" id="chku_${u.id}" ${isChecked ? 'checked' : ''} style="cursor: pointer; width: 1.1rem; height: 1.1rem;">
-                    <label class="form-check-label d-flex align-items-center w-100" for="chku_${u.id}" style="cursor: pointer; font-size: 0.85rem; color: #475569;">
+                    <label class="form-check-label d-flex align-items-center w-100" for="chku_${u.id}" style="cursor: pointer; font-size: 0.85rem; color: #3F67AC;">
                         ${u.unit_number} ${subText}
                     </label>
                 </div>
@@ -3551,7 +3551,7 @@ $community = array_merge([
                 const usagePercent = Math.min(100, (unitCount / parseInt(cp.max_units)) * 100);
 
                 html += `
-                <div style="background:linear-gradient(135deg,#1C2434 0%,#334155 100%);border-radius:12px;padding:1.75rem;color:#fff;margin-bottom:1.5rem;position:relative;overflow:hidden;">
+                <div style="background:linear-gradient(135deg,#1D4C9D 0%,#334155 100%);border-radius:12px;padding:1.75rem;color:#fff;margin-bottom:1.5rem;position:relative;overflow:hidden;">
                     <div style="position:absolute;top:-20px;right:-20px;width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,0.05);"></div>
                     <div style="display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:1;">
                         <div>
@@ -3593,7 +3593,7 @@ $community = array_merge([
                         <div style="font-size:0.85rem;color:#a16207;line-height:1.5;">
                             Tu plan es gestionado directamente por el equipo de AxisCondo. Para cambios de plan, renovaciones o consultas sobre tu facturación, contacta a tu ejecutivo de cuenta.
                         </div>
-                        <a href="mailto:soporte@axiscondo.mx" style="display:inline-flex;align-items:center;gap:0.4rem;margin-top:0.75rem;padding:0.5rem 1rem;background:#1C2434;color:#fff;border-radius:8px;font-weight:600;font-size:0.85rem;text-decoration:none;transition:all 0.2s;" onmouseover="this.style.background='#334155';" onmouseout="this.style.background='#1C2434';">
+                        <a href="mailto:soporte@axiscondo.mx" style="display:inline-flex;align-items:center;gap:0.4rem;margin-top:0.75rem;padding:0.5rem 1rem;background:#1D4C9D;color:#fff;border-radius:8px;font-weight:600;font-size:0.85rem;text-decoration:none;transition:all 0.2s;" onmouseover="this.style.background='#334155';" onmouseout="this.style.background='#1D4C9D';">
                             <i class="bi bi-envelope" style="margin:0;"></i> soporte@axiscondo.mx
                         </a>
                     </div>
@@ -3612,7 +3612,7 @@ $community = array_merge([
             const planName = cp ? cp.name : 'Sin plan asignado';
 
             html += `
-            <div style="background:linear-gradient(135deg,#1C2434 0%,#334155 100%);border-radius:12px;padding:1.75rem;color:#fff;margin-bottom:1.5rem;position:relative;overflow:hidden;">
+            <div style="background:linear-gradient(135deg,#1D4C9D 0%,#334155 100%);border-radius:12px;padding:1.75rem;color:#fff;margin-bottom:1.5rem;position:relative;overflow:hidden;">
                 <div style="position:absolute;top:-20px;right:-20px;width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,0.05);"></div>
                 <div style="position:absolute;bottom:-30px;right:40px;width:140px;height:140px;border-radius:50%;background:rgba(255,255,255,0.03);"></div>
                 <div style="display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:1;">
@@ -3665,19 +3665,19 @@ $community = array_merge([
                     const isUpgrade = cp ? (parseInt(p.max_units) > parseInt(cp.max_units)) : true;
 
                     html += `
-                    <div style="border:${isCurrent ? '2px solid #1C2434' : '1px solid #e2e8f0'};border-radius:12px;padding:1.25rem;background:${isCurrent ? '#f8fafc' : '#fff'};position:relative;transition:all 0.2s;${!isCurrent ? 'cursor:pointer;' : ''}${!isCurrent ? 'box-shadow:0 1px 3px rgba(0,0,0,0.04);' : 'box-shadow:0 2px 8px rgba(28,36,52,0.08);'}" ${!isCurrent ? `onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)'" onmouseout="this.style.transform='';this.style.boxShadow='0 1px 3px rgba(0,0,0,0.04)'"` : ''}>
-                        ${isCurrent ? '<div style="position:absolute;top:0.75rem;right:0.75rem;background:#1C2434;color:#fff;font-size:0.65rem;font-weight:700;padding:0.15rem 0.5rem;border-radius:4px;text-transform:uppercase;">Actual</div>' : ''}
+                    <div style="border:${isCurrent ? '2px solid #1D4C9D' : '1px solid #e2e8f0'};border-radius:12px;padding:1.25rem;background:${isCurrent ? '#f8fafc' : '#fff'};position:relative;transition:all 0.2s;${!isCurrent ? 'cursor:pointer;' : ''}${!isCurrent ? 'box-shadow:0 1px 3px rgba(0,0,0,0.04);' : 'box-shadow:0 2px 8px rgba(28,36,52,0.08);'}" ${!isCurrent ? `onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)'" onmouseout="this.style.transform='';this.style.boxShadow='0 1px 3px rgba(0,0,0,0.04)'"` : ''}>
+                        ${isCurrent ? '<div style="position:absolute;top:0.75rem;right:0.75rem;background:#1D4C9D;color:#fff;font-size:0.65rem;font-weight:700;padding:0.15rem 0.5rem;border-radius:4px;text-transform:uppercase;">Actual</div>' : ''}
                         <div style="font-weight:700;color:#1e293b;font-size:1.1rem;margin-bottom:0.25rem;">${p.name}</div>
                         <div style="font-size:0.8rem;color:#64748b;margin-bottom:0.75rem;">${p.min_units} – ${p.max_units} unidades</div>
                         <div style="display:flex;gap:1rem;margin-bottom:1rem;">
                             <div><span style="font-weight:800;font-size:1.35rem;color:#1e293b;">$${priceM.toLocaleString('es-MX',{minimumFractionDigits:2})}</span><span style="font-size:0.75rem;color:#94a3b8;">/mes</span></div>
-                            <div style="border-left:1px solid #e2e8f0;padding-left:1rem;"><span style="font-weight:700;font-size:1rem;color:#475569;">$${priceY.toLocaleString('es-MX',{minimumFractionDigits:2})}</span><span style="font-size:0.75rem;color:#94a3b8;">/año</span></div>
+                            <div style="border-left:1px solid #e2e8f0;padding-left:1rem;"><span style="font-weight:700;font-size:1rem;color:#3F67AC;">$${priceY.toLocaleString('es-MX',{minimumFractionDigits:2})}</span><span style="font-size:0.75rem;color:#94a3b8;">/año</span></div>
                         </div>
                         ${!isCurrent ? `
                             ${canDowngrade ? `
                                 <div style="display:flex;gap:0.5rem;">
-                                    <button onclick="changePlan(${p.id},'monthly','${p.name.replace(/'/g,"\\\\'")}')" style="flex:1;padding:0.6rem;border-radius:8px;border:1px solid ${isUpgrade ? '#1C2434' : '#e2e8f0'};background:${isUpgrade ? '#1C2434' : '#fff'};color:${isUpgrade ? '#fff' : '#475569'};font-weight:600;font-size:0.85rem;cursor:pointer;transition:all 0.2s;" onmouseover="${isUpgrade ? "this.style.background='#334155';this.style.boxShadow='0 4px 12px rgba(28,36,52,0.15)';" : "this.style.background='#f8fafc';this.style.borderColor='#cbd5e1';this.style.boxShadow='0 2px 6px rgba(0,0,0,0.05)';this.style.color='#1e293b';"}" onmouseout="${isUpgrade ? "this.style.background='#1C2434';this.style.boxShadow='none';" : "this.style.background='#fff';this.style.borderColor='#e2e8f0';this.style.boxShadow='none';this.style.color='#475569';"}">${isUpgrade ? '↑ Upgrade' : '↓ Cambiar'} Mensual</button>
-                                    <button onclick="changePlan(${p.id},'yearly','${p.name.replace(/'/g,"\\\\'")}')" style="flex:1;padding:0.6rem;border-radius:8px;border:1px solid #e2e8f0;background:#fff;color:#475569;font-weight:600;font-size:0.85rem;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='#f8fafc';this.style.borderColor='#cbd5e1';this.style.boxShadow='0 2px 6px rgba(0,0,0,0.05)';this.style.color='#1e293b';" onmouseout="this.style.background='#fff';this.style.borderColor='#e2e8f0';this.style.boxShadow='none';this.style.color='#475569';">Anual</button>
+                                    <button onclick="changePlan(${p.id},'monthly','${p.name.replace(/'/g,"\\\\'")}')" style="flex:1;padding:0.6rem;border-radius:8px;border:1px solid ${isUpgrade ? '#1D4C9D' : '#e2e8f0'};background:${isUpgrade ? '#1D4C9D' : '#fff'};color:${isUpgrade ? '#fff' : '#3F67AC'};font-weight:600;font-size:0.85rem;cursor:pointer;transition:all 0.2s;" onmouseover="${isUpgrade ? "this.style.background='#334155';this.style.boxShadow='0 4px 12px rgba(28,36,52,0.15)';" : "this.style.background='#f8fafc';this.style.borderColor='#cbd5e1';this.style.boxShadow='0 2px 6px rgba(0,0,0,0.05)';this.style.color='#1e293b';"}" onmouseout="${isUpgrade ? "this.style.background='#1D4C9D';this.style.boxShadow='none';" : "this.style.background='#fff';this.style.borderColor='#e2e8f0';this.style.boxShadow='none';this.style.color='#3F67AC';"}">${isUpgrade ? '↑ Upgrade' : '↓ Cambiar'} Mensual</button>
+                                    <button onclick="changePlan(${p.id},'yearly','${p.name.replace(/'/g,"\\\\'")}')" style="flex:1;padding:0.6rem;border-radius:8px;border:1px solid #e2e8f0;background:#fff;color:#3F67AC;font-weight:600;font-size:0.85rem;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='#f8fafc';this.style.borderColor='#cbd5e1';this.style.boxShadow='0 2px 6px rgba(0,0,0,0.05)';this.style.color='#1e293b';" onmouseout="this.style.background='#fff';this.style.borderColor='#e2e8f0';this.style.boxShadow='none';this.style.color='#3F67AC';">Anual</button>
                                 </div>
                             ` : `
                                 <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:0.5rem 0.75rem;font-size:0.78rem;color:#991b1b;display:flex;align-items:center;gap:0.35rem;">
@@ -3686,7 +3686,7 @@ $community = array_merge([
                             `}
                         ` : `
                             <div style="font-size:0.85rem;color:#059669;display:flex;align-items:center;gap:0.4rem;margin-bottom:0.75rem;font-weight:600;background:#ecfdf5;padding:0.4rem 0.75rem;border-radius:6px;width:fit-content;"><i class="bi bi-check-circle-fill" style="margin:0;"></i> Plan activo (${cycle === 'yearly' ? 'Anual' : 'Mensual'})</div>
-                            ${cycle === 'monthly' ? `<button onclick="changePlan(${p.id},'yearly','${p.name.replace(/'/g,"\\\\'")}')" style="width:100%;padding:0.6rem;border-radius:8px;border:none;background:#f8fafc;color:#1C2434;font-weight:700;font-size:0.85rem;cursor:pointer;transition:all 0.2s;box-shadow:inset 0 0 0 1px #1C2434;" onmouseover="this.style.background='#1C2434';this.style.color='#fff';this.style.boxShadow='0 4px 12px rgba(28,36,52,0.15)';" onmouseout="this.style.background='#f8fafc';this.style.color='#1C2434';this.style.boxShadow='inset 0 0 0 1px #1C2434';">↑ Cambiar a Anual</button>` : ''}
+                            ${cycle === 'monthly' ? `<button onclick="changePlan(${p.id},'yearly','${p.name.replace(/'/g,"\\\\'")}')" style="width:100%;padding:0.6rem;border-radius:8px;border:none;background:#f8fafc;color:#1D4C9D;font-weight:700;font-size:0.85rem;cursor:pointer;transition:all 0.2s;box-shadow:inset 0 0 0 1px #1D4C9D;" onmouseover="this.style.background='#1D4C9D';this.style.color='#fff';this.style.boxShadow='0 4px 12px rgba(28,36,52,0.15)';" onmouseout="this.style.background='#f8fafc';this.style.color='#1D4C9D';this.style.boxShadow='inset 0 0 0 1px #1D4C9D';">↑ Cambiar a Anual</button>` : ''}
                         `}
                     </div>`;
                 });
@@ -3705,7 +3705,7 @@ $community = array_merge([
                 html: `<p style="color:#64748b;">Cambiar\u00e1s al plan <strong>${planName}</strong> con facturaci\u00f3n <strong>${cycle === 'yearly' ? 'anual' : 'mensual'}</strong>.</p>`,
                 icon: 'question',
                 showCancelButton: true,
-                confirmButtonColor: '#1C2434',
+                confirmButtonColor: '#1D4C9D',
                 cancelButtonColor: '#94a3b8',
                 confirmButtonText: 'S\u00ed, cambiar',
                 cancelButtonText: 'Cancelar',

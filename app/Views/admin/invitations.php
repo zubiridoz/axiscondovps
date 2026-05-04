@@ -100,7 +100,7 @@
     }
 
     .role-pill {
-        background: #475569;
+        background: #3F67AC;
         color: white;
         padding: 0.15rem 0.6rem;
         border-radius: 1rem;
@@ -109,7 +109,7 @@
     }
 
     .nav-pills-premium .nav-link {
-        color: #475569;
+        color: #3F67AC;
         border-radius: 0.5rem;
         padding: 0.35rem 0.85rem;
         font-size: 0.85rem;
@@ -135,7 +135,7 @@
 
     .count-badge {
         background: #e2e8f0;
-        color: #475569;
+        color: #3F67AC;
         padding: 0.1rem 0.4rem;
         border-radius: 1rem;
         font-size: 0.7rem;
@@ -167,7 +167,7 @@
         margin: 0;
         font-weight: 500;
         font-size: 1.05rem;
-        color: #475569;
+        color: #3F67AC;
     }
 
     .cc-hero-divider {
@@ -217,7 +217,7 @@
     }
 
     .cc-hero-btndark {
-        background: #1C2434;
+        background: #1D4C9D;
         color: #ffffff;
         border: none;
         border-radius: 0.45rem;
@@ -242,7 +242,7 @@
 
     /* INVITATIONS SPECIFIC BADGES */
     .badge-count-premium {
-        background: #1C2434;
+        background: #1D4C9D;
         color: white;
         padding: 0.2rem 0.6rem;
         border-radius: 2rem;
@@ -697,7 +697,7 @@
         border: none;
         background: transparent;
         width: 100%;
-        color: #475569;
+        color: #3F67AC;
         font-size: 0.85rem;
         font-weight: 500;
         padding: 0.35rem 0.25rem;
@@ -731,7 +731,7 @@
         padding: 0.35rem 0.4rem;
         outline: none;
         font-weight: 500;
-        color: #475569;
+        color: #3F67AC;
         font-size: 0.85rem;
         width: 100%;
         min-width: 80px;
@@ -749,7 +749,7 @@
         cursor: pointer;
         background: white;
         font-size: 0.85rem;
-        color: #475569;
+        color: #3F67AC;
         font-weight: 500;
         width: 100%;
         min-width: 80px;
@@ -1195,7 +1195,7 @@
                     <button class="btn btn-outline-secondary px-4 py-2"
                         style="border-radius: 0.5rem; font-size: 0.9rem;" data-bs-dismiss="modal">Cancelar</button>
                     <button class="btn px-4 py-2"
-                        style="background-color: #475569; color: white; border-radius: 0.5rem; font-weight: 500; font-size: 0.9rem; border: none;"
+                        style="background-color: #3F67AC; color: white; border-radius: 0.5rem; font-weight: 500; font-size: 0.9rem; border: none;"
                         id="btn-save-inv-edit">Guardar</button>
                 </div>
             </div>

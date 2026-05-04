@@ -303,7 +303,7 @@ $mesesES = ['January' => 'Enero', 'February' => 'Febrero', 'March' => 'Marzo', '
     .fc-form-label {
         font-weight: 500;
         font-size: 0.85rem;
-        color: #475569;
+        color: #3F67AC;
         margin-bottom: 0.4rem;
     }
 
@@ -530,7 +530,7 @@ $mesesES = ['January' => 'Enero', 'February' => 'Febrero', 'March' => 'Marzo', '
         align-items: center;
         gap: 0.75rem;
         font-size: 0.85rem;
-        color: #475569;
+        color: #3F67AC;
         font-weight: 500;
     }
 
@@ -593,7 +593,7 @@ $mesesES = ['January' => 'Enero', 'February' => 'Febrero', 'March' => 'Marzo', '
         margin: 0;
         font-weight: 500;
         font-size: 1.05rem;
-        color: #475569;
+        color: #3F67AC;
     }
 
     .cc-hero-divider {

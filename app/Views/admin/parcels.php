@@ -204,8 +204,8 @@ $pageRows = array_slice($activeRows, $offset, $perPage);
         width: 28px;
         height: 28px;
         border-radius: 0.45rem;
-        border: 1px solid #1C2434;
-        background: #1C2434;
+        border: 1px solid #1D4C9D;
+        background: #1D4C9D;
         color: rgba(255, 255, 255, 0.95);
         display: inline-flex;
         align-items: center;
@@ -215,7 +215,7 @@ $pageRows = array_slice($activeRows, $offset, $perPage);
     }
 
     .parcel-history-back:hover {
-        color: #1C2434;
+        color: #1D4C9D;
         background: rgba(141, 141, 141, 0.24)
     }
 
@@ -399,7 +399,7 @@ $pageRows = array_slice($activeRows, $offset, $perPage);
     }
 
     .parcel-empty-desc {
-        color: #475569;
+        color: #3F67AC;
         max-width: 480px;
         margin: 0 auto;
         font-size: 0.9rem;
@@ -729,7 +729,7 @@ $pageRows = array_slice($activeRows, $offset, $perPage);
 
     .confirm-deliver-desc {
         font-size: 0.86rem;
-        color: #475569;
+        color: #3F67AC;
         line-height: 1.55;
         margin-bottom: 1rem;
     }
@@ -910,7 +910,7 @@ $pageRows = array_slice($activeRows, $offset, $perPage);
         margin: 0;
         font-weight: 500;
         font-size: 1.05rem;
-        color: #475569;
+        color: #3F67AC;
     }
 
     .cc-hero-divider {

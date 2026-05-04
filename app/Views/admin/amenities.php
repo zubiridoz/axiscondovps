@@ -26,7 +26,7 @@
         margin: 0;
         font-weight: 500;
         font-size: 1.05rem;
-        color: #475569;
+        color: #3F67AC;
     }
 
     .cc-hero-divider {
@@ -76,7 +76,7 @@
     }
 
     .cc-hero-btndark {
-        background: #1C2434;
+        background: #1D4C9D;
         color: #ffffff;
         border: none;
         border-radius: 0.45rem;
@@ -368,7 +368,7 @@
 
     .am-badge.capacity {
         background: #f8fafc;
-        color: #475569;
+        color: #3F67AC;
         border: 1px solid #e2e8f0;
     }
 

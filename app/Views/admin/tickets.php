@@ -212,7 +212,7 @@ $periodUrls = [
         padding: 0.65rem 0.6rem;
         vertical-align: middle;
         border-bottom: 1px solid #f1f5f9;
-        color: #475569;
+        color: #3F67AC;
         font-size: 0.82rem;
     }
 
@@ -389,7 +389,7 @@ $periodUrls = [
         margin: 0;
         font-weight: 500;
         font-size: 1.05rem;
-        color: #475569;
+        color: #3F67AC;
     }
 
     .cc-hero-divider {
@@ -557,7 +557,7 @@ $periodUrls = [
                             <td>
                                 <div class="d-flex align-items-center gap-2">
                                     <div
-                                        style="width:20px;height:20px;border-radius:50%;background:#f1f5f9;color:#475569;display:flex;align-items:center;justify-content:center;font-size:0.55rem;font-weight:700;border:1px solid #e2e8f0;">
+                                        style="width:20px;height:20px;border-radius:50%;background:#f1f5f9;color:#3F67AC;display:flex;align-items:center;justify-content:center;font-size:0.55rem;font-weight:700;border:1px solid #e2e8f0;">
                                         <?= esc($item['reporter_initials']) ?>
                                     </div>
                                     <span class="text-dark"><?= esc($item['reporter']) ?></span>

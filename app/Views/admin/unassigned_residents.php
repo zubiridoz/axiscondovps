@@ -26,7 +26,7 @@
         margin: 0;
         font-weight: 500;
         font-size: 1.05rem;
-        color: #475569;
+        color: #3F67AC;
     }
 
     .cc-hero-divider {
@@ -76,7 +76,7 @@
     }
 
     .cc-hero-btndark {
-        background: #1C2434;
+        background: #1D4C9D;
         color: #ffffff;
         border: none;
         border-radius: 0.45rem;
@@ -101,7 +101,7 @@
 
 
     .badge-count-premium {
-        background: #1C2434;
+        background: #1D4C9D;
         color: white;
         padding: 0.2rem 0.6rem;
         border-radius: 2rem;
@@ -194,7 +194,7 @@
     .btn-assign-premium {
         background: #f8fafc;
         border: 1px solid #e2e8f0;
-        color: #475569;
+        color: #3F67AC;
         padding: 0.35rem 0.75rem;
         border-radius: 6px;
         font-size: 0.8rem;
@@ -289,7 +289,7 @@
         padding: 8px 16px;
         cursor: pointer;
         font-size: 0.9rem;
-        color: #475569;
+        color: #3F67AC;
         transition: all 0.1s;
     }
 
@@ -373,7 +373,7 @@
                                         <div class="d-flex align-items-center">
                                             <div class="resident-avatar" style="overflow: hidden; background-color: #f1f5f9; display: flex; align-items: center; justify-content: center;">
                                                 <?php if (!empty($r['avatar'])): ?>
-                                                    <img src="<?= base_url('admin/configuracion/avatar/' . $r['avatar']) ?>" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">
+                                                    <img src="<?= base_url('media/image/avatars/' . $r['avatar']) ?>" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">
                                                 <?php else: ?>
                                                     <?= strtoupper(substr($r['first_name'], 0, 1)) ?>
                                                 <?php endif; ?>

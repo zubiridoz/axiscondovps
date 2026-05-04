@@ -39,7 +39,7 @@
         margin: 0;
         font-weight: 500;
         font-size: 1.05rem;
-        color: #475569;
+        color: #3F67AC;
     }
 
     .cc-hero-divider {
@@ -542,7 +542,7 @@
 
     .mora-config-row .cfg-badge {
         background: #e2e8f0;
-        color: #475569;
+        color: #3F67AC;
         font-size: .68rem;
         font-weight: 700;
         padding: 2px 8px;

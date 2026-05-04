@@ -55,7 +55,7 @@ $jsonData = htmlspecialchars(json_encode($rawAnnouncements, JSON_UNESCAPED_UNICO
         margin: 0;
         font-weight: 500;
         font-size: 1.05rem;
-        color: #475569;
+        color: #3F67AC;
     }
 
     .cc-hero-divider {
@@ -319,7 +319,7 @@ $jsonData = htmlspecialchars(json_encode($rawAnnouncements, JSON_UNESCAPED_UNICO
         padding: .4rem .75rem;
         display: flex;
         gap: 1rem;
-        color: #475569;
+        color: #3F67AC;
         font-size: .78rem;
         border-top: 1px solid #edf2f7
     }
@@ -573,7 +573,7 @@ $jsonData = htmlspecialchars(json_encode($rawAnnouncements, JSON_UNESCAPED_UNICO
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        color: #475569;
+        color: #3F67AC;
         font-size: .88rem;
         cursor: pointer
     }

@@ -69,7 +69,7 @@ $colors = ['c1', 'c2', 'c3', 'c4', 'c5'];
         margin: 0;
         font-weight: 500;
         font-size: 1.05rem;
-        color: #475569;
+        color: #3F67AC;
     }
 
     .cc-hero-divider {
@@ -191,7 +191,7 @@ $colors = ['c1', 'c2', 'c3', 'c4', 'c5'];
     }
 
     .status-dot.closed {
-        background: #475569;
+        background: #3F67AC;
     }
 
     .main-grid {
@@ -228,7 +228,7 @@ $colors = ['c1', 'c2', 'c3', 'c4', 'c5'];
         -webkit-box-orient: vertical;
         overflow: hidden;
         font-size: 0.8rem;
-        color: #475569;
+        color: #3F67AC;
     }
 
     .btn-close-poll {
@@ -375,7 +375,7 @@ $colors = ['c1', 'c2', 'c3', 'c4', 'c5'];
 
     .legend-item {
         font-size: 0.75rem;
-        color: #475569;
+        color: #3F67AC;
         display: flex;
         align-items: center;
         gap: 0.3rem;
@@ -684,10 +684,10 @@ $colors = ['c1', 'c2', 'c3', 'c4', 'c5'];
                 text: 'Al cerrar esta encuesta, dejará de aceptar votos.',
                 icon: 'info',
                 showCancelButton: true,
-                confirmButtonColor: '#475569',
+                confirmButtonColor: '#3F67AC',
                 cancelButtonColor: '#fff',
                 confirmButtonText: 'Cerrar Encuesta',
-                cancelButtonText: '<span style="color:#475569">Cancelar</span>'
+                cancelButtonText: '<span style="color:#3F67AC">Cancelar</span>'
             }).then((result) => {
                 if (result.isConfirmed) {
                     fetch('<?= base_url("admin/encuestas/cerrar") ?>/' + pollId, {

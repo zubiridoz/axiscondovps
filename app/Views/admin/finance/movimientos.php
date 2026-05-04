@@ -59,7 +59,7 @@
         margin: 0;
         font-weight: 500;
         font-size: 1.05rem;
-        color: #475569;
+        color: #3F67AC;
     }
 
     .cc-hero-divider {
@@ -109,7 +109,7 @@
     }
 
     .cc-hero-btndark {
-        background: #1C2434;
+        background: #1D4C9D;
         color: #ffffff;
         border: none;
         border-radius: 0.45rem;
@@ -615,7 +615,7 @@
 
     .bulk-modal p {
         font-size: 0.9rem;
-        color: #475569;
+        color: #3F67AC;
         margin: 0 0 1.5rem;
         line-height: 1.5;
     }
@@ -1142,7 +1142,7 @@
             <button type="button" onclick="closePaymentDetail()"
                 style="padding:8px 24px; border:1px solid #d1d5db; border-radius:8px; background:#fff; color:#374151; font-size:.88rem; font-weight:500; cursor:pointer;">Cerrar</button>
             <button type="button"
-                style="padding:8px 20px; border:none; border-radius:8px; background:#475569; color:#fff; font-size:.88rem; font-weight:500; cursor:pointer;"
+                style="padding:8px 20px; border:none; border-radius:8px; background:#3F67AC; color:#fff; font-size:.88rem; font-weight:500; cursor:pointer;"
                 id="pd-btn-edit">Editar Pago</button>
         </div>
     </div>
@@ -1171,7 +1171,7 @@
             </div>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; margin-bottom:1.5rem;">
                 <div>
-                    <label style="font-size:0.8rem; color:#475569; margin-bottom:0.4rem; display:block;">Tipo</label>
+                    <label style="font-size:0.8rem; color:#3F67AC; margin-bottom:0.4rem; display:block;">Tipo</label>
                     <select id="ep-tipo" class="ep-select" disabled>
                         <option value="ingreso">INGRESO</option>
                         <option value="egreso">GASTO</option>
@@ -1179,7 +1179,7 @@
                 </div>
                 <div style="position:relative;">
                     <label
-                        style="font-size:0.8rem; color:#475569; margin-bottom:0.4rem; display:block;">Categoría</label>
+                        style="font-size:0.8rem; color:#3F67AC; margin-bottom:0.4rem; display:block;">Categoría</label>
                     <input type="hidden" id="ep-categoria">
                     <div class="ep-custom-select" id="epCatTrigger" onclick="toggleEpCat()">
                         <span id="epCatIcon"><i class="bi bi-tag"></i></span>
@@ -1202,7 +1202,7 @@
                 Pago</div>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; margin-bottom:1.5rem;">
                 <div>
-                    <label style="font-size:0.8rem; color:#475569; margin-bottom:0.4rem; display:block;">Monto</label>
+                    <label style="font-size:0.8rem; color:#3F67AC; margin-bottom:0.4rem; display:block;">Monto</label>
                     <div style="position:relative;">
                         <span
                             style="position:absolute; left:0.75rem; top:50%; transform:translateY(-50%); color:#64748b; font-size:0.9rem;">$</span>
@@ -1210,7 +1210,7 @@
                     </div>
                 </div>
                 <div>
-                    <label style="font-size:0.8rem; color:#475569; margin-bottom:0.4rem; display:block;">Método de
+                    <label style="font-size:0.8rem; color:#3F67AC; margin-bottom:0.4rem; display:block;">Método de
                         Pago</label>
                     <select id="ep-metodo" class="ep-select">
                         <option value="transferencia">TRANSFERENCIA BANCARIA</option>
@@ -1410,7 +1410,7 @@
         padding: 0.5rem 1rem;
         font-size: 0.75rem;
         font-weight: 600;
-        color: #475569;
+        color: #3F67AC;
         border-bottom: 1px solid #e2e8f0;
     }
 
@@ -1460,7 +1460,7 @@
     .ep-btn-adjunto {
         background: transparent;
         border: 1px solid #e2e8f0;
-        color: #475569;
+        color: #3F67AC;
         padding: 0.5rem 1rem;
         border-radius: 6px;
         font-size: 0.85rem;
@@ -1504,7 +1504,7 @@
 
     .ep-btn-save {
         padding: 0.55rem 1.5rem;
-        background: #475569;
+        background: #3F67AC;
         border: none;
         color: #fff;
         border-radius: 6px;
@@ -1874,7 +1874,7 @@
             // ...
             Swal.fire({
                 title: '<span style="font-size:1.15rem; font-weight:600; color:#1e293b;">Eliminar Pago</span>',
-                html: '<div style="color:#475569; font-size:0.95rem; text-align:left; margin-bottom:0.5rem;">¿Está seguro de que desea eliminar este pago? Esta acción no se puede deshacer.</div>',
+                html: '<div style="color:#3F67AC; font-size:0.95rem; text-align:left; margin-bottom:0.5rem;">¿Está seguro de que desea eliminar este pago? Esta acción no se puede deshacer.</div>',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#ef4444',

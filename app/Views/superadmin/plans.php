@@ -2,7 +2,7 @@
 
 <?php $this->section('styles') ?>
 <style>
-    :root { --pl-dark: #1C2434; --pl-muted: #475569; --pl-border: #e2e8f0; --pl-bg: #f8fafc; }
+    :root { --pl-dark: #1D4C9D; --pl-muted: #3F67AC; --pl-border: #e2e8f0; --pl-bg: #f8fafc; }
 
     .pl-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
     .pl-header-left { display: flex; align-items: center; gap: 0.75rem; }

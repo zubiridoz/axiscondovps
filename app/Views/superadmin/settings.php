@@ -2,7 +2,7 @@
 
 <?php $this->section('styles') ?>
 <style>
-    :root { --sa-dark: #1C2434; --sa-muted: #475569; --sa-border: #e2e8f0; --sa-bg: #f8fafc; }
+    :root { --sa-dark: #1D4C9D; --sa-muted: #3F67AC; --sa-border: #e2e8f0; --sa-bg: #f8fafc; }
 
     .sa-settings-card {
         background: #ffffff; border: 1px solid var(--sa-border); border-radius: 12px;
@@ -125,7 +125,7 @@
                         <div>
                             <div class="sa-avatar-upload" onclick="document.getElementById('avatarInput').click()">
                                 <?php if (!empty($me['avatar'])): ?>
-                                    <img src="<?= base_url('superadmin/settings/avatar/' . $me['avatar']) ?>" alt="Avatar" id="avatarPreview">
+                                    <img src="<?= base_url('media/image/avatars/' . $me['avatar']) ?>" alt="Avatar" id="avatarPreview">
                                 <?php else: ?>
                                     <div class="avatar-placeholder" id="avatarPlaceholder"><?= strtoupper(substr($me['first_name'] ?? 'S', 0, 1)) ?></div>
                                 <?php endif; ?>
@@ -383,7 +383,7 @@ function loadAdmins() {
             list.innerHTML = '<div class="sa-empty">No hay Super Administradores registrados.</div>';
             return;
         }
-        const colors = ['#1C2434', '#7c3aed', '#2563eb', '#d97706', '#dc2626'];
+        const colors = ['#1D4C9D', '#7c3aed', '#2563eb', '#d97706', '#dc2626'];
         list.innerHTML = d.admins.map((a, i) => {
             const initial = (a.first_name || '?')[0].toUpperCase();
             const isMe = parseInt(a.id) === MY_ID;

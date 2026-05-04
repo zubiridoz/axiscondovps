@@ -26,7 +26,7 @@
         margin: 0;
         font-weight: 500;
         font-size: 1.05rem;
-        color: #475569;
+        color: #3F67AC;
     }
 
     .cc-hero-divider {
@@ -76,7 +76,7 @@
     }
 
     .cc-hero-btndark {
-        background: #1C2434;
+        background: #1D4C9D;
         color: #ffffff;
         border: none;
         border-radius: 0.45rem;
@@ -792,7 +792,7 @@
         width: 18px;
         height: 18px;
         cursor: pointer;
-        accent-color: #475569;
+        accent-color: #3F67AC;
     }
 </style>
 
@@ -1357,7 +1357,7 @@
                                         </select>
                                     </div>
                                     <button type="button" class="btn btn-secondary px-3 d-none text-nowrap"
-                                        id="btn-confirm-occupancy" style="background-color: #475569; border:none;"
+                                        id="btn-confirm-occupancy" style="background-color: #3F67AC; border:none;"
                                         onclick="confirmOccupancyChange()">
                                         <i class="bi bi-check2"></i> Confirmar
                                     </button>
@@ -3138,12 +3138,12 @@
                 icon: 'warning',
                 iconColor: '#f59e0b',
                 title: 'Capacidad Máxima',
-                html: '<div style="color: #475569; font-size: 0.95rem; margin-top: 0.5rem; line-height: 1.5;"><?= session()->getFlashdata('plan_limit_error') ?></div>',
+                html: '<div style="color: #3F67AC; font-size: 0.95rem; margin-top: 0.5rem; line-height: 1.5;"><?= session()->getFlashdata('plan_limit_error') ?></div>',
                 showCancelButton: true,
-                confirmButtonColor: '#1C2434',
+                confirmButtonColor: '#1D4C9D',
                 cancelButtonColor: '#e2e8f0',
                 confirmButtonText: '<i class="bi bi-star-fill text-warning me-2" style="font-size:0.9rem;"></i>Mejorar Plan',
-                cancelButtonText: '<span style="color:#475569;">Más tarde</span>',
+                cancelButtonText: '<span style="color:#3F67AC;">Más tarde</span>',
                 reverseButtons: true,
                 customClass: {
                     popup: 'premium-swal-popup',
@@ -3756,7 +3756,7 @@
         if (activeIcon) {
             activeIcon.className = currentSortOrder === 'asc' ? 'bi bi-arrow-up-short sort-icon' : 'bi bi-arrow-down-short sort-icon';
             activeIcon.style.opacity = '1';
-            activeIcon.style.color = '#475569'; // Slate Grey Highlight color
+            activeIcon.style.color = '#3F67AC'; // Slate Grey Highlight color
         }
 
         rows.sort((rowA, rowB) => {

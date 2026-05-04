@@ -24,7 +24,7 @@
         width: 50px;
         height: 50px;
         background-color: #f1f5f9;
-        color: #475569;
+        color: #3F67AC;
         border-radius: 50%;
         display: flex;
         align-items: center;
@@ -152,7 +152,7 @@
         padding: 0.3rem 0.6rem;
         font-size: 0.75rem;
         font-weight: 600;
-        color: #475569;
+        color: #3F67AC;
         display: flex;
         align-items: center;
         gap: 0.3rem;
@@ -181,7 +181,7 @@
     }
     .mr-role-checkbox label {
         font-size: 0.85rem;
-        color: #475569;
+        color: #3F67AC;
         font-weight: 500;
         margin: 0;
     }
