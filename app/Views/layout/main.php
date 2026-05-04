@@ -28,8 +28,7 @@
 
         .sidebar {
             height: 100vh;
-            background: #1c2434;
-            /* Ajustado al dark theme tipo Onedash */
+            background: #1D4C9D;
             border-right: none;
             display: flex;
             flex-direction: column;
@@ -44,23 +43,22 @@
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            /* ligero divisor */
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
         }
 
         .condo-logo {
-            width: 32px;
-            height: 32px;
-            background: #ffffff;
-            border-radius: 50%;
+            width: 34px;
+            height: 34px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #1c2434;
+            color: #ffffff;
             font-weight: 700;
             font-size: 1.1rem;
             flex-shrink: 0;
-            box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+            box-shadow: none;
         }
 
         .condo-info {
@@ -85,7 +83,7 @@
         .condo-city {
             font-size: 0.65rem;
             font-weight: 400;
-            color: #8a99af;
+            color: rgba(255, 255, 255, 0.55);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -96,17 +94,17 @@
             overflow-y: auto;
             padding: 1.5rem 0;
             scrollbar-width: thin;
-            scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+            scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
         }
 
         .menu-label {
-            font-size: 0.75rem;
-            color: #8a99af;
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.4);
             text-transform: uppercase;
             font-weight: 600;
             padding: 0.5rem 1.75rem;
             margin-top: 0.5rem;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.8px;
         }
 
         .nav-item {
@@ -114,31 +112,35 @@
         }
 
         .nav-link {
-            color: #8a99af !important;
+            color: rgba(255, 255, 255, 0.7) !important;
             padding: 0.6rem 1.75rem;
             transition: all 0.2s ease-in-out;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             display: flex;
             align-items: center;
             font-weight: 500;
             border-left: 3px solid transparent;
             text-decoration: none;
+            border-radius: 0;
         }
 
         .nav-link:hover {
             color: #ffffff !important;
+            background-color: rgba(255, 255, 255, 0.08);
         }
 
         .nav-link.active-main {
-            background-color: #2b3548;
+            background-color: rgba(255, 255, 255, 0.15);
             color: #ffffff !important;
             border-left: 3px solid #ffffff;
+            font-weight: 700;
         }
 
         .nav-link.active {
             color: #ffffff !important;
-            background-color: #2b3548;
+            background-color: rgba(255, 255, 255, 0.15);
             border-left: 3px solid #ffffff;
+            font-weight: 700;
         }
 
         .sidebar .bi {
@@ -157,8 +159,7 @@
 
         /* Estilo para los submenús */
         .submenu {
-            background: #1c2434;
-            /* Mantiene el fondo, o si lo quieres dif se ajusta */
+            background: rgba(0, 0, 0, 0.08);
             padding-left: 0;
             list-style: none;
             margin: 0;
@@ -184,12 +185,14 @@
 
         .submenu .nav-link:hover {
             color: #ffffff !important;
+            background-color: rgba(255, 255, 255, 0.08);
         }
 
         .submenu .nav-link.active {
-            background-color: #2b3548;
+            background-color: rgba(255, 255, 255, 0.15);
             color: #ffffff !important;
             border-left: 3px solid #ffffff;
+            font-weight: 700;
         }
 
         /* Top Header Styles */
@@ -212,7 +215,7 @@
         }
 
         .theme-toggle {
-            color: #1c2434;
+            color: #1e293b;
             font-size: 1.2rem;
             cursor: pointer;
             padding: 0.5rem;
@@ -451,7 +454,7 @@
                     <span class="condo-city" title="<?= esc($__sidebarCity) ?>"><?= esc($__sidebarCity) ?></span>
                 </div>
                 <div
-                    style="background: rgba(255,255,255,0.1); border-radius: 6px; padding: 4px 6px; margin-left: auto; flex-shrink: 0;">
+                    style="background: rgba(255,255,255,0.12); border-radius: 6px; padding: 4px 6px; margin-left: auto; flex-shrink: 0;">
                     <i class="bi bi-chevron-down"
                         style="color: #ffffff; font-size: 0.85rem; transition: transform 0.2s; display: block;"
                         id="condoChevron"></i>
@@ -825,12 +828,7 @@
                             </a>
                         </li>
                         
-                        <li class="nav-item">
-                            <a href="<?= base_url('admin/novedades') ?>"
-                                class="nav-link <?= strpos(uri_string(), 'admin/novedades') === 0 ? 'active-main' : '' ?>">
-                                <i class="bi bi-stars"></i> Novedades
-                            </a>
-                        </li>
+                       
                     <?php else: ?>
                         <!-- MÓDULOS DEL SUPER ADMIN -->
                         <li class="nav-item">
@@ -855,7 +853,7 @@
                 </ul>
             </div>
 
-            <div class="text-center p-3 text-white-50" style="font-size: 0.7rem;">
+            <div class="text-center p-3" style="font-size: 0.7rem; color: rgba(255, 255, 255, 0.35);">
                 AXISCONDO v1.1.0
             </div>
         </aside>
