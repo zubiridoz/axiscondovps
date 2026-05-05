@@ -81,6 +81,12 @@ class MediaController extends Controller
             return $this->response->setStatusCode(404);
         }
 
+        $ext = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION));
+        $video_exts = ["mp4", "mov", "webm", "avi"];
+        if (in_array($ext, $video_exts)) {
+            return $this->video(...$segments);
+        }
+
         $mime = mime_content_type($fullPath);
         if (empty($mime) || strpos($mime, "image/") !== 0) {
             $ext = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION));
@@ -148,71 +154,52 @@ class MediaController extends Controller
         $mime = $valid_exts[$ext];
         $filesize = filesize($fullPath);
         
-        // Manejo de HTTP 206 Range Requests para streaming
-        $this->response->setHeader("Accept-Ranges", "bytes");
-        $this->response->setHeader("Content-Type", $mime);
-        $this->response->setHeader("Content-Disposition", "inline; filename=\"" . basename($fullPath) . "\"");
-        $this->response->setHeader("Cache-Control", "public, max-age=604800");
-        
         $start = 0;
         $end = $filesize - 1;
-        $status = 200;
         
-        // Procesar Range Request (HTTP 206)
-        if ($this->request->getServer('HTTP_RANGE')) {
-            $range = $this->request->getServer('HTTP_RANGE');
-            
-            if (preg_match('/bytes=(\d+)-(\d*)/', $range, $matches)) {
-                $start = intval($matches[1]);
-                $end = ($matches[2] === '') ? $filesize - 1 : intval($matches[2]);
-                
-                if ($start > $end || $start >= $filesize) {
-                    $this->response->setStatusCode(416);
-                    $this->response->setHeader("Content-Range", "bytes */" . $filesize);
-                    return $this->response;
-                }
-                
-                $status = 206;
-                $length = $end - $start + 1;
-                
-                $this->response->setHeader("Content-Range", "bytes " . $start . "-" . $end . "/" . $filesize);
-                $this->response->setHeader("Content-Length", (string) $length);
+        // Headers obligatorios para iOS AVPlayer
+        header('Content-Type: ' . $mime);
+        header('Accept-Ranges: bytes');
+        header('Cache-Control: public, max-age=604800');
+        header('Content-Disposition: inline; filename="' . basename($fullPath) . '"');
+
+        if (isset($_SERVER['HTTP_RANGE'])) {
+            if (preg_match('/bytes=(\d+)-(\d*)/', $_SERVER['HTTP_RANGE'], $m)) {
+                $start = intval($m[1]);
+                $end = ($m[2] === '') ? $filesize - 1 : intval($m[2]);
             }
+
+            if ($start > $end || $start >= $filesize) {
+                http_response_code(416);
+                header("Content-Range: bytes */$filesize");
+                exit;
+            }
+
+            http_response_code(206);
+            header("Content-Range: bytes $start-$end/$filesize");
+        } else {
+            http_response_code(200);
         }
-        
-        if ($status === 200) {
-            $this->response->setHeader("Content-Length", (string) $filesize);
-        }
-        
-        $this->response->setStatusCode($status);
-        
-        // Enviar el archivo (o rango solicitado)
+
+        $length = $end - $start + 1;
+        header("Content-Length: $length"); // ← ESTE es el que iOS exige
+
+        // Stream en chunks
+        @ob_end_clean();
         $fp = fopen($fullPath, 'rb');
-        if ($fp === false) {
-            return $this->response->setStatusCode(500);
-        }
-        
-        if ($start > 0) {
+        if ($fp !== false) {
             fseek($fp, $start);
-        }
-        
-        $chunkSize = 1024 * 1024; // 1MB chunks
-        $remainingBytes = $end - $start + 1;
-        
-        while ($remainingBytes > 0) {
-            $readSize = min($chunkSize, $remainingBytes);
-            $chunk = fread($fp, $readSize);
-            if ($chunk === false || $chunk === '') {
-                break;
+            $buffer = 8192;
+            $remaining = $length;
+            while ($remaining > 0 && !feof($fp) && connection_status() === CONNECTION_NORMAL) {
+                $read = min($buffer, $remaining);
+                echo fread($fp, $read);
+                flush();
+                $remaining -= $read;
             }
-            echo $chunk;
-            $remainingBytes -= strlen($chunk);
+            fclose($fp);
         }
-        
-        fclose($fp);
-        
-        // Enviar respuesta sin body adicional (ya enviamos el contenido)
-        return $this->response;
+        exit;
     }
 
     }
