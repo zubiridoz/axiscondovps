@@ -261,6 +261,7 @@ class CondominiumApiController extends ResourceController
                 'timezone'                => $condo['timezone'] ?? 'America/Mexico_City',
                 'allow_resident_posts'    => (int) ($condo['allow_resident_posts'] ?? 1),
                 'allow_post_comments'     => (int) ($condo['allow_post_comments'] ?? 1),
+                'resident_view_comments'  => (int) ($condo['resident_view_comments'] ?? 0),
                 'payment_approval_mode'   => $condo['payment_approval_mode'] ?? 'manual',
                 'bank_name'               => $condo['bank_name'] ?? '',
                 'bank_clabe'              => $condo['bank_clabe'] ?? '',
@@ -288,7 +289,7 @@ class CondominiumApiController extends ResourceController
         // Whitelist of updatable fields
         $allowedFields = [
             'name', 'address',
-            'allow_resident_posts', 'allow_post_comments',
+            'allow_resident_posts', 'allow_post_comments', 'resident_view_comments',
             'payment_approval_mode',
             'bank_name', 'bank_clabe', 'bank_rfc', 'bank_card',
         ];
@@ -298,7 +299,7 @@ class CondominiumApiController extends ResourceController
             $value = $this->request->getVar($field);
             if ($value !== null) {
                 // Cast boolean toggles
-                if (in_array($field, ['allow_resident_posts', 'allow_post_comments'])) {
+                if (in_array($field, ['allow_resident_posts', 'allow_post_comments', 'resident_view_comments'])) {
                     $data[$field] = filter_var($value, FILTER_VALIDATE_BOOLEAN) ? 1 : 0;
                 } else {
                     $data[$field] = trim((string) $value);

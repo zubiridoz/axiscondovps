@@ -1235,6 +1235,19 @@ $community = array_merge([
                     </div>
                 </div>
 
+                <!-- Resident view comments -->
+                <div
+                    style="padding: 1.25rem; display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid #e2e8f0;">
+                    <div>
+                        <span style="font-weight:600; color:#0f172a; display:block;">Visibilidad de comentarios entre residentes</span>
+                        <span style="color:#64748b; font-size:0.85rem;">Al activar esta opción, los residentes podrán ver y leer los comentarios que sus vecinos dejen en las publicaciones.<br>Si se desactiva, los comentarios serán privados: solo el administrador podrá verlos todos (los residentes solo verán sus propios comentarios).</span>
+                    </div>
+                    <div class="form-check form-switch" style="font-size: 1.25rem; margin:0;">
+                        <input class="form-check-input" type="checkbox" id="wallResidentViewComments" style="cursor:pointer;"
+                            onchange="saveWallPrefs()" <?= $community['resident_view_comments'] ? 'checked' : '' ?>>
+                    </div>
+                </div>
+
                 <!-- Always email notifications -->
                 <div style="padding: 1.25rem; display:flex; justify-content:space-between; align-items:center;">
                     <div>
@@ -3133,6 +3146,7 @@ $community = array_merge([
                 const fd = new FormData();
                 fd.append('allow_resident_posts', document.getElementById('wallAllowPosts').checked ? 1 : 0);
                 fd.append('allow_post_comments', document.getElementById('wallAllowComments').checked ? 1 : 0);
+                fd.append('resident_view_comments', document.getElementById('wallResidentViewComments').checked ? 1 : 0);
                 fd.append('always_email_posts', document.getElementById('wallAlwaysEmail').checked ? 1 : 0);
 
                 const resp = await fetch(`${BASE}/wall-access`, { method: 'POST', body: fd });

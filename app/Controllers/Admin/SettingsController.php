@@ -61,6 +61,7 @@ class SettingsController extends BaseController
                 'show_delinquency_amounts' => ($condo['show_delinquency_amounts'] ?? 0) ? true : false,
                 'allow_resident_posts'     => ($condo['allow_resident_posts'] ?? 0) ? true : false,
                 'allow_post_comments'      => ($condo['allow_post_comments'] ?? 0) ? true : false,
+                'resident_view_comments'   => ($condo['resident_view_comments'] ?? 0) ? true : false,
                 'always_email_posts'       => ($condo['always_email_posts'] ?? 0) ? true : false,
                 'payment_approval_mode'    => $condo['payment_approval_mode'] ?? 'manual',
                 'restrict_qr_delinquent'        => !empty($condo['restrict_qr_delinquent'] ?? 0),
@@ -173,12 +174,14 @@ class SettingsController extends BaseController
 
         $allowPosts = $this->request->getPost('allow_resident_posts') === '1' || $this->request->getPost('allow_resident_posts') === 'true' ? 1 : 0;
         $allowComments = $this->request->getPost('allow_post_comments') === '1' || $this->request->getPost('allow_post_comments') === 'true' ? 1 : 0;
+        $residentViewComments = $this->request->getPost('resident_view_comments') === '1' || $this->request->getPost('resident_view_comments') === 'true' ? 1 : 0;
         $alwaysEmail = $this->request->getPost('always_email_posts') === '1' || $this->request->getPost('always_email_posts') === 'true' ? 1 : 0;
 
         $condoModel->update($condo['id'], [
-            'allow_resident_posts' => $allowPosts,
-            'allow_post_comments'  => $allowComments,
-            'always_email_posts'   => $alwaysEmail,
+            'allow_resident_posts'   => $allowPosts,
+            'allow_post_comments'    => $allowComments,
+            'resident_view_comments' => $residentViewComments,
+            'always_email_posts'     => $alwaysEmail,
         ]);
 
         return $this->response->setJSON(['success' => true]);

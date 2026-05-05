@@ -111,6 +111,7 @@ class AnnouncementController extends ResourceController
         $condoModel = new \App\Models\Tenant\CondominiumModel();
         $condo = $condoModel->first();
         $globalAllowComments = (int)($condo['allow_post_comments'] ?? 1);
+        $residentViewComments = (int)($condo['resident_view_comments'] ?? 0);
         $allowResidentPost = (int)($condo['allow_resident_posts'] ?? 0);
         $userIsAdmin = $this->isAdmin($userId);
 
@@ -119,9 +120,10 @@ class AnnouncementController extends ResourceController
                 'announcements'       => [], 
                 'has_more'            => false, 
                 'total'               => 0,
-                'allow_resident_post' => $allowResidentPost,
-                'allow_post_comments' => $globalAllowComments,
-                'user_is_admin'       => $userIsAdmin,
+                'allow_resident_post'  => $allowResidentPost, // Legacy
+                'allow_resident_posts' => $allowResidentPost, // Fix for Flutter FAB
+                'allow_post_comments'  => $globalAllowComments,
+                'user_is_admin'        => $userIsAdmin,
             ]);
         }
 
@@ -158,10 +160,22 @@ class AnnouncementController extends ResourceController
 
         // 4. Fetch de Comments (conteo masivo agrupado)
         $commentModel = new AnnouncementCommentModel();
-        $commentsRaw = $commentModel->select('announcement_id, COUNT(id) as total')
-                                    ->whereIn('announcement_id', $ids)
-                                    ->groupBy('announcement_id')
-                                    ->findAll();
+        $commentQuery = $commentModel->select('announcement_comments.announcement_id, COUNT(announcement_comments.id) as total')
+                                     ->whereIn('announcement_comments.announcement_id', $ids);
+        
+        if (!$userIsAdmin && !$residentViewComments) {
+            $tenantId = \App\Services\TenantService::getInstance()->getTenantId();
+            $commentQuery->join('user_condominium_roles ucr', 'ucr.user_id = announcement_comments.user_id AND ucr.condominium_id = ' . (int)$tenantId, 'left')
+                         ->join('roles', 'roles.id = ucr.role_id', 'left')
+                         ->groupStart()
+                             ->where('announcement_comments.user_id', $userId)
+                             ->orGroupStart()
+                                 ->whereIn('LOWER(roles.name)', ['admin', 'super_admin', 'owner'])
+                             ->groupEnd()
+                         ->groupEnd();
+        }
+        
+        $commentsRaw = $commentQuery->groupBy('announcement_comments.announcement_id')->findAll();
         $commentsCountMapped = [];
         foreach ($commentsRaw as $cr) {
             $commentsCountMapped[$cr['announcement_id']] = (int) $cr['total'];
@@ -204,9 +218,10 @@ class AnnouncementController extends ResourceController
             'announcements'       => $announcements, 
             'has_more'            => $hasMore,
             'total'               => $totalResults,
-            'allow_resident_post' => $allowResidentPost,
-            'allow_post_comments' => $globalAllowComments,
-            'user_is_admin'       => $userIsAdmin,
+            'allow_resident_post'  => $allowResidentPost, // Legacy
+            'allow_resident_posts' => $allowResidentPost, // Fix for Flutter FAB
+            'allow_post_comments'  => $globalAllowComments,
+            'user_is_admin'        => $userIsAdmin,
         ]);
     }
 
@@ -255,11 +270,14 @@ class AnnouncementController extends ResourceController
         $ann['user_liked'] = $likeModel->where('announcement_id', $id)->where('user_id', $userId)->countAllResults() > 0;
         $ann['likes'] = $likesList;
 
+        $tenantId = \App\Services\TenantService::getInstance()->getTenantId();
         $commentModel = new AnnouncementCommentModel();
         $comments = $commentModel
-            ->select('announcement_comments.*, users.first_name, users.last_name, users.avatar as author_avatar')
+            ->select('announcement_comments.*, users.first_name, users.last_name, users.avatar as author_avatar, roles.name as role_name')
             ->join('users', 'users.id = announcement_comments.user_id', 'left')
-            ->where('announcement_id', $id)
+            ->join('user_condominium_roles ucr', 'ucr.user_id = announcement_comments.user_id AND ucr.condominium_id = ' . (int)$tenantId, 'left')
+            ->join('roles', 'roles.id = ucr.role_id', 'left')
+            ->where('announcement_comments.announcement_id', $id)
             ->orderBy('announcement_comments.created_at', 'ASC')
             ->findAll();
             
@@ -275,6 +293,9 @@ class AnnouncementController extends ResourceController
         $condoModel = new \App\Models\Tenant\CondominiumModel();
         $condo = $condoModel->first();
         $globalAllowComments = (int)($condo['allow_post_comments'] ?? 1);
+        $residentViewComments = (int)($condo['resident_view_comments'] ?? 0);
+        $userIsAdmin = $this->isAdmin($userId);
+
         $ann['allow_comments'] = $globalAllowComments ? (int)($ann['allow_comments'] ?? 1) : 0;
 
         if (!$globalAllowComments) {
@@ -282,8 +303,18 @@ class AnnouncementController extends ResourceController
             $ann['comments'] = [];
             $ann['comment_count'] = 0;
         } else {
-            $ann['comments'] = $comments;
-            $ann['comment_count'] = count($comments);
+            if (!$userIsAdmin && !$residentViewComments) {
+                // Residentes solo ven sus propios comentarios Y los de los administradores
+                $filteredComments = array_filter($comments, function($c) use ($userId) {
+                    $isCommentAdmin = in_array(strtolower($c['role_name'] ?? ''), ['admin', 'super_admin', 'owner']);
+                    return ((int)$c['user_id'] === (int)$userId) || $isCommentAdmin;
+                });
+                $ann['comments'] = array_values($filteredComments);
+                $ann['comment_count'] = count($filteredComments);
+            } else {
+                $ann['comments'] = $comments;
+                $ann['comment_count'] = count($comments);
+            }
         }
 
         $ann['allow_post_comments'] = $globalAllowComments;
@@ -354,6 +385,39 @@ class AnnouncementController extends ResourceController
         ]);
 
         $count = $commentModel->where('announcement_id', $id)->countAllResults();
+        
+        // Notificar a los administradores si el autor es un residente
+        if (!$this->isAdmin($userId)) {
+            $db = \Config\Database::connect();
+            $tenantId = \App\Services\TenantService::getInstance()->getTenantId();
+            
+            $user = $db->table('users')->select('first_name, last_name')->where('id', $userId)->get()->getRow();
+            $userName = $user ? trim($user->first_name . ' ' . $user->last_name) : 'Un residente';
+            
+            $admins = $db->table('user_condominium_roles ucr')
+                ->select('ucr.user_id')
+                ->join('roles r', 'r.id = ucr.role_id')
+                ->where('ucr.condominium_id', $tenantId)
+                ->whereIn('LOWER(r.name)', ['admin', 'super_admin', 'owner'])
+                ->get()->getResultArray();
+                
+            foreach ($admins as $admin) {
+                if ((int)$admin['user_id'] !== (int)$userId) {
+                    \App\Models\Tenant\NotificationModel::notify(
+                        $tenantId, 
+                        (int)$admin['user_id'], 
+                        'announcement_comment', 
+                        'Nuevo comentario', 
+                        $userName . ' comentó en una publicación del muro.', 
+                        [
+                            'type'            => 'announcement',
+                            'announcement_id' => (string)$id,
+                            'click_action'    => 'FLUTTER_NOTIFICATION_CLICK'
+                        ]
+                    );
+                }
+            }
+        }
         
         // Retornar el detalle del comentario recién creado
         $newComment = $commentModel
