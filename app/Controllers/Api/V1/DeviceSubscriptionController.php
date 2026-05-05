@@ -62,15 +62,18 @@ class DeviceSubscriptionController extends ResourceController
 
         log_message('info', '[FCM_SUB] condominium_id: ' . ($condominiumId ?? 'NULL'));
 
-        // 4. UPSERT directo con Query Builder (evita problemas con Model)
+        // 4. UPSERT con Query Builder y Transacciones para evitar condiciones de carrera
         $db = \Config\Database::connect();
         $table = $db->table('device_push_subscriptions');
 
-        // Buscar si ya existe un registro con este token
+        // Iniciar transacción segura
+        $db->transStart();
+
+        // Buscar si ya existe un registro con este token EXACTO (identificador único de instalación)
         $existing = $table->where('fcm_token', $fcmToken)->get()->getRow();
 
         if ($existing) {
-            // Actualizar el registro existente
+            // Actualizar el registro existente (Traspaso de token a nuevo usuario o simple actualización de datos)
             $db->table('device_push_subscriptions')
                 ->where('id', $existing->id)
                 ->update([
@@ -80,40 +83,28 @@ class DeviceSubscriptionController extends ResourceController
                     'platform'       => $platform,
                     'updated_at'     => date('Y-m-d H:i:s'),
                 ]);
-            log_message('info', '[FCM_SUB] ✅ Token UPDATED (id=' . $existing->id . ')');
+            
+            $db->transComplete();
+
+            if ($db->transStatus() === false) {
+                log_message('error', '[FCM_SUB] ❌ Transaction failed on UPDATE token');
+                return $this->response->setJSON(['status' => 'error', 'message' => 'Error al actualizar token'])->setStatusCode(500);
+            }
+
+            log_message('info', '[FCM_SUB] ✅ Token UPDATED (id=' . $existing->id . ') - Multiple devices supported');
 
             return $this->response->setJSON([
                 'status'  => 'success',
-                'message' => 'Token FCM actualizado.',
+                'message' => 'Token FCM actualizado correctamente.',
                 'id'      => $existing->id,
             ]);
         }
 
-        // Si el usuario ya tiene registro en este condo, actualizar su token
-        $existByUser = $db->table('device_push_subscriptions')
-            ->where('user_id', $userId)
-            ->where('condominium_id', $condominiumId)
-            ->get()->getRow();
+        // Si el token no existe, lo insertamos como NUEVO.
+        // NOTA: Se eliminó la validación anterior que borraba el token del usuario si ya tenía uno.
+        // Esto permite que el mismo usuario tenga múltiples dispositivos simultáneamente.
 
-        if ($existByUser) {
-            $db->table('device_push_subscriptions')
-                ->where('id', $existByUser->id)
-                ->update([
-                    'fcm_token'   => $fcmToken,
-                    'device_info' => $deviceInfo,
-                    'platform'    => $platform,
-                    'updated_at'  => date('Y-m-d H:i:s'),
-                ]);
-            log_message('info', '[FCM_SUB] ✅ Token REPLACED for user (id=' . $existByUser->id . ')');
-
-            return $this->response->setJSON([
-                'status'  => 'success',
-                'message' => 'Token FCM reemplazado.',
-                'id'      => $existByUser->id,
-            ]);
-        }
-
-        // Insertar nuevo
+        // Insertar nuevo registro
         $db->table('device_push_subscriptions')->insert([
             'user_id'        => $userId,
             'condominium_id' => $condominiumId,
@@ -128,11 +119,19 @@ class DeviceSubscriptionController extends ResourceController
         ]);
 
         $newId = $db->insertID();
-        log_message('info', '[FCM_SUB] ✅ Token INSERTED (id=' . $newId . ')');
+        
+        $db->transComplete();
+
+        if ($db->transStatus() === false) {
+            log_message('error', '[FCM_SUB] ❌ Transaction failed on INSERT token');
+            return $this->response->setJSON(['status' => 'error', 'message' => 'Error al registrar token'])->setStatusCode(500);
+        }
+
+        log_message('info', '[FCM_SUB] ✅ Token INSERTED (id=' . $newId . ') - Multiple devices supported');
 
         return $this->response->setJSON([
             'status'  => 'success',
-            'message' => 'Dispositivo registrado.',
+            'message' => 'Dispositivo registrado correctamente.',
             'id'      => $newId,
         ]);
     }

@@ -120,6 +120,13 @@ class PushNotificationService
                             'click_action' => 'FLUTTER_NOTIFICATION_CLICK',
                         ],
                     ],
+                    'apns' => [
+                        'payload' => [
+                            'aps' => [
+                                'sound' => 'default'
+                            ]
+                        ]
+                    ],
                 ],
             ];
 

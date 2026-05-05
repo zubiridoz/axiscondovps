@@ -140,7 +140,8 @@ class AccessNotificationService
                         $notificationType,
                         $title,
                         $body,
-                        $data
+                        $data,
+                        false // Evita doble notificación push (ya se envió arriba)
                     );
                     log_message('info', "[ACCESS_NOTIFY][DB_OK] user_id={$userId}");
                 } catch (\Throwable $e) {
