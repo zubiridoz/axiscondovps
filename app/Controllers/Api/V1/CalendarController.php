@@ -203,6 +203,15 @@ class CalendarController extends ResourceController
         }
 
         $isAdmin = $this->isAdmin($userId);
+        
+        // ── Validar permiso de crear eventos (Si NO es Admin) ──
+        if (!$isAdmin) {
+            $condo = (new \App\Models\Tenant\CondominiumModel())->first();
+            if (!$condo || !(int)($condo['allow_resident_events'] ?? 0)) {
+                return $this->respondError('La administración ha deshabilitado la creación de eventos comunitarios para residentes.', 403);
+            }
+        }
+
         $isInternal = 0;
         
         if ($isAdmin) {

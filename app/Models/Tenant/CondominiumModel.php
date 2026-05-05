@@ -30,6 +30,7 @@ class CondominiumModel extends BaseTenantModel
         'show_delinquent_units',
         'show_delinquency_amounts',
         'allow_resident_posts',
+        'allow_resident_events',
         'allow_post_comments',
         'resident_view_comments',
         'always_email_posts',

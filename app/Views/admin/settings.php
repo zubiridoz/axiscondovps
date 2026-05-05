@@ -1220,6 +1220,19 @@ $community = array_merge([
                     </div>
                 </div>
 
+                <!-- Allow resident events -->
+                <div
+                    style="padding: 1.25rem; display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid #e2e8f0;">
+                    <div>
+                        <span style="font-weight:600; color:#0f172a; display:block;">Residentes pueden crear eventos</span>
+                        <span style="color:#64748b; font-size:0.85rem;">Habilita la opción para que los residentes agreguen eventos en el calendario de la app.</span>
+                    </div>
+                    <div class="form-check form-switch" style="font-size: 1.25rem; margin:0;">
+                        <input class="form-check-input" type="checkbox" id="wallAllowEvents" style="cursor:pointer;"
+                            onchange="saveWallPrefs()" <?= $community['allow_resident_events'] ? 'checked' : '' ?>>
+                    </div>
+                </div>
+
                 <!-- Allow comments -->
                 <div
                     style="padding: 1.25rem; display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid #e2e8f0;">
@@ -3145,6 +3158,7 @@ $community = array_merge([
             try {
                 const fd = new FormData();
                 fd.append('allow_resident_posts', document.getElementById('wallAllowPosts').checked ? 1 : 0);
+                fd.append('allow_resident_events', document.getElementById('wallAllowEvents').checked ? 1 : 0);
                 fd.append('allow_post_comments', document.getElementById('wallAllowComments').checked ? 1 : 0);
                 fd.append('resident_view_comments', document.getElementById('wallResidentViewComments').checked ? 1 : 0);
                 fd.append('always_email_posts', document.getElementById('wallAlwaysEmail').checked ? 1 : 0);
