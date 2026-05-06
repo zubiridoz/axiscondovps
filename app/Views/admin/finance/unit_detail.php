@@ -2065,10 +2065,10 @@ $formatMXN = fn($v) => 'MX$' . number_format((float) $v, 2);
                     let cleanAtt;
                     if (att.startsWith('payments/')) {
                         cleanAtt = att.replace('payments/', '');
-                        imgUrl = '<?= base_url('admin/finanzas/archivo/payments/') ?>' + cleanAtt;
+                        imgUrl = '<?= base_url('media/image/payments/') ?>' + cleanAtt;
                     } else {
                         cleanAtt = att.replace('financial/', '');
-                        imgUrl = '<?= base_url('admin/finanzas/archivo/financial/') ?>' + cleanAtt;
+                        imgUrl = '<?= base_url('media/image/financial/') ?>' + cleanAtt;
                     }
 
                     const thumb = document.createElement('div');
@@ -2289,7 +2289,7 @@ $formatMXN = fn($v) => 'MX$' . number_format((float) $v, 2);
             // Preview del comprobante
             const previewArea = document.getElementById('rvPreview');
             const _proofPath = (d.proof || '').startsWith('payments/') ? d.proof : 'payments/' + d.proof;
-            const proofUrl = '<?= base_url("admin/finanzas/archivo/") ?>' + _proofPath;
+            const proofUrl = '<?= base_url("media/image/") ?>' + _proofPath;
             const isPdf = (d.proof || '').toLowerCase().endsWith('.pdf');
 
             if (isPdf) {

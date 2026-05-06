@@ -108,14 +108,16 @@ class MediaController extends Controller
         }
 
         $cacheTime = 604800; // 7 dias
-        $this->response->setHeader("Cache-Control", "public, max-age=" . $cacheTime)
-                       ->setHeader("Expires", gmdate("D, d M Y H:i:s", time() + $cacheTime) . " GMT")
-                       ->setHeader("Pragma", "cache")
-                       ->setHeader("Content-Type", $mime)
-                       ->setHeader("Content-Disposition", "inline; filename=\"" . basename($fullPath) . "\"")
-                       ->setBody(file_get_contents($fullPath));
-
-        return $this->response;
+        header("Cache-Control: public, max-age=" . $cacheTime);
+        header("Expires: " . gmdate("D, d M Y H:i:s", time() + $cacheTime) . " GMT");
+        header("Pragma: cache");
+        header("Content-Type: " . $mime);
+        header("Content-Length: " . filesize($fullPath));
+        header("Content-Disposition: inline; filename=\"" . basename($fullPath) . "\"");
+        
+        @ob_end_clean();
+        readfile($fullPath);
+        exit;
     }
 
     /**

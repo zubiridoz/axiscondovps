@@ -1486,7 +1486,7 @@
                             ?>
                             <div class="d-flex gap-2">
                                 <?php foreach ($media as $mUrl):
-                                    $secureUrl = base_url('admin/tickets/media/' . urlencode(basename($mUrl)));
+                                    $secureUrl = base_url('media/image/tickets/' . urlencode(basename($mUrl)));
                                     $isVid = preg_match('/\.(mp4|mov|webm)$/i', $mUrl);
                                     $isPdf = preg_match('/\.pdf$/i', $mUrl);
                                     $isDoc = preg_match('/\.(doc|docx|xls|xlsx|ppt|pptx|txt)$/i', $mUrl);
@@ -2322,7 +2322,7 @@
                     $media = is_array($ticket['media_urls']) ? $ticket['media_urls'] : (json_decode($ticket['media_urls'], true) ?? []);
                     $mediaHtml .= '<div class="conv-msg-media" style="margin-top:0.75rem; gap:0.5rem;">';
                     foreach ($media as $mUrl) {
-                        $secureUrl = base_url('admin/tickets/media/' . urlencode(basename($mUrl)));
+                        $secureUrl = base_url('media/image/tickets/' . urlencode(basename($mUrl)));
                         $isVid = preg_match('/\.(mp4|mov|webm)$/i', $mUrl);
                         $isPdf = preg_match('/\.pdf$/i', $mUrl);
                         $isDoc = preg_match('/\.(doc|docx|xls|xlsx|ppt|pptx|txt)$/i', $mUrl);
@@ -2539,7 +2539,7 @@
         const ticketMediaUrls = <?= json_encode(
             array_map(function ($url) {
             return [
-                'url' => base_url('admin/tickets/media/' . basename($url)),
+                'url' => base_url('media/image/tickets/' . basename($url)),
                 'name' => basename($url),
                 'uploader' => esc($ticket['reporter'] ?? 'Residente'),
             ];

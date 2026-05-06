@@ -999,16 +999,21 @@ class TicketController extends BaseController
         
         $filesize = filesize($filePath);
         
+        header('Cache-Control: public, max-age=86400');
+        header('Expires: ' . gmdate('D, d M Y H:i:s', time() + 86400) . ' GMT');
+        header('Pragma: cache');
+        header('Content-Type: ' . $mimeType);
+        header('Content-Length: ' . $filesize);
+        
         // Return stream for large video files
         if (str_starts_with($mimeType, 'video/')) {
-            $this->response->setHeader('Accept-Ranges', 'bytes');
-            $this->response->setHeader('Content-Length', (string)$filesize);
+            header('Accept-Ranges: bytes');
         }
+        header('Content-Disposition: inline; filename="' . basename($filePath) . '"');
 
-        return $this->response
-            ->setHeader('Content-Type', $mimeType)
-            ->setHeader('Cache-Control', 'public, max-age=86400')
-            ->setBody(file_get_contents($filePath));
+        @ob_end_clean();
+        readfile($filePath);
+        exit;
     }
 
     // ─── TICKET NOTIFICATION HELPERS ─────────────────

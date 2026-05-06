@@ -1810,7 +1810,7 @@
                         const fileExt = att.split('.').pop().toLowerCase();
                         const isPdf = fileExt === 'pdf';
                         const cleanAtt = att.replace('financial/', '');
-                        const attUrl = '<?= base_url('admin/finanzas/archivo/financial/') ?>' + cleanAtt;
+                        const attUrl = '<?= base_url('media/image/financial/') ?>' + cleanAtt;
 
                         const thumb = document.createElement('div');
                         thumb.className = 'pd-thumb';
