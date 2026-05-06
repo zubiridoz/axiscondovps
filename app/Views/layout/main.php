@@ -821,6 +821,27 @@
 
                         <div class="menu-label mt-3">AJUSTES Y OTROS</div>
 
+                        <?php
+                        $__pendingReportsCount = 0;
+                        $__modBadgeTenantId = \App\Services\TenantService::getInstance()->getTenantId();
+                        if ($__modBadgeTenantId) {
+                            $__pendingReportsCount = (new \App\Models\Tenant\ContentReportModel())
+                                ->where('condominium_id', $__modBadgeTenantId)
+                                ->where('status', 'pending')
+                                ->countAllResults();
+                        }
+                        ?>
+                        <li class="nav-item">
+                            <a href="<?= base_url('admin/moderacion') ?>"
+                                class="nav-link d-flex align-items-center <?= strpos(uri_string(), 'admin/moderacion') === 0 ? 'active-main' : '' ?>">
+                                <i class="bi bi-shield-exclamation"></i> Moderación
+                                <?php if ($__pendingReportsCount > 0): ?>
+                                    <span class="badge bg-danger rounded-pill ms-auto"
+                                        style="font-size:0.6rem;"><?= $__pendingReportsCount ?></span>
+                                <?php endif; ?>
+                            </a>
+                        </li>
+
                         <li class="nav-item">
                             <a href="<?= base_url('admin/configuracion') ?>"
                                 class="nav-link <?= strpos(uri_string(), 'admin/configuracion') === 0 ? 'active-main' : '' ?>">

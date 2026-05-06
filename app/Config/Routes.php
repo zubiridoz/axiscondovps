@@ -76,6 +76,10 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin', 'filter' => ['a
     $routes->get('dashboard', 'DashboardController::index');
     $routes->get('testdb', '\App\Controllers\TestDB::index');
     
+    // Moderación de Contenido (Apple Guideline 1.2)
+    $routes->get('moderacion', 'ModerationController::index');
+    $routes->post('moderacion/resolver/(:num)', 'ModerationController::resolveReport/$1');
+    $routes->post('moderacion/desbloquear/(:num)', 'ModerationController::adminUnblock/$1');
     
     // Notifications Endpoints
     $routes->get('notifications', 'NotificationController::getLatest');
@@ -572,6 +576,19 @@ $routes->group('api/v1/resident', ['namespace' => 'App\Controllers\Api\V1', 'fil
     $routes->options('documents/rename/(:num)', 'DocumentController::renameDocument/$1');
     $routes->options('documents/delete/(:num)', 'DocumentController::deleteDocument/$1');
     $routes->options('documents/toggle-star/(:num)', 'DocumentController::toggleStar/$1');
+});
+
+// ══════════════════════════════════════════════════════════
+// MODERACIÓN DE CONTENIDO (Apple Guideline 1.2)
+// ══════════════════════════════════════════════════════════
+$routes->group('api/v1/moderation', ['namespace' => 'App\Controllers\Api\V1', 'filter' => 'apiauth'], static function($routes) {
+    $routes->post('report', 'ModerationController::report');
+    $routes->post('block', 'ModerationController::block');
+    $routes->post('unblock', 'ModerationController::unblock');
+    $routes->get('blocked-users', 'ModerationController::blockedUsers');
+    $routes->options('report', 'ModerationController::report');
+    $routes->options('block', 'ModerationController::block');
+    $routes->options('unblock', 'ModerationController::unblock');
 });
 
 // ══════════════════════════════════════════════════════════

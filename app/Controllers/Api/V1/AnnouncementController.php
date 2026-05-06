@@ -7,6 +7,7 @@ use App\Models\Tenant\AnnouncementModel;
 use App\Models\Tenant\AnnouncementAttachmentModel;
 use App\Models\Tenant\AnnouncementLikeModel;
 use App\Models\Tenant\AnnouncementCommentModel;
+use App\Models\Tenant\BlockedUserModel;
 
 /**
  * AnnouncementController (API V1)
@@ -97,13 +98,25 @@ class AnnouncementController extends ResourceController
         
         $userId = $this->request->userId ?? null; // Seteado por ApiAuthFilter
 
+        // Obtener IDs de usuarios bloqueados para filtrar el feed
+        $blockedIds = [];
+        if ($userId) {
+            $blockedIds = (new BlockedUserModel())->getBlockedIds((int)$userId);
+        }
+
         $model = new AnnouncementModel();
         
-        // 1. Obtener la página actual
-        $announcements = $model
+        // 1. Obtener la página actual (excluyendo publicaciones de usuarios bloqueados)
+        $query = $model
             ->select('announcements.*, users.first_name, users.last_name, users.avatar as author_avatar')
             ->join('users', 'users.id = announcements.created_by', 'left')
-            ->where('announcements.is_active', 1)
+            ->where('announcements.is_active', 1);
+
+        if (!empty($blockedIds)) {
+            $query->whereNotIn('announcements.created_by', $blockedIds);
+        }
+
+        $announcements = $query
             ->orderBy('announcements.created_at', 'DESC')
             ->findAll($limit, $offset);
 
@@ -211,7 +224,11 @@ class AnnouncementController extends ResourceController
         }
 
         // Checar si hay más resultados para el infinite scroll
-        $totalResults = $model->where('is_active', 1)->countAllResults();
+        $totalQuery = $model->where('is_active', 1);
+        if (!empty($blockedIds)) {
+            $totalQuery->whereNotIn('created_by', $blockedIds);
+        }
+        $totalResults = $totalQuery->countAllResults();
         $hasMore = ($offset + count($announcements)) < $totalResults;
 
         return $this->respondSuccess([
@@ -303,15 +320,32 @@ class AnnouncementController extends ResourceController
             $ann['comments'] = [];
             $ann['comment_count'] = 0;
         } else {
+            // Filtrar comentarios de usuarios bloqueados
+            $blockedIds = [];
+            if ($userId) {
+                $blockedIds = (new BlockedUserModel())->getBlockedIds((int)$userId);
+            }
+
             if (!$userIsAdmin && !$residentViewComments) {
                 // Residentes solo ven sus propios comentarios Y los de los administradores
-                $filteredComments = array_filter($comments, function($c) use ($userId) {
+                $filteredComments = array_filter($comments, function($c) use ($userId, $blockedIds) {
+                    // Ocultar comentarios de usuarios bloqueados
+                    if (!empty($blockedIds) && in_array((int)$c['user_id'], $blockedIds)) {
+                        return false;
+                    }
                     $isCommentAdmin = in_array(strtolower($c['role_name'] ?? ''), ['admin', 'super_admin', 'owner']);
                     return ((int)$c['user_id'] === (int)$userId) || $isCommentAdmin;
                 });
                 $ann['comments'] = array_values($filteredComments);
                 $ann['comment_count'] = count($filteredComments);
             } else {
+                // Admin o residentViewComments activo: filtrar solo bloqueados
+                if (!empty($blockedIds)) {
+                    $comments = array_filter($comments, function($c) use ($blockedIds) {
+                        return !in_array((int)$c['user_id'], $blockedIds);
+                    });
+                    $comments = array_values($comments);
+                }
                 $ann['comments'] = $comments;
                 $ann['comment_count'] = count($comments);
             }
