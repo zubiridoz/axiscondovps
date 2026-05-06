@@ -187,7 +187,12 @@ class TicketApiController extends ResourceController
             if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
             foreach ($files as $file) {
                 if ($file->isValid() && !$file->hasMoved()) {
-                    $ext = $file->getExtension();
+                    $ext = $file->getExtension() ?: $file->getClientExtension();
+                    if (empty($ext)) {
+                        $mime = $file->getMimeType();
+                        if (strpos($mime, 'video/') === 0) $ext = 'mp4';
+                        else $ext = 'jpg'; // Fallback for gallery images without extension
+                    }
                     $newName = 'tk_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
                     $file->move($uploadDir, $newName);
                     $mediaUrls[] = 'writable/uploads/tickets/' . $newName;
@@ -326,7 +331,12 @@ class TicketApiController extends ResourceController
             if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
             foreach ($files as $file) {
                 if ($file->isValid() && !$file->hasMoved()) {
-                    $ext = $file->getExtension();
+                    $ext = $file->getExtension() ?: $file->getClientExtension();
+                    if (empty($ext)) {
+                        $mime = $file->getMimeType();
+                        if (strpos($mime, 'video/') === 0) $ext = 'mp4';
+                        else $ext = 'jpg'; // Fallback for gallery images without extension
+                    }
                     $newName = 'msg_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
                     $file->move($uploadDir, $newName);
                     $mediaUrls[] = 'writable/uploads/tickets/' . $newName;

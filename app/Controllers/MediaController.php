@@ -90,7 +90,16 @@ class MediaController extends Controller
         $mime = mime_content_type($fullPath);
         if (empty($mime) || strpos($mime, "image/") !== 0) {
             $ext = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION));
-            $valid_exts = ["jpg" => "image/jpeg", "jpeg" => "image/jpeg", "png" => "image/png", "gif" => "image/gif", "webp" => "image/webp", "svg" => "image/svg+xml"];
+            $valid_exts = [
+                "jpg" => "image/jpeg", 
+                "jpeg" => "image/jpeg", 
+                "png" => "image/png", 
+                "gif" => "image/gif", 
+                "webp" => "image/webp", 
+                "svg" => "image/svg+xml",
+                "heic" => "image/heic",
+                "heif" => "image/heif"
+            ];
             if (array_key_exists($ext, $valid_exts)) {
                 $mime = $valid_exts[$ext];
             } else {

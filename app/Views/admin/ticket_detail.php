@@ -152,11 +152,11 @@
     }
 
     .td-nav-tabs .nav-link {
-        color: #64748b;
+        color: #64748b !important;
         font-weight: 600;
         border: none;
         padding: 0.75rem 1.25rem;
-        background: transparent;
+        background: transparent !important;
         transition: color 0.15s ease-in-out;
     }
 
@@ -1355,6 +1355,9 @@
                 <div class="td-meta-label"><i class="bi bi-person"></i> Reportado por</div>
                 <div class="td-meta-value"><?= esc($ticket['reporter'] ?? 'Desconocido') ?></div>
 
+                <div class="td-meta-label"><i class="bi bi-house"></i> Unidad</div>
+                <div class="td-meta-value fst-italic text-secondary"><?= esc($ticket['unit_name'] ?? 'Sin unidad') ?></div>
+
                 <div class="td-meta-label"><i class="bi bi-calendar3"></i> Creado</div>
                 <div class="td-meta-value"><?= esc($ticket['created_at'] ?? 'Hoy') ?></div>
 
@@ -1413,13 +1416,13 @@
 
         <ul class="nav nav-tabs td-nav-tabs" id="ticketDetailTabs" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="tab-reporte" data-bs-toggle="tab" data-bs-target="#pane-reporte"
-                    type="button" role="tab" aria-controls="pane-reporte" aria-selected="true"><i
+                <button class="nav-link" id="tab-reporte" data-bs-toggle="tab" data-bs-target="#pane-reporte"
+                    type="button" role="tab" aria-controls="pane-reporte" aria-selected="false"><i
                         class="bi bi-file-text"></i> Reporte</button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="tab-conversacion" data-bs-toggle="tab" data-bs-target="#pane-conversacion"
-                    type="button" role="tab" aria-controls="pane-conversacion" aria-selected="false"><i
+                <button class="nav-link active" id="tab-conversacion" data-bs-toggle="tab" data-bs-target="#pane-conversacion"
+                    type="button" role="tab" aria-controls="pane-conversacion" aria-selected="true"><i
                         class="bi bi-chat-square-text"></i> Conversación</button>
             </li>
             <li class="nav-item" role="presentation">
@@ -1436,7 +1439,7 @@
 
         <div class="tab-content" id="ticketDetailTabContent">
             <!-- Reporte Tab Pane -->
-            <div class="tab-pane fade show active" id="pane-reporte" role="tabpanel" aria-labelledby="tab-reporte">
+            <div class="tab-pane fade" id="pane-reporte" role="tabpanel" aria-labelledby="tab-reporte">
                 <div class="td-panel">
                     <div class="td-panel-header">
                         <h3 class="td-panel-title"><i class="bi bi-tag text-primary"></i> Reporte</h3>
@@ -1535,7 +1538,7 @@
             </div>
 
             <!-- Conversación Tab Pane -->
-            <div class="tab-pane fade" id="pane-conversacion" role="tabpanel" aria-labelledby="tab-conversacion">
+            <div class="tab-pane fade show active" id="pane-conversacion" role="tabpanel" aria-labelledby="tab-conversacion">
                 <!-- Sub-tabs: Responder al residente | Nota interna -->
                 <div class="conv-subtabs mb-0">
                     <button class="conv-subtab active" id="subtab-reply" data-type="reply">
@@ -1563,43 +1566,50 @@
                     <!-- Messages rendered here by JS -->
                 </div>
 
-                <!-- Quick responses (only visible on reply mode) -->
-                <div class="conv-quick-wrap" id="conv-quick-wrap">
-                    <div class="conv-quick-label"><i class="bi bi-stars"></i> Respuestas Rápidas</div>
-                    <div class="conv-quick-pills">
-                        <button class="conv-pill"
-                            data-text="Estimado residente, estamos investigando su problema y le mantendremos informado.">Investigando</button>
-                        <button class="conv-pill"
-                            data-text="El trabajo en su reporte ha comenzado. Le mantendremos informado.">Trabajo
-                            iniciado</button>
-                        <button class="conv-pill"
-                            data-text="Necesitamos información adicional de su parte para proceder. ¿Podría proporcionarnos más detalles?">Se
-                            necesita más información</button>
-                        <button class="conv-pill"
-                            data-text="El problema ha sido resuelto. Por favor háganos saber si necesita algo más.">Problema
-                            resuelto</button>
+                <?php if (in_array($ticket['status'], ['resolved', 'closed'])): ?>
+                    <div class="alert alert-warning m-3" style="background-color: #fffbeb; border-color: #fde68a; color: #92400e; display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;">
+                        <i class="bi bi-info-circle-fill"></i>
+                        <span>El reporte está marcado como resuelto. Para añadir un nuevo comentario, debes reabrir el ticket desde la pestaña de <b>Acciones</b>.</span>
                     </div>
-                </div>
-
-                <!-- Message input -->
-                <div class="conv-input-wrap" id="conv-input-wrap">
-                    <div class="conv-input-row">
-                        <label class="conv-attach-btn" for="conv-file-input" title="Adjuntar archivo">
-                            <i class="bi bi-paperclip"></i>
-                        </label>
-                        <input type="file" id="conv-file-input" multiple accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx" style="display:none;">
-                        <div class="conv-input-field-wrap">
-                            <textarea class="conv-textarea" id="conv-message" placeholder="Escribe un mensaje..."
-                                rows="1" maxlength="1000"></textarea>
-                            <span class="conv-char-count" id="conv-char-count">1000</span>
+                <?php else: ?>
+                    <!-- Quick responses (only visible on reply mode) -->
+                    <div class="conv-quick-wrap" id="conv-quick-wrap">
+                        <div class="conv-quick-label"><i class="bi bi-stars"></i> Respuestas Rápidas</div>
+                        <div class="conv-quick-pills">
+                            <button class="conv-pill"
+                                data-text="Estimado residente, estamos investigando su problema y le mantendremos informado.">Investigando</button>
+                            <button class="conv-pill"
+                                data-text="El trabajo en su reporte ha comenzado. Le mantendremos informado.">Trabajo
+                                iniciado</button>
+                            <button class="conv-pill"
+                                data-text="Necesitamos información adicional de su parte para proceder. ¿Podría proporcionarnos más detalles?">Se
+                                necesita más información</button>
+                            <button class="conv-pill"
+                                data-text="El problema ha sido resuelto. Por favor háganos saber si necesita algo más.">Problema
+                                resuelto</button>
                         </div>
-                        <button class="conv-send-btn" id="conv-send-btn" title="Enviar">
-                            <i class="bi bi-send-fill"></i>
-                        </button>
                     </div>
-                    <div class="conv-file-preview d-none" id="conv-file-preview"></div>
-                    <div class="conv-hint" id="conv-hint">Presiona Ctrl+Enter para enviar</div>
-                </div>
+
+                    <!-- Message input -->
+                    <div class="conv-input-wrap" id="conv-input-wrap">
+                        <div class="conv-input-row">
+                            <label class="conv-attach-btn" for="conv-file-input" title="Adjuntar archivo">
+                                <i class="bi bi-paperclip"></i>
+                            </label>
+                            <input type="file" id="conv-file-input" multiple accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx" style="display:none;">
+                            <div class="conv-input-field-wrap">
+                                <textarea class="conv-textarea" id="conv-message" placeholder="Escribe un mensaje..."
+                                    rows="1" maxlength="1000"></textarea>
+                                <span class="conv-char-count" id="conv-char-count">1000</span>
+                            </div>
+                            <button class="conv-send-btn" id="conv-send-btn" title="Enviar">
+                                <i class="bi bi-send-fill"></i>
+                            </button>
+                        </div>
+                        <div class="conv-file-preview d-none" id="conv-file-preview"></div>
+                        <div class="conv-hint" id="conv-hint">Presiona Ctrl+Enter para enviar</div>
+                    </div>
+                <?php endif; ?>
             </div>
 
             <!-- Archivos Tab Pane -->
@@ -2130,57 +2140,63 @@
         function applyConvTheme() {
             const isInternal = convMode === 'internal';
             // Context hint
-            convCtxHint.className = 'conv-context-hint ' + (isInternal ? 'mode-internal' : 'mode-reply');
-            convCtxText.textContent = isInternal
+            if (convCtxHint) convCtxHint.className = 'conv-context-hint ' + (isInternal ? 'mode-internal' : 'mode-reply');
+            if (convCtxText) convCtxText.textContent = isInternal
                 ? 'Esta nota solo será visible para administradores y personal'
                 : 'Este mensaje se enviará al residente y será visible en su aplicación';
 
             // Quick responses only on reply
-            convQuickWrap.style.display = isInternal ? 'none' : '';
+            if (convQuickWrap) convQuickWrap.style.display = isInternal ? 'none' : '';
 
             // Send button
-            convSendBtn.className = 'conv-send-btn ' + (isInternal ? 'mode-internal' : 'mode-reply');
+            if (convSendBtn) convSendBtn.className = 'conv-send-btn ' + (isInternal ? 'mode-internal' : 'mode-reply');
 
             // Input border
-            convFieldWrap.classList.toggle('mode-internal', isInternal);
+            if (convFieldWrap) convFieldWrap.classList.toggle('mode-internal', isInternal);
 
             // Hint
-            convHint.textContent = isInternal ? 'Presiona Ctrl+Enter para enviar  (Nota interna)' : 'Presiona Ctrl+Enter para enviar';
+            if (convHint) convHint.textContent = isInternal ? 'Presiona Ctrl+Enter para enviar  (Nota interna)' : 'Presiona Ctrl+Enter para enviar';
         }
         applyConvTheme();
 
         // ── Character counter + auto-resize ──
-        convMsg.addEventListener('input', () => {
-            const rem = 1000 - convMsg.value.length;
-            convCharCount.textContent = rem;
-            convMsg.style.height = 'auto';
-            convMsg.style.height = Math.min(convMsg.scrollHeight, 100) + 'px';
-        });
+        if (convMsg) {
+            convMsg.addEventListener('input', () => {
+                const rem = 1000 - convMsg.value.length;
+                convCharCount.textContent = rem;
+                convMsg.style.height = 'auto';
+                convMsg.style.height = Math.min(convMsg.scrollHeight, 100) + 'px';
+            });
 
-        // ── Ctrl+Enter to send ──
-        convMsg.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-                e.preventDefault();
-                sendConvMessage();
-            }
-        });
+            // ── Ctrl+Enter to send ──
+            convMsg.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                    e.preventDefault();
+                    sendConvMessage();
+                }
+            });
+        }
 
         // ── Quick response pills ──
         document.querySelectorAll('.conv-pill').forEach(pill => {
             pill.addEventListener('click', () => {
-                convMsg.value = pill.dataset.text;
-                convMsg.dispatchEvent(new Event('input'));
-                convMsg.focus();
+                if (convMsg) {
+                    convMsg.value = pill.dataset.text;
+                    convMsg.dispatchEvent(new Event('input'));
+                    convMsg.focus();
+                }
             });
         });
 
         // ── File attach ──
-        convFileInput.addEventListener('change', () => {
-            const newFiles = Array.from(convFileInput.files);
-            convFiles = [...convFiles, ...newFiles].slice(0, 5);
-            renderFilePreviews();
-            convFileInput.value = '';
-        });
+        if (convFileInput) {
+            convFileInput.addEventListener('change', () => {
+                const newFiles = Array.from(convFileInput.files);
+                convFiles = [...convFiles, ...newFiles].slice(0, 5);
+                renderFilePreviews();
+                convFileInput.value = '';
+            });
+        }
 
         function renderFilePreviews() {
             if (convFiles.length === 0) {
@@ -2241,6 +2257,9 @@
                     if (typeof Swal !== 'undefined') {
                         Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: convMode === 'internal' ? 'Nota interna guardada' : 'Mensaje enviado', showConfirmButton: false, timer: 2000 });
                     }
+                    if (data.status_changed) {
+                        setTimeout(() => location.reload(), 1000);
+                    }
                 } else {
                     if (typeof Swal !== 'undefined') Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: data.error || 'Error al enviar', showConfirmButton: false, timer: 3000 });
                 }
@@ -2250,7 +2269,9 @@
             convSendBtn.disabled = false;
         }
 
-        convSendBtn.addEventListener('click', sendConvMessage);
+        if (convSendBtn) {
+            convSendBtn.addEventListener('click', sendConvMessage);
+        }
 
         // ── Load messages ──
         async function loadMessages() {
@@ -2279,13 +2300,65 @@
             // Remove old rendered messages (keep empty if present)
             convThread.querySelectorAll('.conv-msg, .conv-date-divider').forEach(el => el.remove());
 
-            if (filtered.length === 0) {
+            if (filtered.length === 0 && convMode === 'internal') {
                 convEmpty.style.display = '';
                 return;
             }
             convEmpty.style.display = 'none';
 
             let lastDate = '';
+
+            // Inject initial report as the first message
+            if (convMode === 'reply') {
+                lastDate = '<?= date("Y-m-d", $ticket["created_ts"] ?? time()) === date("Y-m-d") ? "Hoy" : date("d M Y", $ticket["created_ts"] ?? time()) ?>';
+                const initialDivider = document.createElement('div');
+                initialDivider.className = 'conv-date-divider';
+                initialDivider.innerHTML = `<span>${lastDate}</span>`;
+                convThread.appendChild(initialDivider);
+
+                <?php 
+                $mediaHtml = '';
+                if (!empty($ticket['media_urls'])) {
+                    $media = is_array($ticket['media_urls']) ? $ticket['media_urls'] : (json_decode($ticket['media_urls'], true) ?? []);
+                    $mediaHtml .= '<div class="conv-msg-media" style="margin-top:0.75rem; gap:0.5rem;">';
+                    foreach ($media as $mUrl) {
+                        $secureUrl = base_url('admin/tickets/media/' . urlencode(basename($mUrl)));
+                        $isVid = preg_match('/\.(mp4|mov|webm)$/i', $mUrl);
+                        $isPdf = preg_match('/\.pdf$/i', $mUrl);
+                        $isDoc = preg_match('/\.(doc|docx|xls|xlsx|ppt|pptx|txt)$/i', $mUrl);
+                        
+                        if ($isVid) {
+                            $mediaHtml .= '<div class="position-relative report-attached-vid" data-url="'.esc($secureUrl).'" style="width: 140px; height: 100px; cursor:pointer;"><video src="'.esc($secureUrl).'#t=0.1" style="width: 100%; height: 100%; object-fit:cover; border-radius:12px; border:2px solid #e2e8f0; pointer-events: none;"></video><div class="position-absolute top-50 start-50 translate-middle text-white d-flex align-items-center justify-content-center" style="background: rgba(0,0,0,0.5); border-radius: 50%; width: 40px; height: 40px; transition: 0.2s;"><i class="bi bi-play-fill fs-3"></i></div></div>';
+                        } elseif ($isPdf) {
+                            $mediaHtml .= '<a href="'.esc($secureUrl).'" target="_blank" class="d-flex align-items-center justify-content-center text-decoration-none" style="width: 100px; height: 80px; border-radius:12px; border:2px solid #e2e8f0; background: #f8fafc; color: #3F67AC; font-size: 2.5rem; transition: 0.2s;" title="Abrir PDF"><i class="bi bi-file-earmark-pdf text-danger"></i></a>';
+                        } elseif ($isDoc) {
+                            $mediaHtml .= '<a href="'.esc($secureUrl).'" target="_blank" class="d-flex align-items-center justify-content-center text-decoration-none" style="width: 100px; height: 80px; border-radius:12px; border:2px solid #e2e8f0; background: #f8fafc; color: #3F67AC; font-size: 2.5rem; transition: 0.2s;" title="Abrir Documento"><i class="bi bi-file-earmark-text text-primary"></i></a>';
+                        } else {
+                            $mediaHtml .= '<img src="'.esc($secureUrl).'" class="report-attached-img" style="cursor:pointer; border-radius:12px; border:2px solid #e2e8f0;">';
+                        }
+                    }
+                    $mediaHtml .= '</div>';
+                }
+                ?>
+
+                const initialDiv = document.createElement('div');
+                initialDiv.className = 'conv-msg';
+                initialDiv.innerHTML = `
+                    <div class="conv-msg-header">
+                        <div class="conv-msg-avatar" style="background:#f1f5f9; color:#64748b;"><i class="bi bi-file-text-fill"></i></div>
+                        <span class="conv-msg-name">Reporte Inicial</span>
+                        <span class="conv-msg-badge bg-light text-dark border">Categoría: <?= esc($ticket['category'] ?? 'Otro') ?></span>
+                    </div>
+                    <div class="conv-msg-bubble bg-light border text-dark" style="max-width: 90%;">
+                        <div class="fw-bold mb-1"><?= esc(str_replace("\n", ' ', $ticket['subject'] ?? 'Sin asunto')) ?></div>
+                        <div style="white-space: pre-wrap; font-size: 0.85rem;"><?= esc(str_replace("\r", "", $ticket['description'] ?? 'Sin descripción')) ?></div>
+                        <?= $mediaHtml ?>
+                    </div>
+                    <div class="conv-msg-time"><?= esc($ticket['created_at_label'] ?? '') ?></div>
+                `;
+                convThread.appendChild(initialDiv);
+            }
+
             filtered.forEach(m => {
                 // Date divider
                 if (m.date_label !== lastDate) {

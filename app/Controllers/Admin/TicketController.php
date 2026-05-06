@@ -42,11 +42,17 @@ class TicketController extends BaseController
 
         $ticketModel = new TicketModel();
         
+        $builder = $ticketModel->select('tickets.*, units.unit_number as unit_name, users.first_name, users.last_name, staff.first_name as staff_fname, staff.last_name as staff_lname, assigned_users.first_name as user_fname, assigned_users.last_name as user_lname')
+            ->join('units', 'units.id = tickets.unit_id', 'left')
+            ->join('users', 'users.id = tickets.reported_by', 'left')
+            ->join('users as assigned_users', 'assigned_users.id = tickets.assigned_to_id AND tickets.assigned_to_type = "user"', 'left')
+            ->join('staff_members as staff', 'staff.id = tickets.assigned_to_id AND tickets.assigned_to_type = "staff"', 'left');
+
         // Queries with Strict Tenant Isolation!
         if (is_numeric($hash) && strlen($hash) < 10) {
-            $ticketInfo = $ticketModel->where('condominium_id', $tenantId)->where('id', $hash)->first();
+            $ticketInfo = $builder->where('tickets.condominium_id', $tenantId)->where('tickets.id', $hash)->first();
         } else {
-            $ticketInfo = $ticketModel->where('condominium_id', $tenantId)->where('ticket_hash', $hash)->first();
+            $ticketInfo = $builder->where('tickets.condominium_id', $tenantId)->where('tickets.ticket_hash', $hash)->first();
         }
 
         if (!$ticketInfo) return redirect()->to(base_url('admin/tickets'))->with('error', 'Ticket no encontrado');
@@ -97,7 +103,12 @@ class TicketController extends BaseController
             }
             foreach ($files as $file) {
                 if ($file->isValid() && !$file->hasMoved()) {
-                    $ext = $file->getExtension();
+                    $ext = $file->getExtension() ?: $file->getClientExtension();
+                    if (empty($ext)) {
+                        $mime = $file->getMimeType();
+                        if (strpos($mime, 'video/') === 0) $ext = 'mp4';
+                        else $ext = 'jpg'; // Fallback for gallery images without extension
+                    }
                     $newName = 'tk_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
                     $file->move($uploadDir, $newName);
                     $mediaUrls[] = 'writable/uploads/tickets/' . $newName;
@@ -332,7 +343,12 @@ class TicketController extends BaseController
             if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
             foreach ($files as $file) {
                 if ($file->isValid() && !$file->hasMoved()) {
-                    $ext = $file->getExtension();
+                    $ext = $file->getExtension() ?: $file->getClientExtension();
+                    if (empty($ext)) {
+                        $mime = $file->getMimeType();
+                        if (strpos($mime, 'video/') === 0) $ext = 'mp4';
+                        else $ext = 'jpg'; // Fallback for gallery images without extension
+                    }
                     $newName = 'msg_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
                     $file->move($uploadDir, $newName);
                     $mediaUrls[] = 'writable/uploads/tickets/' . $newName;
@@ -356,10 +372,18 @@ class TicketController extends BaseController
             return $this->response->setJSON(['status' => 400, 'error' => 'Error al guardar: ' . implode(', ', $commentModel->errors())]);
         }
 
+        $statusChanged = false;
         // ── Notificar al residente si es un reply (no nota interna) ──
         if ($type === 'reply') {
-            $ticket = (new TicketModel())->find($ticketId);
+            $ticketModel = new TicketModel();
+            $ticket = $ticketModel->find($ticketId);
             $adminUserId = session()->get('user_id') ?? 1;
+            
+            if ($ticket && $ticket['status'] === 'open') {
+                $ticketModel->update($ticketId, ['status' => 'in_progress']);
+                $statusChanged = true;
+            }
+
             if ($ticket && !empty($ticket['reported_by']) && (int) $ticket['reported_by'] !== (int) $adminUserId) {
                 $adminName = $this->getAdminName($adminUserId);
                 $this->notifyTicketResident(
@@ -376,6 +400,7 @@ class TicketController extends BaseController
             'status'  => 201,
             'message' => 'Mensaje enviado',
             'id'      => $commentId,
+            'status_changed' => $statusChanged
         ]);
     }
 
