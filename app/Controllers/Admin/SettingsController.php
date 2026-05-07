@@ -204,14 +204,20 @@ class SettingsController extends BaseController
             return $this->response->setJSON(['success' => false, 'message' => 'Comunidad no encontrada.'])->setStatusCode(404);
         }
 
-        $country    = trim((string) $this->request->getPost('country'));
-        $state      = trim((string) $this->request->getPost('state'));
-        $city       = trim((string) $this->request->getPost('city'));
-        $postalCode = trim((string) $this->request->getPost('postal_code'));
-        $street     = trim((string) $this->request->getPost('street'));
+        $country    = trim(str_replace(',', ' ', (string) $this->request->getPost('country')));
+        $state      = trim(str_replace(',', ' ', (string) $this->request->getPost('state')));
+        $city       = trim(str_replace(',', ' ', (string) $this->request->getPost('city')));
+        $postalCode = trim(str_replace(',', ' ', (string) $this->request->getPost('postal_code')));
+        $street     = trim(str_replace(',', ' ', (string) $this->request->getPost('street')));
 
-        // Build a comma-separated address string for storage
-        $parts = array_filter([$street, $city, $state, $postalCode, $country], fn($v) => $v !== '');
+        // Construir string separado por comas, asegurando 5 partes fijas para no desfasar al cargar
+        $parts = [
+            $street !== '' ? $street : 'Sin definir',
+            $city !== '' ? $city : 'Sin definir',
+            $state !== '' ? $state : 'Sin definir',
+            $postalCode !== '' ? $postalCode : 'Sin definir',
+            $country !== '' ? $country : 'Sin definir'
+        ];
         $addressString = implode(', ', $parts);
 
         $condoModel->update($condo['id'], [

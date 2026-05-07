@@ -58,37 +58,44 @@ class SecurityController extends ResourceController
 
         $isSingleEntry = ((int)($qr['usage_limit'] ?? 1) === 1);
 
+        $isExpired = false;
+        $expiredMsg = '';
+        $notValidYet = false;
+        $notValidMsg = '';
+
+        $todayStr = $now->format('Y-m-d');
+        $fromStr = $validFrom->format('Y-m-d');
+        $untilStr = $validUntil->format('Y-m-d');
+
+        $isPaseFiesta = (!$isSingleEntry && $fromStr === $untilStr);
+        $isTemporal = (!$isSingleEntry && $fromStr !== $untilStr);
+
         if ($isSingleEntry) {
             // "Una entrada": Solo puede usarse en la fecha exacta de valid_from
-            $todayStr = $now->format('Y-m-d');
             $entryDateStr = $validFrom->format('Y-m-d');
 
             if ($todayStr < $entryDateStr) {
-                return $this->respondError(
-                    "QR NO VÁLIDO AÚN: Este pase es válido a partir del " . $validFrom->format('d/m/Y') . ".",
-                    403
-                );
+                $notValidYet = true;
+                $notValidMsg = "QR NO VÁLIDO AÚN: Este pase es válido a partir del " . $validFrom->format('d/m/Y') . ".";
             }
             if ($todayStr > $entryDateStr) {
-                return $this->respondError(
-                    'QR EXPIRADO: La fecha de acceso de este pase ya pasó.',
-                    403
-                );
+                $isExpired = true;
+                $expiredMsg = 'QR EXPIRADO: La fecha de acceso de este pase ya pasó.';
             }
         } else {
-            // "QR temporal": Puede usarse dentro del rango valid_from – valid_until
+            // "QR temporal" o "Pase de Fiesta"
             if ($now < $validFrom) {
-                return $this->respondError(
-                    "QR NO VÁLIDO AÚN: Este pase temporal es válido a partir del " . $validFrom->format('d/m/Y H:i') . ".",
-                    403
-                );
+                $notValidYet = true;
+                $notValidMsg = "QR NO VÁLIDO AÚN: Este pase es válido a partir del " . $validFrom->format('d/m/Y H:i') . ".";
             }
             if ($now > $validUntil) {
-                return $this->respondError(
-                    'QR EXPIRADO: El periodo de acceso de este pase temporal ha finalizado.',
-                    403
-                );
+                $isExpired = true;
+                $expiredMsg = 'QR EXPIRADO: El periodo de acceso de este pase ha finalizado.';
             }
+        }
+
+        if ($notValidYet) {
+            return $this->respondError($notValidMsg, 403);
         }
 
         // Enriquecer con datos de la unidad
@@ -128,21 +135,54 @@ class SecurityController extends ResourceController
             ORDER BY e.created_at DESC LIMIT 1
         ", [$qr['id']])->getRowArray();
 
+        // ── Lógica de Expiración y Salidas Pendientes ──
+        if ($isExpired) {
+            if ($activeEntry) {
+                // Permitir escaneo excepcional de salida si se quedó tarde
+                $activeEntry['unit_number'] = $unit['unit_number'] ?? 'N/A';
+                $activeEntry['visit_type'] = $qr['visit_type'] ?? 'Visita';
+                $activeEntry['vehicle_type'] = $qr['vehicle_type'] ?? '';
+                return $this->respondSuccess([
+                    'message'       => 'SALIDA PENDIENTE',
+                    'action'        => 'exit',
+                    'active_entry'  => $activeEntry,
+                    'qr_data'       => $qr,
+                    'unit_number'   => $unit['unit_number'] ?? 'N/A',
+                    'section_name'  => $unit['section_name'] ?? '',
+                    'floor'         => $unit['floor'] ?? '',
+                    'unit'          => $unitDataResponse,
+                ]);
+            } else {
+                return $this->respondError($expiredMsg, 403);
+            }
+        }
+
         if ($activeEntry) {
-            // El QR ya fue escaneado y tiene una entrada activa — redirigir a salida
-            $activeEntry['unit_number'] = $unit['unit_number'] ?? 'N/A';
-            $activeEntry['visit_type'] = $qr['visit_type'] ?? 'Visita';
-            $activeEntry['vehicle_type'] = $qr['vehicle_type'] ?? '';
-            return $this->respondSuccess([
-                'message'       => 'SALIDA PENDIENTE',
-                'action'        => 'exit',
-                'active_entry'  => $activeEntry,
-                'qr_data'       => $qr,
-                'unit_number'   => $unit['unit_number'] ?? 'N/A',
-                'section_name'  => $unit['section_name'] ?? '',
-                'floor'         => $unit['floor'] ?? '',
-                'unit'          => $unitDataResponse, // Inyección al cliente
-            ]);
+            // Determinar si forzamos salida o permitimos concurrencia
+            $forceExit = false;
+            
+            if ($isSingleEntry || $isTemporal) {
+                $forceExit = true;
+            } elseif ($isPaseFiesta) {
+                // Pase de fiesta permite concurrencia. No forzamos salida.
+                $forceExit = false;
+            }
+
+            if ($forceExit) {
+                $activeEntry['unit_number'] = $unit['unit_number'] ?? 'N/A';
+                $activeEntry['visit_type'] = $qr['visit_type'] ?? 'Visita';
+                $activeEntry['vehicle_type'] = $qr['vehicle_type'] ?? '';
+                return $this->respondSuccess([
+                    'message'       => 'SALIDA PENDIENTE',
+                    'action'        => 'exit',
+                    'active_entry'  => $activeEntry,
+                    'qr_data'       => $qr,
+                    'unit_number'   => $unit['unit_number'] ?? 'N/A',
+                    'section_name'  => $unit['section_name'] ?? '',
+                    'floor'         => $unit['floor'] ?? '',
+                    'unit'          => $unitDataResponse,
+                ]);
+            }
         }
 
         // Cambiar el estado del QR a 'renovado' al ser escaneado exitosamente
@@ -193,12 +233,39 @@ class SecurityController extends ResourceController
             $photoPlateUrl = 'writable/uploads/access/' . $newName;
         }
 
-        // Resolver unit_id desde QR si no se envió directamente
-        if ($qrId && !$unitId) {
+        // Resolver unit_id desde QR y aplicar lógicas de QR
+        if ($qrId) {
             $qrModel = new QrCodeModel();
             $qr = $qrModel->find($qrId);
             if ($qr) {
-                $unitId = $qr['unit_id'];
+                if (!$unitId) {
+                    $unitId = $qr['unit_id'];
+                }
+                
+                // Fallback por si el nombre no viene en el POST
+                if (empty($visitorName)) {
+                    $visitorName = $qr['visitor_name'];
+                }
+                
+                // Lógica de auto-contador para Pase de Fiesta (Mismo día y usos > 1)
+                $isSingleEntry = ((int)($qr['usage_limit'] ?? 1) === 1);
+                $fromStr = date('Y-m-d', strtotime($qr['valid_from']));
+                $untilStr = date('Y-m-d', strtotime($qr['valid_until']));
+                $isPaseFiesta = (!$isSingleEntry && $fromStr === $untilStr);
+                
+                if ($isPaseFiesta) {
+                    $db = \Config\Database::connect();
+                    $realCount = $db->table('access_logs')
+                                    ->where('qr_code_id', $qrId)
+                                    ->where('type', 'entry')
+                                    ->countAllResults();
+                    
+                    $entryCount = $realCount + 1;
+                    if ($entryCount > 1) {
+                        $visitorName = trim((string)$visitorName) . " (#" . $entryCount . ")";
+                    }
+                }
+
                 // Quemar un uso del QR
                 $qrModel->update($qrId, ['times_used' => $qr['times_used'] + 1]);
             }

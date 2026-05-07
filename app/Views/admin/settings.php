@@ -1081,12 +1081,12 @@ $community = array_merge([
 
                 <div class="cfg-address-box">
                     <div>
-                        <span class="cfg-field-label">Calle</span>
+                        <span class="cfg-field-label">Calle y Colonia</span>
                         <p class="cfg-field-value cfg-uppercase" id="displayStreet"><?= esc($community['street']) ?></p>
                     </div>
                     <div></div>
                     <div>
-                        <span class="cfg-field-label">Ciudad</span>
+                        <span class="cfg-field-label">Municipio o Delegación</span>
                         <p class="cfg-field-value cfg-uppercase" id="displayCity"><?= esc($community['city']) ?></p>
                     </div>
                     <div>
@@ -2170,7 +2170,7 @@ $community = array_merge([
                     </div>
                     <div class="row g-3 mb-3">
                         <div class="col-6">
-                            <label for="inputCity">Ciudad</label>
+                            <label for="inputCity">Municipio o Delegación</label>
                             <input type="text" class="form-control" id="inputCity"
                                 value="<?= esc($community['city'] !== 'Sin definir' ? $community['city'] : '') ?>">
                         </div>
@@ -2181,7 +2181,7 @@ $community = array_merge([
                         </div>
                     </div>
                     <div class="mb-2">
-                        <label for="inputStreet">Calle</label>
+                        <label for="inputStreet">Calle y Colonia</label>
                         <input type="text" class="form-control" id="inputStreet"
                             value="<?= esc($community['street'] !== 'Sin definir' ? $community['street'] : '') ?>">
                     </div>
