@@ -21,9 +21,19 @@ class ModerationController extends BaseController
         $reports = $reportModel
             ->select('content_reports.*, 
                       reporter.first_name as reporter_first_name, reporter.last_name as reporter_last_name,
-                      reported.first_name as reported_first_name, reported.last_name as reported_last_name')
+                      reported.first_name as reported_first_name, reported.last_name as reported_last_name,
+                      u_reporter.unit_number as reporter_unit,
+                      u_reported.unit_number as reported_unit,
+                      ann.title as announcement_title, ann.content as announcement_content,
+                      ac.content as comment_content')
             ->join('users as reporter', 'reporter.id = content_reports.reporter_user_id', 'left')
             ->join('users as reported', 'reported.id = content_reports.reported_user_id', 'left')
+            ->join('residents as res', 'res.user_id = content_reports.reporter_user_id AND res.condominium_id = content_reports.condominium_id', 'left')
+            ->join('units as u_reporter', 'u_reporter.id = res.unit_id', 'left')
+            ->join('residents as res2', 'res2.user_id = content_reports.reported_user_id AND res2.condominium_id = content_reports.condominium_id', 'left')
+            ->join('units as u_reported', 'u_reported.id = res2.unit_id', 'left')
+            ->join('announcements as ann', 'ann.id = content_reports.announcement_id', 'left')
+            ->join('announcement_comments as ac', 'ac.id = content_reports.comment_id', 'left')
             ->where('content_reports.condominium_id', $tenantId)
             ->orderBy('content_reports.created_at', 'DESC')
             ->findAll();

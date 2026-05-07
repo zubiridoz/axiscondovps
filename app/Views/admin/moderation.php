@@ -21,14 +21,92 @@ $timeAgo = static function ($dateStr): string {
 ?>
 
 <style>
-    .mod-header {
-        background: linear-gradient(135deg, #2f3a4d 0%, #243246 100%);
-        border-radius: 0.6rem;
-        padding: 1.5rem;
-        color: #fff;
-        box-shadow: 0 8px 22px rgba(15, 23, 42, 0.16);
+    /* ── Hero (same as Calendar module) ── */
+    .mod-hero {
+        background: #ffffff;
+        border-radius: .5rem;
+        padding: 0.85rem 1.25rem;
+        border: 1px solid #e2e8f0;
+        margin-bottom: 1.25rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
     }
-    .mod-header p { color: rgba(255,255,255,0.8); margin-bottom: 0; font-size: 0.92rem; }
+    .mod-hero-left {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .mod-hero-title {
+        margin: 0;
+        font-weight: 500;
+        font-size: 1.05rem;
+        color: #3F67AC;
+    }
+    .mod-hero-divider {
+        width: 1px;
+        height: 22px;
+        background-color: #cbd5e1;
+    }
+    .mod-hero-breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        font-size: 0.85rem;
+        color: #64748b;
+    }
+    .mod-hero-breadcrumb i.bi-chevron-right {
+        font-size: 0.65rem;
+        color: #94a3b8;
+    }
+    .mod-hero-right {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .mod-hero-btn {
+        background: #238b71ff;
+        color: #ffffff;
+        border: none;
+        border-radius: 0.45rem;
+        padding: 0.55rem 1.1rem;
+        font-size: 0.88rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        cursor: pointer;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+        transition: all 0.25s ease;
+    }
+    .mod-hero-btn:hover {
+        background: #5cad99ff;
+        box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
+        transform: translateY(-1px);
+    }
+    .mod-hero-btn.active {
+        background: #238b71ff;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    }
+    .mod-hero-btn.outline {
+        background: #ffffff;
+        color: #334155;
+        border: 1px solid #d0d8e2;
+        box-shadow: none;
+    }
+    .mod-hero-btn.outline:hover {
+        background: #f8fafc;
+        border-color: #94a3b8;
+        box-shadow: none;
+        transform: translateY(-1px);
+    }
+    .mod-hero-btn .badge {
+        font-size: 0.65rem;
+        padding: 0.2em 0.5em;
+        border-radius: 10px;
+    }
 
     .mod-stat-card {
         border: 1px solid #d9e1eb;
@@ -84,13 +162,6 @@ $timeAgo = static function ($dateStr): string {
     .mod-empty-title { color: #0f172a; font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; }
     .mod-empty-desc { color: #3F67AC; max-width: 480px; margin: 0 auto; font-size: 0.9rem; }
 
-    .mod-tab-btn {
-        background: rgba(255,255,255,0.13); color: #fff; border: 1px solid rgba(255,255,255,0.16);
-        font-size: 0.82rem; font-weight: 600; border-radius: 0.45rem; padding: 0.4rem 0.9rem;
-        transition: background 0.15s;
-    }
-    .mod-tab-btn:hover, .mod-tab-btn.active { background: rgba(255,255,255,0.22); color: #fff; border-color: rgba(255,255,255,0.3); }
-
     .mod-reason-badge {
         display: inline-flex; align-items: center; gap: 4px;
         padding: 3px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 600;
@@ -104,27 +175,55 @@ $timeAgo = static function ($dateStr): string {
         font-size: 0.82rem;
     }
     .mod-action-btn:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+
+    /* ── Clickable row + content preview ── */
+    .mod-table tbody tr.mod-row-main { cursor: pointer; }
+    .mod-table tbody tr.mod-row-main:hover td { background: #f1f5f9; }
+    .mod-row-detail { display: none; }
+    .mod-row-detail.open { display: table-row; }
+    .mod-content-card {
+        background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.5rem;
+        padding: 0.75rem 1rem; font-size: 0.84rem; color: #334155;
+    }
+    .mod-content-card .mod-content-label {
+        font-size: 0.72rem; font-weight: 700; color: #64748b; text-transform: uppercase;
+        letter-spacing: 0.03em; margin-bottom: 0.3rem; display: flex; align-items: center; gap: 0.3rem;
+    }
+    .mod-content-card .mod-content-title {
+        font-weight: 700; color: #0f172a; font-size: 0.9rem; margin-bottom: 0.25rem;
+    }
+    .mod-content-card .mod-content-body {
+        color: #475569; line-height: 1.5; word-break: break-word;
+    }
+    .mod-unit-badge {
+        display: inline-flex; align-items: center; gap: 3px;
+        background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe;
+        border-radius: 0.35rem; padding: 2px 8px; font-size: 0.78rem; font-weight: 600;
+    }
 </style>
 
-<!-- Header -->
-<div class="mod-header mb-4">
-    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
-        <div>
-            <h4 class="mb-1 fw-bold"><i class="bi bi-shield-exclamation me-2"></i>Moderación de Contenido</h4>
-            <p>Apple Guideline 1.2 — Reportes y bloqueos de usuarios de la comunidad</p>
+<!-- Header (same style as Calendar hero) -->
+<div class="mod-hero">
+    <div class="mod-hero-left">
+        <h2 class="mod-hero-title">Moderación</h2>
+        <div class="mod-hero-divider"></div>
+        <div class="mod-hero-breadcrumb">
+            <i class="bi bi-shield-exclamation"></i>
+            <i class="bi bi-chevron-right"></i>
+            Moderación de Contenido
         </div>
-        <div class="d-flex gap-2">
-            <button class="mod-tab-btn active" onclick="showTab('reports', this)">
-                <i class="bi bi-flag me-1"></i>Reportes
-                <?php if ($pendingReports > 0): ?>
-                    <span class="badge bg-danger ms-1" style="font-size:0.65rem;"><?= $pendingReports ?></span>
-                <?php endif; ?>
-            </button>
-            <button class="mod-tab-btn" onclick="showTab('blocks', this)">
-                <i class="bi bi-person-x me-1"></i>Bloqueos
-                <span class="badge bg-light text-dark ms-1" style="font-size:0.65rem;"><?= $totalBlocks ?></span>
-            </button>
-        </div>
+    </div>
+    <div class="mod-hero-right">
+        <button class="mod-hero-btn active" onclick="showTab('reports', this)">
+            <i class="bi bi-flag"></i> Reportes
+            <?php if ($pendingReports > 0): ?>
+                <span class="badge bg-danger"><?= $pendingReports ?></span>
+            <?php endif; ?>
+        </button>
+        <button class="mod-hero-btn outline" onclick="showTab('blocks', this)">
+            <i class="bi bi-person-x"></i> Bloqueos
+            <span class="badge bg-secondary"><?= $totalBlocks ?></span>
+        </button>
     </div>
 </div>
 
@@ -230,7 +329,9 @@ $timeAgo = static function ($dateStr): string {
                         <tr>
                             <th style="width:45px">#</th>
                             <th>Reportado por</th>
+                            <th>Unidad</th>
                             <th>Usuario reportado</th>
+                            <th>Unidad</th>
                             <th>Motivo</th>
                             <th>Tipo</th>
                             <th>Estado</th>
@@ -261,14 +362,44 @@ $timeAgo = static function ($dateStr): string {
                                 $typeIcon  = !empty($r['comment_id']) ? 'bi-chat-dots' : 'bi-megaphone';
                                 $reporterName = trim(($r['reporter_first_name'] ?? '') . ' ' . ($r['reporter_last_name'] ?? '')) ?: 'Anónimo';
                                 $reportedName = trim(($r['reported_first_name'] ?? '') . ' ' . ($r['reported_last_name'] ?? '')) ?: 'N/A';
+                                $reporterUnit = $r['reporter_unit'] ?? '';
+                                $reportedUnit = $r['reported_unit'] ?? '';
+                                // Contenido reportado
+                                if (!empty($r['comment_id']) && !empty($r['comment_content'])) {
+                                    $reportedContent = strip_tags($r['comment_content']);
+                                    $reportedContentTitle = $r['announcement_title'] ?? '';
+                                    $reportedContentType = 'Comentario';
+                                } elseif (!empty($r['announcement_id'])) {
+                                    $reportedContent = strip_tags($r['announcement_content'] ?? '');
+                                    $reportedContentTitle = $r['announcement_title'] ?? '';
+                                    $reportedContentType = 'Publicación';
+                                } else {
+                                    $reportedContent = '';
+                                    $reportedContentTitle = '';
+                                    $reportedContentType = '';
+                                }
                             ?>
-                            <tr data-search="<?= strtolower($reporterName . ' ' . $reportedName . ' ' . $reasonMeta['label'] . ' ' . $statusMeta['label']) ?>">
+                            <tr class="mod-row-main" data-report-id="<?= $r['id'] ?>" data-search="<?= strtolower($reporterName . ' ' . $reportedName . ' ' . $reporterUnit . ' ' . $reportedUnit . ' ' . $reasonMeta['label'] . ' ' . $statusMeta['label']) ?>" onclick="toggleDetail(<?= $r['id'] ?>)">
                                 <td class="text-muted fw-semibold"><?= esc((string)$r['id']) ?></td>
                                 <td>
                                     <div class="fw-semibold" style="font-size:0.88rem;"><?= esc($reporterName) ?></div>
                                 </td>
                                 <td>
+                                    <?php if ($reporterUnit): ?>
+                                        <span class="mod-unit-badge"><i class="bi bi-building"></i> <?= esc($reporterUnit) ?></span>
+                                    <?php else: ?>
+                                        <span class="text-muted" style="font-size:0.78rem;">—</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
                                     <div class="fw-semibold" style="color:#ef4444; font-size:0.88rem;"><?= esc($reportedName) ?></div>
+                                </td>
+                                <td>
+                                    <?php if ($reportedUnit): ?>
+                                        <span class="mod-unit-badge"><i class="bi bi-building"></i> <?= esc($reportedUnit) ?></span>
+                                    <?php else: ?>
+                                        <span class="text-muted" style="font-size:0.78rem;">—</span>
+                                    <?php endif; ?>
                                 </td>
                                 <td>
                                     <span class="mod-reason-badge" style="background:<?= $reasonMeta['bg'] ?>; color:<?= $reasonMeta['color'] ?>;">
@@ -317,16 +448,32 @@ $timeAgo = static function ($dateStr): string {
                                     <?php endif; ?>
                                 </td>
                             </tr>
-                            <?php if (!empty($r['description'])): ?>
-                                <tr data-search="<?= strtolower($r['description']) ?>">
-                                    <td></td>
-                                    <td colspan="7" class="pt-0 pb-2" style="border-bottom:none;">
-                                        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:0.4rem; padding:0.5rem 0.8rem; font-size:0.82rem; color:#475569;">
+                            <tr class="mod-row-detail" id="detail-<?= $r['id'] ?>">
+                                <td></td>
+                                <td colspan="9" class="pt-0 pb-3" style="border-bottom:none;">
+                                    <?php if (!empty($r['description'])): ?>
+                                        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:0.4rem; padding:0.5rem 0.8rem; font-size:0.82rem; color:#475569; margin-bottom:0.5rem;">
                                             <i class="bi bi-chat-quote me-1 text-muted"></i><?= esc($r['description']) ?>
                                         </div>
-                                    </td>
-                                </tr>
-                            <?php endif; ?>
+                                    <?php endif; ?>
+                                    <?php if (!empty($reportedContent)): ?>
+                                        <div class="mod-content-card">
+                                            <div class="mod-content-label">
+                                                <i class="bi bi-<?= $reportedContentType === 'Comentario' ? 'chat-dots' : 'megaphone' ?>"></i>
+                                                Contenido reportado (<?= $reportedContentType ?>)
+                                            </div>
+                                            <?php if ($reportedContentTitle): ?>
+                                                <div class="mod-content-title"><?= esc($reportedContentTitle) ?></div>
+                                            <?php endif; ?>
+                                            <div class="mod-content-body"><?= esc(mb_strimwidth($reportedContent, 0, 800, '…')) ?></div>
+                                        </div>
+                                    <?php else: ?>
+                                        <div class="mod-content-card" style="color:#94a3b8; font-style:italic;">
+                                            <i class="bi bi-info-circle me-1"></i>Contenido no disponible o eliminado.
+                                        </div>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
                         <?php endforeach; ?>
                     </tbody>
                 </table>
@@ -403,8 +550,12 @@ $timeAgo = static function ($dateStr): string {
 function showTab(tab, btn) {
     document.getElementById('panel-reports').style.display = tab === 'reports' ? '' : 'none';
     document.getElementById('panel-blocks').style.display  = tab === 'blocks'  ? '' : 'none';
-    document.querySelectorAll('.mod-tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.mod-hero-btn').forEach(b => {
+        b.classList.remove('active');
+        b.classList.add('outline');
+    });
     btn.classList.add('active');
+    btn.classList.remove('outline');
 }
 
 function filterTable(tableId, query) {
@@ -414,6 +565,13 @@ function filterTable(tableId, query) {
         const search = row.getAttribute('data-search') || '';
         row.style.display = !q || search.includes(q) ? '' : 'none';
     });
+}
+
+function toggleDetail(reportId) {
+    // Don't toggle if clicking action buttons/forms
+    if (event && (event.target.closest('form') || event.target.closest('.mod-action-btn'))) return;
+    const detail = document.getElementById('detail-' + reportId);
+    if (detail) detail.classList.toggle('open');
 }
 </script>
 
