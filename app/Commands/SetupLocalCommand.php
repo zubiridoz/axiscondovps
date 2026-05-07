@@ -48,33 +48,10 @@ class SetupLocalCommand extends BaseCommand
             return;
         }
 
-        // 3. Resumen y Credenciales de Operador
+        // 3. Resumen
         CLI::write("\n==================================================", "yellow");
         CLI::write("  AXISCONDO ESTÁ LISTO PARA NAVEGAR ", "white", "green");
         CLI::write("==================================================", "yellow");
-        
-        CLI::write("\nCredenciales Maestras de Acceso:", "yellow");
-        
-        CLI::write("\n👔 SUPERADMIN (SaaS Owner):");
-        CLI::write("Usuario:   superadmin@axiscondo.local");
-        CLI::write("Password:  password123");
-        CLI::write("URL:       /condominet26/superadmin/dashboard");
-
-        CLI::write("\n🏢 ADMIN DEL CONDOMINIO DEMO:");
-        CLI::write("Usuario:   admin@demo.com");
-        CLI::write("Password:  password123");
-        CLI::write("URL:       /condominet26/admin/dashboard");
-
-        CLI::write("\n👤 RESIDENTE PWA (Unidad A101):");
-        CLI::write("Usuario:   resident@demo.com");
-        CLI::write("Password:  password123");
-        CLI::write("URL:       /condominet26/pwa/resident/login.html");
-
-        CLI::write("\n👮 GUARDIA PWA CASETA:");
-        CLI::write("Usuario:   guard@demo.com");
-        CLI::write("Password:  password123");
-        CLI::write("URL:       /condominet26/pwa/security/login.html");
-
-        CLI::write("\n!A probar todos los flujos de código!\n");
+        CLI::write("\nSetup completado. Revisa el Seeder para las credenciales de acceso.\n");
     }
 }

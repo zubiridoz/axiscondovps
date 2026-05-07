@@ -203,7 +203,7 @@
                         <label class="form-label">Correo Electrónico</label>
                         <div class="input-icon-wrap">
                             <i class="bi bi-envelope field-icon"></i>
-                            <input type="email" name="email" class="form-control" required value="admin@demo.com">
+                            <input type="email" name="email" class="form-control" required value="">
                         </div>
                     </div>
 
@@ -212,7 +212,7 @@
                         <div class="input-icon-wrap">
                             <i class="bi bi-lock field-icon"></i>
                             <div class="input-group-relative" style="width:100%">
-                                <input type="password" name="password" id="login_password" class="form-control" style="padding-left:42px" required value="password123">
+                                <input type="password" name="password" id="login_password" class="form-control" style="padding-left:42px" required value="">
                                 <i class="bi bi-eye password-toggle" onclick="togglePassword('login_password', this)"></i>
                             </div>
                         </div>
