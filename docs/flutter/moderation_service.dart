@@ -1,5 +1,6 @@
 // lib/services/moderation_service.dart
 // Apple Guideline 1.2 — Content Moderation Service
+// ⚠️ REEMPLAZA COMPLETAMENTE tu moderation_service.dart actual
 import 'package:flutter/foundation.dart';
 import 'api_service.dart';
 
@@ -8,7 +9,7 @@ class ModerationService {
   static Set<int> get blockedIds => _blockedIds;
   static bool isBlocked(int userId) => _blockedIds.contains(userId);
 
-  /// Cargar IDs bloqueados al iniciar (fire-and-forget)
+  /// Cargar IDs bloqueados desde el servidor al iniciar
   static Future<void> loadBlockedIds() async {
     try {
       final res = await ApiService.getBlockedUsers();
@@ -25,6 +26,7 @@ class ModerationService {
     }
   }
 
+  /// Reportar contenido al servidor — retorna true si fue exitoso
   static Future<bool> reportContent({
     int? announcementId,
     int? commentId,
@@ -32,39 +34,66 @@ class ModerationService {
     required String reason,
     String? description,
   }) async {
-    final res = await ApiService.reportContent(
-      announcementId: announcementId,
-      commentId: commentId,
-      reportedUserId: reportedUserId,
-      reason: reason,
-      description: description,
-    );
-    return res['status'] == 'success';
-  }
-
-  static Future<bool> blockUser(int blockedUserId) async {
-    final res = await ApiService.blockUser(blockedUserId);
-    if (res['status'] == 'success') {
-      _blockedIds.add(blockedUserId);
-      return true;
+    try {
+      final res = await ApiService.reportContent(
+        announcementId: announcementId,
+        commentId: commentId,
+        reportedUserId: reportedUserId,
+        reason: reason,
+        description: description,
+      );
+      debugPrint('[ModerationService] reportContent response: $res');
+      return res['status'] == 'success';
+    } catch (e) {
+      debugPrint('[ModerationService] reportContent error: $e');
+      return false;
     }
-    return false;
   }
 
-  static Future<bool> unblockUser(int blockedUserId) async {
-    final res = await ApiService.unblockUser(blockedUserId);
-    if (res['status'] == 'success') {
-      _blockedIds.remove(blockedUserId);
-      return true;
+  /// Bloquear usuario en el servidor + cache local — retorna true si fue exitoso
+  static Future<bool> blockUser(int userId) async {
+    try {
+      final res = await ApiService.blockUser(userId);
+      debugPrint('[ModerationService] blockUser response: $res');
+      if (res['status'] == 'success') {
+        _blockedIds.add(userId);
+        return true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('[ModerationService] blockUser error: $e');
+      return false;
     }
-    return false;
   }
 
+  /// Desbloquear usuario en el servidor + quitar del cache local
+  static Future<bool> unblockUser(int userId) async {
+    try {
+      final res = await ApiService.unblockUser(userId);
+      debugPrint('[ModerationService] unblockUser response: $res');
+      if (res['status'] == 'success') {
+        _blockedIds.remove(userId);
+        return true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('[ModerationService] unblockUser error: $e');
+      return false;
+    }
+  }
+
+  /// Obtener lista completa de usuarios bloqueados (para la pantalla de gestión)
   static Future<List<Map<String, dynamic>>> getBlockedUsersList() async {
-    final res = await ApiService.getBlockedUsers();
-    if (res['status'] == 'success') {
-      return List<Map<String, dynamic>>.from(res['data']?['blocked_users'] ?? []);
+    try {
+      final res = await ApiService.getBlockedUsers();
+      if (res['status'] == 'success') {
+        final list = res['data']?['blocked_users'] ?? [];
+        return List<Map<String, dynamic>>.from(list);
+      }
+      return [];
+    } catch (e) {
+      debugPrint('[ModerationService] getBlockedUsersList error: $e');
+      return [];
     }
-    return [];
   }
 }

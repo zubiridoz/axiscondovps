@@ -70,24 +70,25 @@ class ModerationController extends ResourceController
         }
 
         // Verificar duplicados (mismo usuario, mismo target, misma razón)
-        $reportModel = new ContentReportModel();
-        $existing = $reportModel
-            ->where('reporter_user_id', $userId)
-            ->where('reason', $reason);
+        $checkModel = new ContentReportModel();
+        $checkModel->where('reporter_user_id', $userId)
+                   ->where('reason', $reason);
 
         if ($announcementId) {
-            $existing->where('announcement_id', $announcementId);
+            $checkModel->where('announcement_id', $announcementId);
         }
         if ($commentId) {
-            $existing->where('comment_id', $commentId);
+            $checkModel->where('comment_id', $commentId);
         }
 
-        if ($existing->countAllResults() > 0) {
+        if ($checkModel->countAllResults() > 0) {
             // Silently accept duplicate — no error to user
             return $this->respondSuccess(['message' => 'Reporte enviado. Gracias por ayudar a mantener la comunidad segura.']);
         }
 
-        $reportModel->insert([
+        // Usar instancia FRESCA para el insert
+        $insertModel = new ContentReportModel();
+        $insertData = [
             'reporter_user_id' => $userId,
             'reported_user_id' => $reportedUserId,
             'announcement_id'  => $announcementId,
@@ -95,7 +96,14 @@ class ModerationController extends ResourceController
             'reason'           => $reason,
             'description'      => trim((string)($json['description'] ?? '')) ?: null,
             'status'           => 'pending',
-        ]);
+        ];
+
+        $inserted = $insertModel->insert($insertData);
+        if (!$inserted) {
+            log_message('error', '[MODERATION] Insert failed. Errors: ' . json_encode($insertModel->errors()) . ' Data: ' . json_encode($insertData));
+            return $this->respondError('No se pudo guardar el reporte. Intenta de nuevo.', 500);
+        }
+        log_message('info', '[MODERATION] Report saved ID=' . $inserted . ' by user=' . $userId);
 
         // Notificar administradores del condominio
         $this->notifyAdminsOfReport($userId, $reason, $announcementId, $commentId);
