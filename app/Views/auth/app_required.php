@@ -33,7 +33,7 @@
 
         /* Lado izquierdo (Panel azul oscuro) */
         .left-panel {
-            background: radial-gradient(circle at top left, #2c4251, #0f172a 80%);
+            background: radial-gradient(circle at top left, #0d5dd4ff, #104e96ff 80%);
             color: #ffffff;
             width: 45%;
             display: flex;
@@ -50,7 +50,7 @@
         .left-panel::after {
             content: '';
             position: absolute;
-            background: rgba(255, 255, 255, 0.03);
+            background: rgba(35, 95, 224, 0.82);
             border-radius: 50%;
             filter: blur(60px);
             z-index: 0;
@@ -155,7 +155,7 @@
             border-radius: 12px;
             text-decoration: none;
             transition: all 0.2s ease;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            box-shadow: 0 4px 6px -1px rgba(18, 97, 216, 0.1), 0 2px 4px -1px rgba(48, 107, 235, 0.06);
         }
 
         .store-btn:hover {
@@ -276,14 +276,14 @@
                 </p>
 
                 <div class="store-buttons">
-                    <a href="#" class="store-btn">
+                    <a href="https://apps.apple.com/us/app/axiscondo/id6766423248" class="store-btn">
                         <i class="bi bi-apple"></i>
                         <div class="store-text">
                             <small>Descárgalo en la</small>
                             <strong>App Store</strong>
                         </div>
                     </a>
-                    <a href="#" class="store-btn" style="background-color: #1a73e8;">
+                    <a href="https://play.google.com/store/apps/details?id=com.axiscondo.guardias" class="store-btn" style="background-color: #03875F;">
                         <i class="bi bi-google-play"></i>
                         <div class="store-text">
                             <small>DISPONIBLE EN</small>
