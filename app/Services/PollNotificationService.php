@@ -104,13 +104,23 @@ class PollNotificationService
         $name = $user ? trim(($user['first_name'] ?? '') . ' ' . ($user['last_name'] ?? '')) : 'Usuario';
 
         $unitName = 'Sin unidad';
-        $residentModel = new ResidentModel();
-        $res = $residentModel->where('user_id', $userId)->first();
-        if ($res && !empty($res['unit_id'])) {
+        $ctx = \App\Services\ResidentContextService::getInstance();
+        if ($ctx->isResolved() && $ctx->getUnitId()) {
             $unitModel = new UnitModel();
-            $unit = $unitModel->find($res['unit_id']);
+            $unit = $unitModel->find($ctx->getUnitId());
             if ($unit) {
                 $unitName = $unit['unit_number'] ?? $unitName;
+            }
+        } else {
+            // Fallback para CLI/cron sin contexto HTTP
+            $residentModel = new ResidentModel();
+            $res = $residentModel->where('user_id', $userId)->first();
+            if ($res && !empty($res['unit_id'])) {
+                $unitModel = new UnitModel();
+                $unit = $unitModel->find($res['unit_id']);
+                if ($unit) {
+                    $unitName = $unit['unit_number'] ?? $unitName;
+                }
             }
         }
 

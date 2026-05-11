@@ -38,8 +38,8 @@ class DocumentController extends ResourceController
         $folderId = $this->request->getGet('folder_id'); // nullable
         $search = $this->request->getGet('search');
         
-        $residentModel = new ResidentModel();
-        $resident = $residentModel->where('user_id', $userId)->first();
+        $ctx = \App\Services\ResidentContextService::getInstance();
+        $resident = $ctx->getResidentRecord();
         
         if (!$tenantId && $resident) {
             $tenantId = $resident['condominium_id'];
@@ -160,8 +160,8 @@ class DocumentController extends ResourceController
         if (!$userId) return $this->response->setStatusCode(401, 'No autenticado');
 
         $tenantId = \App\Services\TenantService::getInstance()->getTenantId();
-        $residentModel = new ResidentModel();
-        $resident = $residentModel->where('user_id', $userId)->first();
+        $ctx = \App\Services\ResidentContextService::getInstance();
+        $resident = $ctx->getResidentRecord();
         if (!$tenantId && $resident) {
             $tenantId = $resident['condominium_id'];
             \App\Services\TenantService::getInstance()->setTenantId($tenantId);

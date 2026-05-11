@@ -195,6 +195,36 @@ class ApiAuthFilter implements FilterInterface
         self::$validatedPivots[$cacheKey] = true;
         \App\Services\TenantService::getInstance()->setTenantId($condoId);
         @$request->user_condominio_id = $condoId;
+
+        // ═══════════════════════════════════════════════
+        // PASO 3: Resolver Resident Context (multi-unidad)
+        // ═══════════════════════════════════════════════
+        $rawUnitHeader = $request->getHeaderLine('X-Unit-Id');
+        $requestedUnitId = null;
+
+        if (!empty($rawUnitHeader)) {
+            if (!is_numeric($rawUnitHeader) || (int) $rawUnitHeader <= 0) {
+                log_message('warning', "[RESIDENT_CTX] Header X-Unit-Id inválido: '{$rawUnitHeader}' | user={$userId}");
+                return $this->rejectBadRequest('X-Unit-Id debe ser un entero positivo, recibido: ' . $rawUnitHeader);
+            }
+            $requestedUnitId = (int) $rawUnitHeader;
+        }
+
+        // Resolver contexto del residente (valida pertenencia de X-Unit-Id)
+        $ctxService = \App\Services\ResidentContextService::getInstance();
+        $ctxResult = $ctxService->resolve($userId, $condoId, $requestedUnitId);
+
+        if (!$ctxResult) {
+            // X-Unit-Id no pertenece a este usuario en este condominio → 403 limpio
+            log_message('warning', "[SECURITY] X-Unit-Id={$requestedUnitId} rechazado para user={$userId} condo={$condoId}");
+            return response()
+                ->setJSON([
+                    'success' => false,
+                    'message' => 'La unidad seleccionada no pertenece a tu cuenta en este condominio.',
+                    'code'    => 'INVALID_UNIT'
+                ])
+                ->setStatusCode(403);
+        }
     }
 
     /**

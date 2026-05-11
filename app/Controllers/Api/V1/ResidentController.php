@@ -54,9 +54,8 @@ class ResidentController extends ResourceController
             return $this->respondError('Usuario no encontrado', 404);
         }
 
-        // Obtener datos del residente en ESTE condominio
-        $residentModel = new ResidentModel();
-        $residentData = $residentModel->where('user_id', $userId)->first();
+        // Obtener datos del residente en ESTE condominio (usa unidad activa del contexto)
+        $residentData = \App\Services\ResidentContextService::getInstance()->getResidentRecord();
 
         // Obtener Condominio y Unidad (importante para PWA/Flutter)
         $db = \Config\Database::connect();
@@ -99,9 +98,9 @@ class ResidentController extends ResourceController
         $userId = $this->request->userId ?? null;
         if (!$userId) return $this->respondError('Usuario no autenticado', 401);
 
-        $residentModel = new ResidentModel();
-        $resident = $residentModel->where('user_id', $userId)->first();
-        $unitId = $resident['unit_id'] ?? null;
+        $ctx = \App\Services\ResidentContextService::getInstance();
+        $resident = $ctx->getResidentRecord();
+        $unitId = $ctx->getUnitId();
 
         $db = \Config\Database::connect();
 
@@ -454,10 +453,8 @@ class ResidentController extends ResourceController
         $userId = $this->request->userId ?? null;
         if (!$userId) return $this->respondError('No Autorizado', 401);
 
-        // Resolver la unidad ACTUAL del residente para aislar datos por unidad
-        $residentModel = new ResidentModel();
-        $resident = $residentModel->where('user_id', $userId)->first();
-        $currentUnitId = $resident['unit_id'] ?? null;
+        // Resolver la unidad ACTUAL del residente (usa contexto centralizado)
+        $currentUnitId = \App\Services\ResidentContextService::getInstance()->getUnitId();
 
         $qrModel = new \App\Models\Tenant\QrCodeModel();
         $builder = $qrModel->select('qr_codes.*, units.unit_number')
@@ -534,10 +531,9 @@ class ResidentController extends ResourceController
             return $this->respondError('El nombre del visitante es obligatorio.');
         }
 
-        // Resolver la unidad: admins pueden elegir, residentes usan la propia
-        $residentModel = new ResidentModel();
-        $resident = $residentModel->where('user_id', $userId)->first();
-        $unitId = $resident['unit_id'] ?? null;
+        // Resolver la unidad: admins pueden elegir, residentes usan la propia (contexto centralizado)
+        $ctx = \App\Services\ResidentContextService::getInstance();
+        $unitId = $ctx->getUnitId();
 
         $db = \Config\Database::connect();
         $tenantId = \App\Services\TenantService::getInstance()->getTenantId();
@@ -716,9 +712,7 @@ class ResidentController extends ResourceController
                       ->where('role_id', 2)
                       ->countAllResults() > 0;
 
-        $residentModel = new ResidentModel();
-        $resident = $residentModel->where('user_id', $userId)->first();
-        $unitId = $resident['unit_id'] ?? null;
+        $unitId = \App\Services\ResidentContextService::getInstance()->getUnitId();
 
         if (!$isAdmin && !$unitId) {
             return $this->respondSuccess([]);

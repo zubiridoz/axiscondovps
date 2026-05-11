@@ -1306,27 +1306,27 @@
 
         function selectUnit(unitId) {
             pickerPanel.style.display = 'none';
-            if (!currentPrimaryResidentId) {
-                Swal.fire({ icon: 'warning', title: 'Aviso', text: 'No se pudo determinar el registro a actualizar.', confirmButtonColor: '#6366f1' });
+            if (!profileUserId) {
+                Swal.fire({ icon: 'warning', title: 'Aviso', text: 'No se pudo determinar el usuario a actualizar.', confirmButtonColor: '#6366f1' });
                 return;
             }
 
             let fd = new FormData();
-            fd.append('resident_id', currentPrimaryResidentId);
+            fd.append('user_id', profileUserId);
             fd.append('unit_id', unitId);
             fd.append('<?= csrf_token() ?>', '<?= csrf_hash() ?>');
 
-            fetch('<?= base_url("admin/residentes/cambiar-unidad") ?>', { method: 'POST', body: fd })
+            fetch('<?= base_url("admin/residentes/agregar-unidad") ?>', { method: 'POST', body: fd })
                 .then(r => r.json())
                 .then(data => {
                     if (data.success) {
-                        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Unidad actualizada', showConfirmButton: false, timer: 2500 });
+                        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Unidad agregada', showConfirmButton: false, timer: 2500 });
                         // Refresh profile to show new unit
                         openManageModal(profileUserId);
                         // Also might want to reload the page in background to update directory
                         setTimeout(() => window.location.reload(), 1500);
                     } else {
-                        Swal.fire({ icon: 'error', title: 'Error', text: data.message || 'Error al cambiar unidad', confirmButtonColor: '#6366f1' });
+                        Swal.fire({ icon: 'error', title: 'Error', text: data.message || 'Error al agregar unidad', confirmButtonColor: '#6366f1' });
                     }
                 }).catch(e => console.error(e));
         }

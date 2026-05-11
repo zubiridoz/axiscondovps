@@ -105,9 +105,7 @@ class AmenityController extends ResourceController
         $userId = $this->request->userId ?? 0;
         $activeReservationsCount = 0;
         if ($userId) {
-            $residentModel = new \App\Models\Tenant\ResidentModel();
-            $resident = $residentModel->where('user_id', $userId)->first();
-            $unitId = $resident['unit_id'] ?? null;
+            $unitId = \App\Services\ResidentContextService::getInstance()->getUnitId();
 
             $bookingModelCount = new BookingModel();
             $bookingModelCount->where('amenity_id', $id)

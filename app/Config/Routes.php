@@ -105,6 +105,7 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin', 'filter' => ['a
     $routes->post('residentes/remover-unidad', 'ResidentController::removeUnitJson');
     $routes->post('residentes/remover-comunidad', 'ResidentController::removeCommunityJson');
     $routes->post('residentes/actualizar-telefono', 'ResidentController::updatePhoneJson');
+    $routes->post('residentes/agregar-unidad', 'ResidentController::addUnitJson');
 
     $routes->get('tickets', 'TicketController::index');
     $routes->get('tickets/panel', 'TicketController::panel');
@@ -416,6 +417,7 @@ $routes->get('api/v1/public/image/(.*)', 'MediaController::image/$1');
 // API Condominiums (Selector + Switch Tenant + Admin Settings)
 $routes->group('api/v1/condominiums', ['namespace' => 'App\Controllers\Api\V1', 'filter' => 'apiauth'], static function($routes) {
     $routes->get('mine', 'CondominiumApiController::mine');
+    $routes->get('my-units', 'CondominiumApiController::myUnits');
     $routes->post('switch', 'CondominiumApiController::switchTenant');
     $routes->options('switch', 'CondominiumApiController::switchTenant');
     // Admin Community Settings

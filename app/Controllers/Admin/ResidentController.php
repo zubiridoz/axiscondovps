@@ -494,4 +494,67 @@ class ResidentController extends BaseController
         }
         return $this->response->setJSON(['success' => false, 'message' => 'Error al actualizar teléfono.'])->setStatusCode(500);
     }
+
+    /**
+     * POST /admin/residentes/agregar-unidad
+     * Agrega una NUEVA unidad a un residente existente (crea nuevo row en residents).
+     * Esto permite que un usuario sea dueño/inquilino de múltiples unidades.
+     */
+    public function addUnitJson()
+    {
+        $userId = $this->request->getPost('user_id');
+        $unitId = $this->request->getPost('unit_id');
+        $type   = $this->request->getPost('type') ?? 'owner';
+
+        if (!$userId || !$unitId) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Datos incompletos.'])->setStatusCode(400);
+        }
+
+        if (!in_array($type, ['owner', 'tenant'])) {
+            $type = 'owner';
+        }
+
+        $demoCondo = (new \App\Models\Tenant\CondominiumModel())->first();
+        if (!$demoCondo) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Condominio no encontrado'])->setStatusCode(404);
+        }
+
+        // Validar que NO exista duplicado user_id + unit_id + condominium_id
+        $residentModel = new ResidentModel();
+        $existing = $residentModel
+            ->where('user_id', $userId)
+            ->where('unit_id', $unitId)
+            ->where('condominium_id', $demoCondo['id'])
+            ->first();
+
+        if ($existing) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Este residente ya está asignado a esa unidad.'])->setStatusCode(409);
+        }
+
+        // Validar que la unidad existe en este condominio
+        $unitModel = new \App\Models\Tenant\UnitModel();
+        $unit = $unitModel->where('id', $unitId)->where('condominium_id', $demoCondo['id'])->first();
+        if (!$unit) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Unidad no encontrada en este condominio.'])->setStatusCode(404);
+        }
+
+        // Crear nuevo registro (NO sobrescribe el existente)
+        $newResidentId = $residentModel->insert([
+            'user_id'        => $userId,
+            'unit_id'        => $unitId,
+            'condominium_id' => $demoCondo['id'],
+            'type'           => $type,
+            'is_active'      => 1,
+        ]);
+
+        if (!$newResidentId) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Error al agregar unidad.'])->setStatusCode(500);
+        }
+
+        return $this->response->setJSON([
+            'success' => true,
+            'message' => 'Unidad agregada exitosamente.',
+            'resident_id' => $newResidentId
+        ]);
+    }
 }

@@ -33,12 +33,11 @@ class TicketApiController extends ResourceController
     }
 
     /**
-     * Resolve current resident's unit_id for data isolation
+     * Resolve current resident's unit_id for data isolation (uses centralized context)
      */
     private function resolveResident(int $userId): ?array
     {
-        $residentModel = new ResidentModel();
-        return $residentModel->where('user_id', $userId)->first();
+        return \App\Services\ResidentContextService::getInstance()->getResidentRecord();
     }
 
     /**

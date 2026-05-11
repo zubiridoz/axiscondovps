@@ -92,6 +92,55 @@ class CondominiumApiController extends ResourceController
     }
 
     /**
+     * GET /api/v1/condominiums/my-units
+     * 
+     * Retorna las unidades del usuario autenticado en el condominio activo.
+     * Se usa para el selector de unidades en el Drawer de Flutter.
+     */
+    public function myUnits()
+    {
+        $userId = (int) $this->request->getHeaderLine('X-Auth-UserId');
+        if (!$userId) {
+            return $this->failUnauthorized('No se pudo identificar al usuario.');
+        }
+
+        $condoId = \App\Services\TenantService::getInstance()->getTenantId();
+        if (!$condoId) {
+            return $this->respond([
+                'status' => 'success',
+                'data'   => ['units' => [], 'current_unit_id' => null]
+            ]);
+        }
+
+        $db = \Config\Database::connect();
+        $units = $db->table('residents r')
+            ->select('r.id as resident_id, r.unit_id, r.type, r.is_active, u.unit_number, s.name as section_name')
+            ->join('units u', 'u.id = r.unit_id')
+            ->join('sections s', 's.id = u.section_id', 'left')
+            ->where('r.user_id', $userId)
+            ->where('r.condominium_id', $condoId)
+            ->where('r.is_active', 1)
+            ->orderBy('u.unit_number', 'ASC')
+            ->get()->getResultArray();
+
+        // Determinar unidad activa desde ResidentContextService
+        $ctx = \App\Services\ResidentContextService::getInstance();
+        $currentUnitId = $ctx->isResolved() ? $ctx->getUnitId() : null;
+
+        if (!$currentUnitId && !empty($units)) {
+            $currentUnitId = (int) $units[0]['unit_id'];
+        }
+
+        return $this->respond([
+            'status' => 'success',
+            'data'   => [
+                'units'           => $units,
+                'current_unit_id' => $currentUnitId,
+            ]
+        ]);
+    }
+
+    /**
      * Switch Tenant (STATELESS)
      * 
      * Valida que el usuario pertenece al condominio solicitado y retorna

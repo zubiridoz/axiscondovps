@@ -51,10 +51,9 @@ class TicketController extends ResourceController
             return $this->respondError('Asunto y descripción son obligatorios');
         }
 
-        // Determinar unidad originaria
-        $residentModel = new ResidentModel();
-        $resident = $residentModel->where('user_id', $userId)->first();
-        $unitId = $resident ? $resident['unit_id'] : null;
+        // Determinar unidad originaria (contexto centralizado)
+        $ctx = \App\Services\ResidentContextService::getInstance();
+        $unitId = $ctx->getUnitId();
 
         $ticketModel = new TicketModel();
         $ticketId = $ticketModel->insert([

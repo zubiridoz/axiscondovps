@@ -33,10 +33,8 @@ class BookingController extends ResourceController
     {
         $userId = $this->request->userId;
         
-        // Resolver la unidad ACTUAL del residente para aislar datos
-        $residentModel = new ResidentModel();
-        $resident = $residentModel->where('user_id', $userId)->first();
-        $currentUnitId = $resident['unit_id'] ?? null;
+        // Resolver la unidad ACTUAL del residente (contexto centralizado)
+        $currentUnitId = \App\Services\ResidentContextService::getInstance()->getUnitId();
 
         $bookingModel = new BookingModel();
         
@@ -65,10 +63,8 @@ class BookingController extends ResourceController
     {
         $userId = $this->request->userId;
         
-        // Resolver la unidad ACTUAL del residente para aislar datos
-        $residentModel = new ResidentModel();
-        $resident = $residentModel->where('user_id', $userId)->first();
-        $currentUnitId = $resident['unit_id'] ?? null;
+        // Resolver la unidad ACTUAL del residente (contexto centralizado)
+        $currentUnitId = \App\Services\ResidentContextService::getInstance()->getUnitId();
 
         $bookingModel = new BookingModel();
         
@@ -110,8 +106,8 @@ class BookingController extends ResourceController
 
         $isAdmin = $userRole && ((int)($userRole['role_id'] ?? 0) === 2);
 
-        $residentModel = new ResidentModel();
-        $resident = $residentModel->where('user_id', $userId)->first();
+        $ctx = \App\Services\ResidentContextService::getInstance();
+        $resident = $ctx->getResidentRecord();
 
         // Leer input
         $json = $this->request->getJSON(true);

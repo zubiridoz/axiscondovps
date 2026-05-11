@@ -140,8 +140,7 @@ class FinanceController extends ResourceController
 
         $tenantId = \App\Services\TenantService::getInstance()->getTenantId();
         
-        $residentModel = new ResidentModel();
-        $resident = $residentModel->where('user_id', $userId)->first();
+        $resident = \App\Services\ResidentContextService::getInstance()->getResidentRecord();
         if (!$resident) return $this->respondError('Residente no encontrado', 404);
 
         $month = (int) ($this->request->getGet('month') ?: 0);
@@ -245,7 +244,7 @@ class FinanceController extends ResourceController
             'status' => $paymentStatus // 'approved' or 'pending' depending on settings
         ]);
 
-        $resident = $residentModel->where('user_id', $userId)->first();
+        $resident = \App\Services\ResidentContextService::getInstance()->getResidentRecord();
         $unit = $db->table('units')->where('id', $unitId)->get()->getRowArray();
         $unitName = $unit ? $unit['unit_number'] : 'Desconocida';
         
@@ -407,8 +406,7 @@ class FinanceController extends ResourceController
         }
 
         if (!$isAdmin) {
-            $residentModel = new ResidentModel();
-            $resident = $residentModel->where('user_id', $userId)->first();
+            $resident = \App\Services\ResidentContextService::getInstance()->getResidentRecord();
             if (!$resident) return $this->respondError('Residente no encontrado', 404);
         }
 
@@ -584,8 +582,7 @@ class FinanceController extends ResourceController
         $condoModel = new CondominiumModel();
         $condo = $condoModel->find($tenantId);
 
-        $residentModel = new ResidentModel();
-        $resident = $residentModel->where('user_id', $userId)->first();
+        $resident = \App\Services\ResidentContextService::getInstance()->getResidentRecord();
 
         if (!$resident) return $this->respondError('Residente no encontrado', 404);
 
@@ -769,8 +766,7 @@ class FinanceController extends ResourceController
         }
 
         if (!$isAdmin) {
-            $residentModel = new ResidentModel();
-            $resident = $residentModel->where('user_id', $userId)->first();
+            $resident = \App\Services\ResidentContextService::getInstance()->getResidentRecord();
             if (!$resident) return $this->respondError('Residente no encontrado', 404);
 
             // Verificar acceso comunitario
@@ -953,8 +949,7 @@ class FinanceController extends ResourceController
         }
 
         if (!$isAdmin) {
-            $residentModel = new ResidentModel();
-            $resident = $residentModel->where('user_id', $userId)->first();
+            $resident = \App\Services\ResidentContextService::getInstance()->getResidentRecord();
             if (!$resident) return $this->respondError('Residente no encontrado', 404);
         }
 
@@ -998,8 +993,7 @@ class FinanceController extends ResourceController
         $tenantId = \App\Services\TenantService::getInstance()->getTenantId();
 
         // Verificar que la transacción existe y pertenece a una unidad del residente
-        $residentModel = new ResidentModel();
-        $resident = $residentModel->where('user_id', $userId)->first();
+        $resident = \App\Services\ResidentContextService::getInstance()->getResidentRecord();
         if (!$resident) return $this->respondError('Residente no encontrado', 404);
 
         $db = \Config\Database::connect();
@@ -1099,8 +1093,7 @@ class FinanceController extends ResourceController
         $userId = $this->request->userId ?? null;
         if (!$userId) return $this->respondError('No autenticado', 401);
 
-        $residentModel = new ResidentModel();
-        $resident = $residentModel->where('user_id', $userId)->first();
+        $resident = \App\Services\ResidentContextService::getInstance()->getResidentRecord();
         if (!$resident) return $this->respondError('Residente no encontrado', 404);
 
         $unitId = $resident['unit_id'];
@@ -1122,8 +1115,7 @@ class FinanceController extends ResourceController
         $userId = $this->request->userId ?? null;
         if (!$userId) return $this->respondError('No autenticado', 401);
 
-        $residentModel = new ResidentModel();
-        $resident = $residentModel->where('user_id', $userId)->first();
+        $resident = \App\Services\ResidentContextService::getInstance()->getResidentRecord();
         if (!$resident) return $this->respondError('Residente no encontrado', 404);
 
         // Verificar que la transacción pertenece a la unidad del residente

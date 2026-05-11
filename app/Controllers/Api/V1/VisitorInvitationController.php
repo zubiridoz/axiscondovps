@@ -31,10 +31,8 @@ class VisitorInvitationController extends ResourceController
     {
         $userId = $this->request->userId;
         
-        // Resolver la unidad ACTUAL del residente para aislar datos por unidad
-        $residentModel = new ResidentModel();
-        $resident = $residentModel->where('user_id', $userId)->first();
-        $currentUnitId = $resident['unit_id'] ?? null;
+        // Resolver la unidad ACTUAL del residente (contexto centralizado)
+        $currentUnitId = \App\Services\ResidentContextService::getInstance()->getUnitId();
 
         $invitationModel = new VisitorInvitationModel();
         $builder = $invitationModel->where('created_by', $userId);
@@ -63,11 +61,11 @@ class VisitorInvitationController extends ResourceController
             return $this->respondError('El nombre del visitante es obligatorio');
         }
 
-        // Obtener la unidad por defecto del residente
-        $residentModel = new ResidentModel();
-        $resident = $residentModel->where('user_id', $userId)->first();
+        // Obtener la unidad del residente (contexto centralizado)
+        $ctx = \App\Services\ResidentContextService::getInstance();
+        $resident = $ctx->getResidentRecord();
         
-        if (!$resident || empty($resident['unit_id'])) {
+        if (!$resident || !$ctx->getUnitId()) {
             return $this->respondError('No tienes asiganda una unidad funcional en este condominio', 403);
         }
 

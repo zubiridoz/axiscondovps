@@ -31,10 +31,9 @@ class CalendarController extends ResourceController
      */
     private function getMyUnitUsersIds($userId)
     {
-        $residentModel = new ResidentModel();
-        
-        // 1. Encontrar a qué unidad pertenece el usuario local
-        $myResidentRecord = $residentModel->where('user_id', $userId)->first();
+        // 1. Encontrar a qué unidad pertenece el usuario local (contexto centralizado)
+        $ctx = \App\Services\ResidentContextService::getInstance();
+        $myResidentRecord = $ctx->getResidentRecord();
         if (!$myResidentRecord || !$myResidentRecord['unit_id']) {
             return [$userId]; // Failsafe: solo su propio ID
         }
