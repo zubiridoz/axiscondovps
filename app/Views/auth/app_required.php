@@ -276,7 +276,7 @@
                 </p>
 
                 <div class="store-buttons">
-                    <a href="https://apps.apple.com/us/app/axiscondo/id6766423248" class="store-btn">
+                    <a href="https://apps.apple.com/mx/app/axiscondo/id6766423248" class="store-btn">
                         <i class="bi bi-apple"></i>
                         <div class="store-text">
                             <small>Descárgalo en la</small>

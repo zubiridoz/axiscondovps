@@ -759,9 +759,24 @@
                                         class="nav-link <?= uri_string() == 'admin/residentes/por-asignar' ? 'active' : '' ?>"><i
                                             class="bi bi-circle"></i> Por
                                         Asignar</a></li>
+                                <?php
+                                $__pendingInvCount = 0;
+                                // We fetch the tenant ID locally here in case $__badgeTenantId is defined further down
+                                $__menuTenantId = \App\Services\TenantService::getInstance()->getTenantId();
+                                if ($__menuTenantId) {
+                                    $__pendingInvCount = (new \App\Models\Tenant\ResidentInvitationModel())
+                                        ->where('condominium_id', $__menuTenantId)
+                                        ->where('invitation_status', 'pending')
+                                        ->countAllResults();
+                                }
+                                ?>
                                 <li><a href="<?= base_url('admin/residentes/invitaciones') ?>"
-                                        class="nav-link <?= uri_string() == 'admin/residentes/invitaciones' ? 'active' : '' ?>"><i
-                                            class="bi bi-circle"></i> Invitaciones</a>
+                                        class="nav-link d-flex align-items-center <?= uri_string() == 'admin/residentes/invitaciones' ? 'active' : '' ?>">
+                                        <span><i class="bi bi-circle"></i> Invitaciones</span>
+                                        <?php if ($__pendingInvCount > 0): ?>
+                                            <span class="badge bg-danger rounded-pill ms-auto" style="font-size: 0.6rem;"><?= $__pendingInvCount ?></span>
+                                        <?php endif; ?>
+                                    </a>
                                 </li>
                             </ul>
                         </li>
