@@ -742,12 +742,26 @@
                         </li>
 
                         <!-- Residentes Dropdown -->
+                        <?php
+                        $__pendingInvCount = 0;
+                        // We fetch the tenant ID locally here in case $__badgeTenantId is defined further down
+                        $__menuTenantId = \App\Services\TenantService::getInstance()->getTenantId();
+                        if ($__menuTenantId) {
+                            $__pendingInvCount = (new \App\Models\Tenant\ResidentInvitationModel())
+                                ->where('condominium_id', $__menuTenantId)
+                                ->where('invitation_status', 'pending')
+                                ->countAllResults();
+                        }
+                        ?>
                         <li class="nav-item">
-                            <a href="<?= base_url('admin/residentes') ?>"
+                            <a href="#residentesSub" data-bs-toggle="collapse"
                                 class="nav-link d-flex align-items-center <?= strpos(uri_string(), 'residentes') !== false ? 'active-main' : '' ?>"
                                 data-bs-target="#residentesSub">
                                 <i class="bi bi-people"></i> Residentes
-                                <i class="bi bi-chevron-left chevron"></i>
+                                <?php if ($__pendingInvCount > 0): ?>
+                                    <span class="badge bg-danger rounded-pill ms-auto me-2" style="font-size: 0.6rem;"><?= $__pendingInvCount ?></span>
+                                <?php endif; ?>
+                                <i class="bi bi-chevron-left chevron" <?= ($__pendingInvCount > 0) ? 'style="margin-left: 0;"' : '' ?>></i>
                             </a>
                             <ul class="collapse <?= strpos(uri_string(), 'residentes') !== false ? 'show' : '' ?> submenu"
                                 id="residentesSub" data-bs-parent="#menu">
@@ -759,17 +773,6 @@
                                         class="nav-link <?= uri_string() == 'admin/residentes/por-asignar' ? 'active' : '' ?>"><i
                                             class="bi bi-circle"></i> Por
                                         Asignar</a></li>
-                                <?php
-                                $__pendingInvCount = 0;
-                                // We fetch the tenant ID locally here in case $__badgeTenantId is defined further down
-                                $__menuTenantId = \App\Services\TenantService::getInstance()->getTenantId();
-                                if ($__menuTenantId) {
-                                    $__pendingInvCount = (new \App\Models\Tenant\ResidentInvitationModel())
-                                        ->where('condominium_id', $__menuTenantId)
-                                        ->where('invitation_status', 'pending')
-                                        ->countAllResults();
-                                }
-                                ?>
                                 <li><a href="<?= base_url('admin/residentes/invitaciones') ?>"
                                         class="nav-link d-flex align-items-center <?= uri_string() == 'admin/residentes/invitaciones' ? 'active' : '' ?>">
                                         <span><i class="bi bi-circle"></i> Invitaciones</span>
