@@ -29,7 +29,7 @@ class CreateCondominiumsTable extends Migration
             'currency' => [
                 'type'           => 'VARCHAR',
                 'constraint'     => 3,
-                'default'        => 'USD',
+                'default'        => 'MXN',
             ],
             'timezone' => [
                 'type'           => 'VARCHAR',

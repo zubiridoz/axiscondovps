@@ -1584,7 +1584,7 @@ $community = array_merge([
                         </div>
                         <div>
                             <span
-                                style="color:#64748b; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em; font-weight:500;">RFC</span>
+                                style="color:#64748b; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em; font-weight:500;">Numero de Cuenta</span>
                             <div style="color:#0f172a; font-weight:600; font-size:0.95rem; margin-top:0.25rem; text-transform: uppercase;"
                                 id="displayBankRfc">
                                 <?= esc($community['bank_rfc']) ?: '<span style="color:#94a3b8;">No establecido</span>' ?>
@@ -2245,12 +2245,11 @@ $community = array_merge([
 
                     <div class="mb-0">
                         <label for="inputBankRfc"
-                            style="display: block; font-weight: 600; color: #334155; font-size: 0.85rem; margin-bottom: 0.5rem;">RFC
-                            del Condominio</label>
+                            style="display: block; font-weight: 600; color: #334155; font-size: 0.85rem; margin-bottom: 0.5rem;">Numero de Cuenta</label>
                         <div style="position: relative;">
                             <i class="bi bi-person-badge"
                                 style="position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: #94a3b8;"></i>
-                            <input type="text" class="form-control" id="inputBankRfc" placeholder="RFC" maxlength="13"
+                            <input type="text" class="form-control" id="inputBankRfc" placeholder="Numero de Cuenta" maxlength="30"
                                 value="<?= esc($community['bank_rfc'] ?? '') ?>"
                                 style="padding-left: 2.75rem; height: 3rem; border-radius: 0.6rem; border: 1px solid #e2e8f0; font-size: 0.95rem; text-transform: uppercase;">
                         </div>

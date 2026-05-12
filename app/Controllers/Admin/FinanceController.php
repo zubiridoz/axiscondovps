@@ -3489,7 +3489,7 @@ class FinanceController extends BaseController
             $bankRowsHtml .= '<tr><td width="40%"><font color="#64748b">Cuenta CLABE</font></td><td width="60%"><font color="#059669" size="10.5pt"><b>' . $demoCondo['bank_clabe'] . '</b></font></td></tr>';
         }
         if (!empty($demoCondo['bank_rfc'])) {
-            $bankRowsHtml .= '<tr><td width="40%"><font color="#64748b">RFC Receptor</font></td><td width="60%"><font color="#1e293b"><b>' . strtoupper($demoCondo['bank_rfc']) . '</b></font></td></tr>';
+            $bankRowsHtml .= '<tr><td width="40%"><font color="#64748b">Numero de Cuenta</font></td><td width="60%"><font color="#1e293b"><b>' . strtoupper($demoCondo['bank_rfc']) . '</b></font></td></tr>';
         }
         if (!empty($formattedCard)) {
             $bankRowsHtml .= '<tr><td width="40%"><font color="#64748b">Tarjeta Bancaria</font></td><td width="60%"><font color="#1e293b"><b>' . $formattedCard . '</b></font></td></tr>';
@@ -3965,7 +3965,7 @@ class FinanceController extends BaseController
                 <td width="80%">
                     <div style="font-size: 14pt; font-weight: bold; text-transform: uppercase;">REPORTE FINANCIERO - ' . mb_strtoupper($mesGenerado, "UTF-8") . '</div>
                     <div style="font-size: 12pt; font-weight: bold; text-transform: uppercase;">' . esc($demoCondo['name']) . '</div>
-                    <div style="font-size: 10pt; color: #cbd5e1;">' . $locationStr . '</div>
+                    <div style="font-size: 10pt; color: #cbd5e1;">' . esc($addressStr) . '</div>
                 </td>
             </tr>
         </table>
