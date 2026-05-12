@@ -840,6 +840,38 @@
     .btn-import-final:hover {
         background-color: #1e293b;
     }
+
+    /* Premium SweetAlert */
+    .premium-swal-popup {
+        border-radius: 1rem !important;
+        padding: 1.5rem !important;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+        border: 1px solid #e2e8f0 !important;
+    }
+    .premium-swal-btn {
+        border-radius: 0.5rem !important;
+        font-weight: 600 !important;
+        padding: 0.5rem 1.5rem !important;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+        transition: all 0.2s;
+    }
+    .premium-swal-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+    }
+    .premium-swal-btn-cancel {
+        border-radius: 0.5rem !important;
+        font-weight: 600 !important;
+        background-color: white !important;
+        color: #64748b !important;
+        border: 1px solid #cbd5e1 !important;
+        padding: 0.5rem 1.5rem !important;
+        transition: all 0.2s;
+    }
+    .premium-swal-btn-cancel:hover {
+        background-color: #f8fafc !important;
+        color: #1e293b !important;
+    }
 </style>
 <?= $this->endSection() ?>
 
@@ -1341,6 +1373,79 @@
             } else {
                 currentPrimaryResidentId = null;
             }
+        };
+
+        const PremiumToast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            customClass: {
+                popup: 'premium-swal-popup'
+            }
+        });
+
+        window.generateNewPassword = function() {
+            if (!profileUserId) {
+                PremiumToast.fire({ icon: 'warning', title: 'No se pudo identificar al residente.' });
+                return;
+            }
+
+            Swal.fire({
+                title: '¿Generar nueva contraseña?',
+                text: "Se generará una contraseña aleatoria segura y se cerrarán las sesiones activas.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#334155',
+                cancelButtonColor: '#fff',
+                confirmButtonText: 'Sí, generar',
+                cancelButtonText: 'Cancelar',
+                customClass: {
+                    popup: 'premium-swal-popup',
+                    confirmButton: 'premium-swal-btn',
+                    cancelButton: 'premium-swal-btn-cancel ms-2'
+                },
+                buttonsStyling: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    let fd = new FormData();
+                    fd.append('user_id', profileUserId);
+                    fd.append('<?= csrf_token() ?>', '<?= csrf_hash() ?>');
+
+                    fetch('<?= base_url("admin/residentes/generar-password") ?>', { method: 'POST', body: fd })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire({
+                                    title: 'Contraseña generada',
+                                    html: `
+                                        <p class="text-muted" style="font-size:0.9rem;">La nueva contraseña es:</p>
+                                        <div class="input-group mb-3 mt-3 px-2">
+                                            <input type="text" class="form-control text-center fw-bold fs-5 bg-light" value="${data.new_password}" readonly style="letter-spacing: 2px;">
+                                            <button class="btn btn-outline-secondary bg-white" type="button" onclick="navigator.clipboard.writeText('${data.new_password}').then(()=> { const el = this; const og = el.innerHTML; el.innerHTML = '<i class=\\\'bi bi-check\\\'></i> Copiado'; setTimeout(()=>el.innerHTML=og, 2000); })">
+                                                <i class="bi bi-clipboard"></i> Copiar
+                                            </button>
+                                        </div>
+                                        <p class="small text-muted mb-0">Cópiala y entrégala al residente.</p>
+                                    `,
+                                    icon: 'success',
+                                    confirmButtonText: 'Entendido',
+                                    customClass: {
+                                        popup: 'premium-swal-popup',
+                                        confirmButton: 'btn btn-primary premium-swal-btn'
+                                    },
+                                    buttonsStyling: false
+                                });
+                            } else {
+                                PremiumToast.fire({ icon: 'error', title: data.message || 'Error al generar contraseña' });
+                            }
+                        }).catch(e => {
+                            console.error(e);
+                            PremiumToast.fire({ icon: 'error', title: 'Error de conexión' });
+                        });
+                }
+            });
         };
 
     });

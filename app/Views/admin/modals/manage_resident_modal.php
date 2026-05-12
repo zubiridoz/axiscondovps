@@ -164,6 +164,32 @@
         border-color: #94a3b8;
     }
 
+    .btn-premium-action {
+        background-color: white;
+        border: 1px solid #e2e8f0;
+        color: #475569;
+        font-weight: 500;
+        border-radius: 0.5rem;
+        padding: 0.45rem 1rem;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        font-size: 0.85rem;
+    }
+    .btn-premium-action:hover {
+        background-color: #f8fafc;
+        border-color: #cbd5e1;
+        color: #0f172a;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+    .btn-premium-action:active {
+        transform: translateY(0);
+        box-shadow: none;
+    }
+
     /* Roles Section */
     .mr-role-checkbox {
         display: flex;
@@ -399,9 +425,15 @@
                             <span class="text-muted small">Correo verificado</span>
                             <span class="text-success small fw-500"><i class="bi bi-check-circle"></i> Correo verificado</span>
                         </div>
-                        <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
                             <span class="text-muted small">Miembro desde</span>
                             <span class="text-dark small fw-500" id="mr-member-since-display">Cargando...</span>
+                        </div>
+                        
+                        <div class="d-grid mt-2">
+                            <button class="btn-premium-action w-100" onclick="generateNewPassword()">
+                                <i class="bi bi-key me-1"></i> Generar nueva contraseña
+                            </button>
                         </div>
                     </div>
                 </div>

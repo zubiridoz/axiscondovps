@@ -584,4 +584,45 @@ class ResidentController extends BaseController
             'resident_id' => $newResidentId
         ]);
     }
+
+    public function generatePasswordJson()
+    {
+        $userId = $this->request->getPost('user_id');
+        if (!$userId) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Datos incompletos.'])->setStatusCode(400);
+        }
+
+        $db = \Config\Database::connect();
+        $user = $db->table('users')->where('id', $userId)->get()->getRowArray();
+
+        if (!$user) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Usuario no encontrado.'])->setStatusCode(404);
+        }
+
+        // Generate alphanumeric password (e.g. 8 characters, easy to read)
+        $characters = '23456789abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ';
+        $newPassword = '';
+        $max = strlen($characters) - 1;
+        for ($i = 0; $i < 8; $i++) {
+            $newPassword .= $characters[random_int(0, $max)];
+        }
+
+        $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+
+        $db->table('users')->where('id', $userId)->update(['password_hash' => $hashedPassword]);
+
+        // Revoke existing tokens for security
+        try {
+            $tokenService = new \App\Services\Auth\TokenService();
+            $tokenService->revokeAllUserTokens($userId);
+        } catch (\Exception $e) {
+            // Ignore if token service is not fully set up or fails, password is still changed
+        }
+
+        return $this->response->setJSON([
+            'success' => true,
+            'message' => 'Contraseña generada exitosamente.',
+            'new_password' => $newPassword
+        ]);
+    }
 }
