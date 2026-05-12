@@ -35,7 +35,12 @@ class ResidentController extends BaseController
         // VISTA 1: DIRECTORIO -> Muestra residentes que: ya aceptaron invitación, ya tienen usuario, ya están asignados a unidad.
         // Asumiendo que todos los usuarios mostrados aquí pertenecen a este condominio (Tenant Actual)
         $builder = $db->table('residents');
-        $builder->select('users.id as user_id, users.first_name, users.last_name, users.phone, users.email, users.avatar, residents.id as p_resident_id, residents.type as res_type, units.unit_number as unit_name');
+        
+        // Calculamos el threshold en PHP para evitar desajustes de zona horaria con MySQL
+        $threshold = date('Y-m-d H:i:s', strtotime('-15 minutes'));
+        
+        // Para considerar "Activo" solo si entraron a la app recientemente (últimos 15 minutos), filtramos por last_used_at
+        $builder->select('users.id as user_id, users.first_name, users.last_name, users.phone, users.email, users.avatar, residents.id as p_resident_id, residents.type as res_type, units.unit_number as unit_name, (SELECT COUNT(id) FROM personal_access_tokens WHERE user_id = users.id AND last_used_at >= ' . $db->escape($threshold) . ') as token_count');
         $builder->join('users', 'users.id = residents.user_id');
         $builder->join('units', 'units.id = residents.unit_id');
         // Residents table directly validates they exist and are assigned to a unit. We assume these are 'accepted'.
@@ -66,7 +71,8 @@ class ResidentController extends BaseController
                     'avatar' => $r['avatar'] ?? null,
                     'unit_names' => [],
                     'type' => $type,
-                    'is_active' => 1
+                    'is_active' => 1,
+                    'has_app' => ($r['token_count'] > 0)
                 ];
             }
             
@@ -624,5 +630,22 @@ class ResidentController extends BaseController
             'message' => 'Contraseña generada exitosamente.',
             'new_password' => $newPassword
         ]);
+    }
+
+    public function forceLogoutJson()
+    {
+        $userId = $this->request->getPost('user_id');
+        if (!$userId) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Datos incompletos.'])->setStatusCode(400);
+        }
+
+        try {
+            $tokenService = new \App\Services\Auth\TokenService();
+            $tokenService->revokeAllUserTokens($userId);
+            return $this->response->setJSON(['success' => true, 'message' => 'Sesiones cerradas exitosamente.']);
+        } catch (\Exception $e) {
+            log_message('error', 'Error forzando logout: ' . $e->getMessage());
+            return $this->response->setJSON(['success' => false, 'message' => 'Error al cerrar sesiones.'])->setStatusCode(500);
+        }
     }
 }

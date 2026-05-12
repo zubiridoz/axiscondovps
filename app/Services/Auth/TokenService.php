@@ -34,7 +34,8 @@ class TokenService
             'user_id'      => $userId,
             'token_hash'   => $hashedToken,
             'device_name'  => $deviceName,
-            'expires_at'   => $expiresAt
+            'expires_at'   => $expiresAt,
+            'last_used_at' => date('Y-m-d H:i:s')
         ]);
         
         // Retornamos el token plano para que la PWA lo guarde en LocalStorage

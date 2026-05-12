@@ -951,7 +951,7 @@
                             <th style="width: 10%;">Unidad <i class="bi bi-arrow-down-up text-muted small ms-1"></i>
                             </th>
                             <th style="width: 12%;">Tipo <i class="bi bi-arrow-down-up text-muted small ms-1"></i></th>
-                            <th style="width: 10%;">Roles <i class="bi bi-arrow-down-up text-muted small ms-1"></i></th>
+                            <th style="width: 10%;">App <i class="bi bi-arrow-down-up text-muted small ms-1"></i></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -985,7 +985,15 @@
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <span class="role-pill">Residente</span>
+                                    <?php if ($res['has_app']): ?>
+                                        <span class="badge bg-success bg-opacity-10 text-success rounded-pill px-2 py-1 border border-success border-opacity-10" style="font-weight:500;" title="El residente está usando la app ahora mismo">
+                                            <i class="bi bi-circle-fill me-1" style="font-size: 0.6rem;"></i> En línea
+                                        </span>
+                                    <?php else: ?>
+                                        <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill px-2 py-1 border border-secondary border-opacity-10" style="font-weight:500;" title="El residente no está activo en este momento">
+                                            <i class="bi bi-circle me-1" style="font-size: 0.6rem;"></i> Desconectado
+                                        </span>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -1437,11 +1445,66 @@
                                     },
                                     buttonsStyling: false
                                 });
+                                
+                                // Update UI row to show Inactivo
+                                const row = document.querySelector(`.res-row[data-user-id="${profileUserId}"]`);
+                                if (row) {
+                                    const appCell = row.querySelectorAll('td')[5]; // App is the 6th column (index 5)
+                                    if (appCell) {
+                                        appCell.innerHTML = `<span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill px-2 py-1 border border-secondary border-opacity-10" style="font-weight:500;" title="El residente no está activo en este momento"><i class="bi bi-circle me-1" style="font-size: 0.6rem;"></i> Desconectado</span>`;
+                                    }
+                                }
                             } else {
                                 PremiumToast.fire({ icon: 'error', title: data.message || 'Error al generar contraseña' });
                             }
                         }).catch(e => {
                             console.error(e);
+                            PremiumToast.fire({ icon: 'error', title: 'Error de conexión' });
+                        });
+                }
+            });
+        };
+
+        window.forceLogoutResident = function() {
+            if (!profileUserId) return;
+            Swal.fire({
+                title: '¿Cerrar todas las sesiones?',
+                text: "Esto desconectará al residente de todos los dispositivos donde tenga la app abierta.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#fff',
+                confirmButtonText: 'Sí, cerrar',
+                cancelButtonText: 'Cancelar',
+                customClass: {
+                    popup: 'premium-swal-popup',
+                    confirmButton: 'btn btn-danger premium-swal-btn',
+                    cancelButton: 'premium-swal-btn-cancel ms-2'
+                },
+                buttonsStyling: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    let fd = new FormData();
+                    fd.append('user_id', profileUserId);
+                    fd.append('<?= csrf_token() ?>', '<?= csrf_hash() ?>');
+
+                    fetch('<?= base_url("admin/residentes/forzar-logout") ?>', { method: 'POST', body: fd })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.success) {
+                                PremiumToast.fire({ icon: 'success', title: 'Sesiones cerradas' });
+                                // Update UI row to show Inactivo
+                                const row = document.querySelector(`.res-row[data-user-id="${profileUserId}"]`);
+                                if (row) {
+                                    const appCell = row.querySelectorAll('td')[5];
+                                    if (appCell) {
+                                        appCell.innerHTML = `<span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill px-2 py-1 border border-secondary border-opacity-10" style="font-weight:500;" title="El residente no está activo en este momento"><i class="bi bi-circle me-1" style="font-size: 0.6rem;"></i> Desconectado</span>`;
+                                    }
+                                }
+                            } else {
+                                PremiumToast.fire({ icon: 'error', title: data.message || 'Error' });
+                            }
+                        }).catch(e => {
                             PremiumToast.fire({ icon: 'error', title: 'Error de conexión' });
                         });
                 }

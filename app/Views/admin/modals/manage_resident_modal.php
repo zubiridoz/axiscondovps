@@ -430,9 +430,12 @@
                             <span class="text-dark small fw-500" id="mr-member-since-display">Cargando...</span>
                         </div>
                         
-                        <div class="d-grid mt-2">
+                        <div class="d-grid mt-2 gap-2">
                             <button class="btn-premium-action w-100" onclick="generateNewPassword()">
                                 <i class="bi bi-key me-1"></i> Generar nueva contraseña
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm w-100" style="border-radius: 0.5rem; font-weight: 500;" onclick="forceLogoutResident()">
+                                <i class="bi bi-box-arrow-right me-1"></i> Cerrar todas las sesiones
                             </button>
                         </div>
                     </div>
