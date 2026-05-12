@@ -362,8 +362,14 @@
         color: var(--fin-warning);
     }
 
+    .action-icons .act-btn.act-download {
+        color: #3b82f6;
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+    }
     .action-icons .act-btn.act-download:hover {
-        color: #6366f1;
+        background: #dbeafe;
+        color: #1d4ed8;
     }
 
     /* Tooltip */
