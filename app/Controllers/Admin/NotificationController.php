@@ -114,6 +114,8 @@ class NotificationController extends BaseController
                     $actionUrl = base_url('admin/tickets');
                 } elseif ($n['type'] === 'calendar_event_new' || $n['type'] === 'calendar_event') {
                     $actionUrl = base_url('admin/calendario');
+                } elseif ($n['type'] === 'announcement_comment' || $n['type'] === 'announcement') {
+                    $actionUrl = base_url('admin/anuncios');
                 }
             }
             

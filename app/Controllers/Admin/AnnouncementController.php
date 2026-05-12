@@ -333,6 +333,82 @@ class AnnouncementController extends BaseController
             'content'         => $content,
         ]);
 
+        // --- NOTIFICACIONES ---
+        $db = \Config\Database::connect();
+        $tenantId = \App\Services\TenantService::getInstance()->getTenantId();
+        
+        $annModel = new AnnouncementModel();
+        $ann = $annModel->find($id);
+        
+        $user = $db->table('users')->select('first_name, last_name')->where('id', $userId)->get()->getRow();
+        $userName = $user ? trim($user->first_name . ' ' . $user->last_name) : 'El administrador';
+
+        if ($ann) {
+            $creatorId = (int)$ann['created_by'];
+            $usersToNotify = [];
+            
+            // 1. Al creador
+            if ($creatorId !== (int)$userId) {
+                $usersToNotify[] = $creatorId;
+            }
+            
+            // 2. A todos los que hayan comentado previamente
+            $commenters = $commentModel->select('user_id')
+                ->where('announcement_id', $id)
+                ->where('user_id !=', $userId)
+                ->groupBy('user_id')
+                ->findAll();
+                
+            foreach ($commenters as $c) {
+                $uid = (int)$c['user_id'];
+                if (!in_array($uid, $usersToNotify)) {
+                    $usersToNotify[] = $uid;
+                }
+            }
+            
+            // --- REGLA DE PRIVACIDAD ---
+            $condoModel = new \App\Models\Tenant\CondominiumModel();
+            $condo = $condoModel->first();
+            $residentViewComments = (int)($condo['resident_view_comments'] ?? 0);
+            
+            $admins = $db->table('user_condominium_roles ucr')
+                ->select('ucr.user_id')
+                ->join('roles r', 'r.id = ucr.role_id')
+                ->where('ucr.condominium_id', $tenantId)
+                ->whereIn('LOWER(r.name)', ['admin', 'super_admin', 'owner'])
+                ->get()->getResultArray();
+            $adminIds = array_map(function($a) { return (int)$a['user_id']; }, $admins);
+            
+            $isCommenterAdmin = in_array((int)$userId, $adminIds);
+            
+            $finalUsersToNotify = [];
+            foreach ($usersToNotify as $uid) {
+                $isTargetAdmin = in_array($uid, $adminIds);
+                // Si el objetivo es admin, siempre notificar.
+                // Si el objetivo es residente, notificar SOLO SI el que comenta es admin O la configuración permite ver comentarios entre residentes.
+                if ($isTargetAdmin || $isCommenterAdmin || $residentViewComments === 1) {
+                    $finalUsersToNotify[] = $uid;
+                }
+            }
+            
+            // Enviar notificaciones
+            foreach ($finalUsersToNotify as $uid) {
+                \App\Models\Tenant\NotificationModel::notify(
+                    $tenantId, 
+                    $uid, 
+                    'announcement_comment', 
+                    'Nuevo comentario', 
+                    $userName . ' comentó en una publicación del muro.', 
+                    [
+                        'type'            => 'announcement',
+                        'announcement_id' => (string)$id,
+                        'click_action'    => 'FLUTTER_NOTIFICATION_CLICK'
+                    ]
+                );
+            }
+        }
+        // --- FIN NOTIFICACIONES ---
+
         $count = $commentModel->where('announcement_id', $id)->countAllResults();
         return $this->response->setJSON(['status' => 201, 'message' => 'Comentario agregado', 'count' => $count, 'id' => $commentId]);
     }

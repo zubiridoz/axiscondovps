@@ -420,13 +420,42 @@ class AnnouncementController extends ResourceController
 
         $count = $commentModel->where('announcement_id', $id)->countAllResults();
         
-        // Notificar a los administradores si el autor es un residente
-        if (!$this->isAdmin($userId)) {
-            $db = \Config\Database::connect();
-            $tenantId = \App\Services\TenantService::getInstance()->getTenantId();
+        // --- NOTIFICAR A LOS INVOLUCRADOS ---
+        $db = \Config\Database::connect();
+        $tenantId = \App\Services\TenantService::getInstance()->getTenantId();
+        
+        $user = $db->table('users')->select('first_name, last_name')->where('id', $userId)->get()->getRow();
+        $userName = $user ? trim($user->first_name . ' ' . $user->last_name) : 'Un residente';
+        
+        $annModel = new \App\Models\Tenant\AnnouncementModel();
+        $ann = $annModel->find($id);
+        
+        if ($ann) {
+            $usersToNotify = [];
             
-            $user = $db->table('users')->select('first_name, last_name')->where('id', $userId)->get()->getRow();
-            $userName = $user ? trim($user->first_name . ' ' . $user->last_name) : 'Un residente';
+            // 1. Al creador del anuncio
+            if ((int)$ann['created_by'] !== (int)$userId) {
+                $usersToNotify[] = (int)$ann['created_by'];
+            }
+            
+            // 2. A otros residentes/usuarios que ya hayan comentado
+            $commenters = $commentModel->select('user_id')
+                ->where('announcement_id', $id)
+                ->where('user_id !=', $userId)
+                ->groupBy('user_id')
+                ->findAll();
+                
+            foreach ($commenters as $c) {
+                $uid = (int)$c['user_id'];
+                if (!in_array($uid, $usersToNotify)) {
+                    $usersToNotify[] = $uid;
+                }
+            }
+            
+            // --- REGLA DE PRIVACIDAD Y ADMINS ---
+            $condoModel = new \App\Models\Tenant\CondominiumModel();
+            $condo = $condoModel->first();
+            $residentViewComments = (int)($condo['resident_view_comments'] ?? 0);
             
             $admins = $db->table('user_condominium_roles ucr')
                 ->select('ucr.user_id')
@@ -434,24 +463,46 @@ class AnnouncementController extends ResourceController
                 ->where('ucr.condominium_id', $tenantId)
                 ->whereIn('LOWER(r.name)', ['admin', 'super_admin', 'owner'])
                 ->get()->getResultArray();
-                
-            foreach ($admins as $admin) {
-                if ((int)$admin['user_id'] !== (int)$userId) {
-                    \App\Models\Tenant\NotificationModel::notify(
-                        $tenantId, 
-                        (int)$admin['user_id'], 
-                        'announcement_comment', 
-                        'Nuevo comentario', 
-                        $userName . ' comentó en una publicación del muro.', 
-                        [
-                            'type'            => 'announcement',
-                            'announcement_id' => (string)$id,
-                            'click_action'    => 'FLUTTER_NOTIFICATION_CLICK'
-                        ]
-                    );
+            $adminIds = array_map(function($a) { return (int)$a['user_id']; }, $admins);
+            
+            $isCommenterAdmin = in_array((int)$userId, $adminIds);
+            
+            // 3. A los administradores (siempre notificar a los admins si el autor es residente)
+            if (!$isCommenterAdmin) {
+                foreach ($adminIds as $uid) {
+                    if ($uid !== (int)$userId && !in_array($uid, $usersToNotify)) {
+                        $usersToNotify[] = $uid;
+                    }
                 }
             }
+            
+            $finalUsersToNotify = [];
+            foreach ($usersToNotify as $uid) {
+                $isTargetAdmin = in_array($uid, $adminIds);
+                // Si el objetivo es admin, siempre notificar.
+                // Si el objetivo es residente, notificar SOLO SI el que comenta es admin O la configuración permite ver comentarios entre residentes.
+                if ($isTargetAdmin || $isCommenterAdmin || $residentViewComments === 1) {
+                    $finalUsersToNotify[] = $uid;
+                }
+            }
+            
+            // Enviar notificaciones a todos los reunidos
+            foreach ($finalUsersToNotify as $uid) {
+                \App\Models\Tenant\NotificationModel::notify(
+                    $tenantId, 
+                    $uid, 
+                    'announcement_comment', 
+                    'Nuevo comentario', 
+                    $userName . ' comentó en una publicación del muro.', 
+                    [
+                        'type'            => 'announcement',
+                        'announcement_id' => (string)$id,
+                        'click_action'    => 'FLUTTER_NOTIFICATION_CLICK'
+                    ]
+                );
+            }
         }
+        // --- FIN NOTIFICACIONES ---
         
         // Retornar el detalle del comentario recién creado
         $newComment = $commentModel

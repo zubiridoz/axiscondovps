@@ -1135,6 +1135,8 @@
                     iconHtml = '<i class="bi bi-exclamation-circle text-danger fs-5"></i>';
                 } else if (n.type === 'calendar_event_new' || n.type === 'calendar_event' || n.title.includes('evento') || n.title.includes('calendario')) {
                     iconHtml = '<i class="bi bi-calendar-event text-primary fs-5"></i>';
+                } else if (n.type === 'announcement_comment' || n.title.includes('comentario')) {
+                    iconHtml = '<i class="bi bi-chat-left-text text-primary fs-5"></i>';
                 }
 
                 let wrapperStart = n.action_url ? `<a href="${n.action_url}" class="text-decoration-none notification-link" style="display: block; transition: background-color 0.2s;">` : `<div style="display: block;">`;
