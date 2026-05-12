@@ -111,7 +111,7 @@
     }
 
     .nav-pills-premium .nav-link {
-        color: #3F67AC;
+        color: #64748b !important;
         border-radius: 0.5rem;
         padding: 0.35rem 0.85rem;
         font-size: 0.85rem;

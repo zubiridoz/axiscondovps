@@ -51,22 +51,49 @@ class ResidentController extends BaseController
             'tenant' => 0
         ];
 
+        $groupedResidents = [];
+        foreach($residents as $r) {
+            $userId = $r['user_id'];
+            if (!isset($groupedResidents[$userId])) {
+                $type = $r['res_type'] ?? 'owner';
+                $groupedResidents[$userId] = [
+                    'id' => $r['p_resident_id'] ?? null,
+                    'user_id' => $userId,
+                    'first_name' => $r['first_name'],
+                    'last_name' => $r['last_name'],
+                    'email' => $r['email'],
+                    'phone' => $r['phone'],
+                    'avatar' => $r['avatar'] ?? null,
+                    'unit_names' => [],
+                    'type' => $type,
+                    'is_active' => 1
+                ];
+            }
+            
+            // Prioritize 'owner' status if they have multiple units and at least one is owner
+            if (($r['res_type'] ?? '') === 'owner') {
+                $groupedResidents[$userId]['type'] = 'owner';
+            }
+            
+            $unitName = $r['unit_name'] ?? 'No asignada';
+            if ($unitName !== 'No asignada' && $unitName !== null && !in_array($unitName, $groupedResidents[$userId]['unit_names'])) {
+                $groupedResidents[$userId]['unit_names'][] = $unitName;
+            }
+        }
+
         // Mapear resultado al formato esperado por la vista
         $mappedResidents = [];
-        foreach($residents as $r) {
-            $type = $r['res_type'] ?? 'owner';
-            $mappedResidents[] = [
-                'id' => $r['p_resident_id'] ?? null,
-                'user_id' => $r['user_id'],
-                'first_name' => $r['first_name'],
-                'last_name' => $r['last_name'],
-                'email' => $r['email'],
-                'phone' => $r['phone'],
-                'avatar' => $r['avatar'] ?? null,
-                'unit_name' => $r['unit_name'] ?? '<i>No asignada</i>',
-                'type' => $type,
-                'is_active' => 1
-            ];
+        foreach ($groupedResidents as $userId => $gr) {
+            $type = $gr['type'];
+            
+            if (empty($gr['unit_names'])) {
+                $gr['unit_name'] = '<i>No asignada</i>';
+            } else {
+                $gr['unit_name'] = implode(', ', $gr['unit_names']);
+            }
+            
+            unset($gr['unit_names']);
+            $mappedResidents[] = $gr;
 
             $counts['all']++;
             if (isset($counts[$type])) {
