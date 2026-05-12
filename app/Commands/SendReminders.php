@@ -43,6 +43,14 @@ class SendReminders extends BaseCommand
 
                 $now = new \DateTime('now', new \DateTimeZone($timezone));
                 
+                // Procesar solo si son las 10 AM en el horario del condominio, a menos que se fuerce la ejecución
+                $currentHour = (int) $now->format('G');
+                $isForce = CLI::getOption('force') !== null;
+                
+                if ($currentHour !== 10 && !$isForce) {
+                    continue;
+                }
+                
                 $this->processCondominium($condo, $reminders, $now, $db);
                 $processedCount++;
             } catch (\Exception $e) {
@@ -112,7 +120,8 @@ class SendReminders extends BaseCommand
                     $unitNeedsReminder = true;
                 } else {
                     // Check if unit has pending charges with matching due dates
-                    $charges = $db->table('charges')
+                    $charges = $db->table('financial_transactions')
+                        ->where('type', 'charge')
                         ->where('unit_id', $unit['id'])
                         ->where('status', 'pending')
                         ->whereIn('due_date', $dueDatesToFind)
@@ -128,7 +137,7 @@ class SendReminders extends BaseCommand
                     // Get all active residents for this unit
                     $residents = $db->table('residents')
                         ->where('unit_id', $unit['id'])
-                        ->where('status', 'active')
+                        ->where('is_active', 1)
                         ->get()
                         ->getResultArray();
 

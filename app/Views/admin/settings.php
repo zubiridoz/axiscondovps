@@ -1393,7 +1393,7 @@ $community = array_merge([
                     <p style="color:#64748b; font-size:0.95rem; margin-top:0.3rem;">Configura notificaciones automáticas
                         para recordar a los residentes sobre el pago de cuotas de mantenimiento.<br>Los recordatorios se
                         envían a las 10 AM en la zona horaria de tu comunidad.</p>
-                    0 10 * * * php /ruta/absoluta/a/tu/proyecto/spark reminders:send > /dev/null 2>&1
+                    <code style="display:block; background:#f1f5f9; padding:0.5rem 1rem; border-radius:0.4rem; color:#334155; font-size:0.85rem; margin-top:0.5rem; font-family:monospace;">0 * * * * php /ruta/absoluta/a/tu/proyecto/spark reminders:send > /dev/null 2>&1</code>
                 </div>
             </div>
 
