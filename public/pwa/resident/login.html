@@ -229,23 +229,14 @@
                 const result = await response.json();
 
                 if (result.success) {
-                    // Registro exitoso: mostrar mensaje y cambiar a login
+                    // Registro exitoso: mostrar mensaje y redirigir a descarga de app
                     msg.className = 'alert success';
                     msg.innerText = result.message;
                     msg.style.display = 'block';
 
-                    // Pre-llenar el email en el login
-                    if (result.data && result.data.email) {
-                        document.getElementById('login_email').value = result.data.email;
-                    }
-
-                    // Tras 2 segundos, cambiar al tab de login
+                    // Redirigir a la página de descarga de la app tras 2 segundos
                     setTimeout(() => {
-                        switchTab('login');
-                        const loginMsg = document.getElementById('loginMsg');
-                        loginMsg.className = 'alert success';
-                        loginMsg.innerText = '¡Cuenta creada exitosamente! Ingresa tu correo y contraseña.';
-                        loginMsg.style.display = 'block';
+                        window.location.href = result.redirect_url || '/app-required';
                     }, 2000);
                 } else {
                     msg.className = 'alert error';

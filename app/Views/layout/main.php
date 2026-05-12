@@ -754,7 +754,7 @@
                         }
                         ?>
                         <li class="nav-item">
-                            <a href="#residentesSub" data-bs-toggle="collapse"
+                            <a href="<?= base_url('admin/residentes') ?>"
                                 class="nav-link d-flex align-items-center <?= strpos(uri_string(), 'residentes') !== false ? 'active-main' : '' ?>"
                                 data-bs-target="#residentesSub">
                                 <i class="bi bi-people"></i> Residentes

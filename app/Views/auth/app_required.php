@@ -269,7 +269,14 @@
                 <div class="icon-container">
                     <i class="bi bi-phone"></i>
                 </div>
-                
+
+                <?php if (session()->getFlashdata('success')): ?>
+                    <div style="background: #d1fae5; border: 1px solid #6ee7b7; border-radius: 10px; padding: 0.85rem 1.2rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.65rem; font-size: 0.9rem; color: #065f46;">
+                        <i class="bi bi-check-circle-fill" style="font-size: 1.2rem; color: #059669; flex-shrink: 0;"></i>
+                        <span><?= esc(session()->getFlashdata('success')) ?></span>
+                    </div>
+                <?php endif; ?>
+
                 <h2 class="form-title">Descarga la App</h2>
                 <p class="form-subtitle">
                     Por motivos de seguridad y para brindarte la mejor experiencia, el acceso para residentes y guardias requiere el uso de nuestra aplicación móvil oficial.

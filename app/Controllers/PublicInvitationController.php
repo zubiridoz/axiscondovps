@@ -161,7 +161,7 @@ class PublicInvitationController extends BaseController
                 return redirect()->back()->with('error', 'Error al procesar el registro.');
             }
 
-            return redirect()->to('/login')->with('success', '¡Registro exitoso! Ya puedes iniciar sesión en tu comunidad.');
+            return redirect()->to('/app-required')->with('success', '¡Registro exitoso! Descarga la app para acceder a tu comunidad.');
 
         } catch (\Exception $e) {
             log_message('error', $e->getMessage());
@@ -281,8 +281,9 @@ class PublicInvitationController extends BaseController
 
             return $this->response->setJSON([
                 'success' => true,
-                'message' => '¡Registro exitoso! Ya puedes iniciar sesión con tu correo y contraseña.',
-                'data' => ['email' => $invitation['email']]
+                'message' => '¡Registro exitoso! Descarga la app para acceder a tu comunidad.',
+                'data' => ['email' => $invitation['email']],
+                'redirect_url' => base_url('app-required')
             ]);
 
         } catch (\Exception $e) {
