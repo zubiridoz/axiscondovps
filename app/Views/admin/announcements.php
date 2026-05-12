@@ -1301,6 +1301,10 @@ $jsonData = htmlspecialchars(json_encode($rawAnnouncements, JSON_UNESCAPED_UNICO
             border-radius: 0
         }
     }
+    
+    .swal2-container {
+        z-index: 99999 !important;
+    }
 </style>
 
 <!-- ── Hero ── -->
@@ -1797,7 +1801,7 @@ $jsonData = htmlspecialchars(json_encode($rawAnnouncements, JSON_UNESCAPED_UNICO
                         var cini = ((cm.first_name || '').charAt(0) + (cm.last_name || '').charAt(0)).toUpperCase();
                         var ctime = timeAgo(new Date(cm.created_at));
                         var item = document.createElement('div'); item.className = 'an-comment-item';
-                        item.innerHTML = '<span class="an-avatar" style="width:30px;height:30px;font-size:.7rem">' + esc(cini) + '</span><div style="flex:1"><div><span class="an-comment-author">' + esc(cfn) + '</span> <span class="an-comment-time">' + esc(ctime) + '</span></div><div class="an-comment-text">' + esc(cm.content) + '</div></div>';
+                        item.innerHTML = '<span class="an-avatar" style="width:30px;height:30px;font-size:.7rem">' + esc(cini) + '</span><div style="flex:1; position:relative;"><div><span class="an-comment-author">' + esc(cfn) + '</span> <span class="an-comment-time">' + esc(ctime) + '</span></div><div class="an-comment-text">' + esc(cm.content) + '</div><button title="Eliminar comentario" onclick="window.deleteComment(' + cm.id + ')" style="position:absolute; right:0; top:0; background:none; border:none; color:#cbd5e1; font-size:1rem; cursor:pointer;" onmouseover="this.style.color=\'#ef4444\'" onmouseout="this.style.color=\'#cbd5e1\'"><i class="bi bi-trash3"></i></button></div>';
                         cWrap.appendChild(item);
                     });
                 }
@@ -1805,6 +1809,30 @@ $jsonData = htmlspecialchars(json_encode($rawAnnouncements, JSON_UNESCAPED_UNICO
                 detailOverlay.classList.add('show');
             });
         }
+
+        window.deleteComment = function(id) {
+            Swal.fire({
+                title: '¿Eliminar comentario?',
+                text: 'Esta acción no se puede deshacer.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            }).then(function (result) {
+                if (result.isConfirmed) {
+                    fetch(BASE + '/comentario/eliminar/' + id, { method: 'POST' }).then(function (r) { return r.json() }).then(function (d) {
+                        if (d.status === 200) {
+                            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Comentario eliminado', showConfirmButton: false, timer: 1500 });
+                            openDetail(currentDetailId);
+                        } else {
+                            Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: d.error || 'Error al eliminar', showConfirmButton: false, timer: 3000 });
+                        }
+                    });
+                }
+            });
+        };
 
         /* ─── Like toggle ─── */
         $('an-det-like-btn').addEventListener('click', function (e) {
