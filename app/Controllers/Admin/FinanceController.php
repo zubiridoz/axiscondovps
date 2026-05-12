@@ -863,7 +863,7 @@ class FinanceController extends BaseController
                     'attachment' => $attachmentPath,
                     'payment_method' => $paymentMethod,
                     'source' => 'manual',
-                    'created_at' => date('Y-m-d H:i:s'),
+                    'created_at' => $fecha ? $fecha . ' ' . date('H:i:s') : date('Y-m-d H:i:s'),
                     'updated_at' => date('Y-m-d H:i:s')
                 ];
                 $builderTrans->insert($dataCharge);
@@ -887,7 +887,7 @@ class FinanceController extends BaseController
                     'attachment' => $attachmentPath,
                     'payment_method' => $paymentMethod,
                     'source' => 'manual',
-                    'created_at' => date('Y-m-d H:i:s'),
+                    'created_at' => $fecha ? $fecha . ' ' . date('H:i:s') : date('Y-m-d H:i:s'),
                     'updated_at' => date('Y-m-d H:i:s')
                 ];
                 $builderTrans->insert($dataPayment);

@@ -1567,6 +1567,7 @@
                         <div class="pt-info">
                             <div class="pt-title">${c.display_label}</div>
                             <div class="pt-debt">Pendiente: $${parseFloat(c.debt_remaining).toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
+                            <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px;"><i class="bi bi-calendar-event me-1"></i>Vence: ${c.due_date.split('-').reverse().join('/')}</div>
                         </div>
                         <div class="pt-input-wrapper">
                             <span>$</span>
