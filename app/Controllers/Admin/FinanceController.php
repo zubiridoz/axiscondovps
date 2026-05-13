@@ -2853,202 +2853,222 @@ class FinanceController extends BaseController
         $yellowBorder = [253, 230, 138];
         $grayBg = [248, 250, 252];
 
-        // ── HEADER BAR (Barra oscura superior) ──
-        $pdf->SetFillColor(...$darkBlue);
-        $pdf->Rect(20, 15, 175.6, 28, 'F');
+        // ── HEADER BAR ──
+        $pdf->SetFillColor(29, 76, 157); // #1D4C9D
+        $pdf->Rect(20, 15, 175.6, 36, 'F');
 
-        // Texto en header
-        $pdf->SetTextColor(255, 255, 255);
-        $pdf->SetFont('helvetica', 'B', 16);
-        $pdf->SetXY(30, 19);
-        $pdf->Cell(120, 8, 'RECIBO DE PAGO', 0, 0, 'L');
-        $pdf->SetFont('helvetica', 'B', 12);
-        $pdf->SetXY(30, 27);
-        $pdf->Cell(120, 7, strtoupper($condoName), 0, 0, 'L');
-        if ($condoAddress) {
-            $pdf->SetFont('helvetica', '', 8);
-            $pdf->SetXY(30, 34);
-            $pdf->Cell(120, 5, $condoAddress, 0, 0, 'L');
+        // Logo
+        $logoFile = $demoCondo['logo'] ?? '';
+        $logoPath = '';
+        $hasLogo = false;
+        if (!empty($logoFile)) {
+            $logoPath = (strpos($logoFile, '/') !== false)
+                ? WRITEPATH . 'uploads/' . $logoFile
+                : WRITEPATH . 'uploads/condominiums/' . $demoCondo['id'] . '/' . $logoFile;
+            $hasLogo = is_file($logoPath);
         }
 
-        // Línea verde debajo del header
-        $pdf->SetFillColor(...$greenBar);
-        $pdf->Rect(20, 43, 175.6, 1.5, 'F');
+        if ($hasLogo) {
+            $pdf->SetFillColor(255, 255, 255);
+            $pdf->Rect(24, 19, 28, 28, 'F');
+            $pdf->Image($logoPath, 25, 20, 26, 26, '', '', '', false, 300, '', false, false, 0, 'CM', false, false);
+        } else {
+            $pdf->SetFillColor(255, 255, 255);
+            $pdf->Rect(24, 19, 28, 28, 'F');
+            $pdf->SetFillColor(29, 76, 157);
+            $pdf->Rect(28, 29, 20, 4, 'F');
+        }
 
-        // ── RECIBO DE PAGO + FECHA DE EMISIí“N ──
-        $pdf->SetY(52);
-        $pdf->SetTextColor(...$greenBar);
+        // Title
+        $pdf->SetTextColor(255, 255, 255);
+        $pdf->SetFont('helvetica', 'B', 16);
+        $pdf->SetXY(56, 18);
+        $pdf->Cell(136, 8, 'RECIBO DE PAGO', 0, 1, 'C');
+
+        // Community name
         $pdf->SetFont('helvetica', 'B', 11);
-        $pdf->Cell(90, 6, 'RECIBO DE PAGO', 0, 0, 'L');
+        $pdf->SetXY(56, 27);
+        $pdf->Cell(136, 7, 'COMUNIDAD: ' . strtoupper($condoName), 0, 1, 'C');
 
-        $pdf->SetTextColor(...$textDark);
-        $pdf->SetFont('helvetica', 'B', 8);
-        $pdf->Cell(85.6, 4, 'Fecha de Emisión:', 0, 1, 'R');
-
-        $pdf->SetX(110);
+        // Address
         $pdf->SetFont('helvetica', '', 8);
-        $pdf->Cell(85.6, 4, $emissionDate, 0, 1, 'R');
+        $pdf->SetTextColor(199, 210, 232);
+        $pdf->SetXY(56, 35);
+        $pdf->Cell(136, 5, strtoupper($condoAddress), 0, 1, 'C');
 
-        // Número de recibo
-        $pdf->SetX(20);
-        $pdf->SetTextColor(...$textDark);
-        $pdf->SetFont('helvetica', 'B', 14);
-        $pdf->Cell(100, 8, 'No. ' . $receiptNum, 0, 1, 'L');
+        // Blue accent line
+        $pdf->SetFillColor(63, 103, 172);
+        $pdf->Rect(20, 51, 175.6, 1.2, 'F');
 
-        $pdf->Ln(4);
+        // ── RECIBO DE PAGO + FECHA DE EMISIÓN ──
+        $pdf->SetY(56);
+        $pdf->SetTextColor(15, 23, 42);
+        $pdf->SetFont('helvetica', 'B', 11);
+        $pdf->Cell(175.6, 7, 'Detalle del Recibo', 0, 1, 'L');
+        $pdf->SetDrawColor(226, 232, 240);
+        $pdf->Line(20, $pdf->GetY(), 195.6, $pdf->GetY());
+        $pdf->Ln(2);
 
-        // ── DOS COLUMNAS: Admin del Condominio + Datos del Condómino ──
+        // Número de recibo + Fecha
+        $pdf->SetFont('helvetica', '', 9);
+        $pdf->SetTextColor(100, 116, 139);
+        $pdf->Cell(55, 6, 'No. de Recibo', 0, 0, 'L');
+        $pdf->SetTextColor(15, 23, 42);
+        $pdf->SetFont('helvetica', 'B', 9);
+        $pdf->Cell(120.6, 6, $receiptNum, 0, 1, 'L');
+
+        $pdf->SetFillColor(248, 250, 252);
+        $pdf->SetFont('helvetica', '', 9);
+        $pdf->SetTextColor(100, 116, 139);
+        $pdf->Cell(55, 6, 'Fecha de Emisión', 0, 0, 'L', true);
+        $pdf->SetTextColor(15, 23, 42);
+        $pdf->SetFont('helvetica', '', 9);
+        $pdf->Cell(120.6, 6, $emissionDate, 0, 1, 'L', true);
+
+        $pdf->SetFont('helvetica', '', 9);
+        $pdf->SetTextColor(100, 116, 139);
+        $pdf->Cell(55, 6, 'Estatus', 0, 0, 'L');
+        $pdf->SetTextColor(5, 150, 105);
+        $pdf->SetFont('helvetica', 'B', 9);
+        $pdf->Cell(120.6, 6, 'COMPLETADO', 0, 1, 'L');
+
+        $pdf->Ln(6);
+
+        // ── DOS COLUMNAS: Admin + Condómino ──
         $boxY = $pdf->GetY();
 
-        // Título izquierdo
-        $pdf->SetFont('helvetica', 'B', 9);
-        $pdf->SetTextColor(...$textDark);
+        $pdf->SetTextColor(15, 23, 42);
+        $pdf->SetFont('helvetica', 'B', 11);
         $pdf->SetXY(20, $boxY);
-        $pdf->Cell(85, 6, 'Administración del Condominio', 0, 0, 'L');
-
-        // Título derecho
+        $pdf->Cell(85, 7, 'Administración', 0, 0, 'L');
         $pdf->SetXY(110, $boxY);
-        $pdf->Cell(85, 6, 'Datos del Condómino', 0, 1, 'L');
+        $pdf->Cell(85, 7, 'Condómino', 0, 1, 'L');
 
-        $boxContentY = $boxY + 8;
+        $pdf->SetDrawColor(226, 232, 240);
+        $pdf->Line(20, $pdf->GetY(), 105, $pdf->GetY());
+        $pdf->Line(110, $pdf->GetY(), 195.6, $pdf->GetY());
+        $pdf->Ln(3);
 
-        // Box izquierdo
-        $pdf->SetDrawColor(...$borderGray);
-        $pdf->Rect(20, $boxContentY, 85, 22, 'D');
+        $infoY = $pdf->GetY();
+
+        // Left column
         $pdf->SetFont('helvetica', 'B', 9);
-        $pdf->SetXY(24, $boxContentY + 3);
-        $pdf->Cell(77, 5, strtoupper($condoName), 0, 1, 'L');
+        $pdf->SetTextColor(15, 23, 42);
+        $pdf->SetXY(20, $infoY);
+        $pdf->Cell(85, 5, strtoupper($condoName), 0, 1, 'L');
         if ($condoAddress) {
             $parts = explode(',', $condoAddress);
             $pdf->SetFont('helvetica', '', 8);
-            $pdf->SetTextColor(...$textMuted);
-            $pdf->SetX(24);
-            $pdf->Cell(77, 4, trim($parts[0] ?? ''), 0, 1, 'L');
+            $pdf->SetTextColor(100, 116, 139);
+            $pdf->SetX(20);
+            $pdf->Cell(85, 4, trim($parts[0] ?? ''), 0, 1, 'L');
             if (count($parts) > 1) {
-                $pdf->SetX(24);
-                $pdf->Cell(77, 4, trim(implode(',', array_slice($parts, 1))), 0, 1, 'L');
+                $pdf->SetX(20);
+                $pdf->Cell(85, 4, trim(implode(',', array_slice($parts, 1))), 0, 1, 'L');
             }
         }
 
-        // Box derecho
-        $pdf->Rect(110, $boxContentY, 85.6, 22, 'D');
+        // Right column
         $pdf->SetFont('helvetica', 'B', 9);
-        $pdf->SetTextColor(...$textDark);
-        $pdf->SetXY(114, $boxContentY + 3);
-        $pdf->Cell(77, 5, 'Unidad ' . $unit['unit_number'], 0, 1, 'L');
+        $pdf->SetTextColor(15, 23, 42);
+        $pdf->SetXY(110, $infoY);
+        $pdf->Cell(85, 5, 'Unidad ' . $unit['unit_number'], 0, 1, 'L');
         $pdf->SetFont('helvetica', '', 8);
-        $pdf->SetTextColor(...$textMuted);
-        $pdf->SetX(114);
-        $pdf->Cell(77, 4, $residentName, 0, 1, 'L');
+        $pdf->SetTextColor(100, 116, 139);
+        $pdf->SetX(110);
+        $pdf->Cell(85, 4, $residentName, 0, 1, 'L');
+
+        // Move below both columns
+        $pdf->SetY(max($pdf->GetY(), $infoY + 16));
+        $pdf->Ln(6);
 
         // ── TABLA DE DETALLES ──
-        $tableY = $boxContentY + 28;
-        $pdf->SetY($tableY);
+        $pdf->SetTextColor(15, 23, 42);
+        $pdf->SetFont('helvetica', 'B', 11);
+        $pdf->Cell(175.6, 7, 'Detalle del Pago', 0, 1, 'L');
+        $pdf->SetDrawColor(226, 232, 240);
+        $pdf->Line(20, $pdf->GetY(), 195.6, $pdf->GetY());
+        $pdf->Ln(2);
 
         $leftCol = 55;
         $rightCol = 120.6;
 
-        // Helper para fila de tabla
-        $drawRow = function ($label, $value, $bold = false) use ($pdf, $leftCol, $rightCol, $borderGray, $textDark) {
-            $y = $pdf->GetY();
-            $pdf->SetDrawColor(...$borderGray);
-            $pdf->SetTextColor(...$textDark);
-            $pdf->SetFont('helvetica', 'B', 8);
-            $pdf->SetFillColor(248, 250, 252);
-            $pdf->Cell($leftCol, 9, '  ' . $label, 'LTB', 0, 'L', true);
-            $pdf->SetFont('helvetica', $bold ? 'B' : '', 8);
-            $pdf->SetFillColor(255, 255, 255);
-            $pdf->Cell($rightCol, 9, $value . '  ', 'RTB', 1, 'R', true);
+        // Row helper function
+        $drawRow = function ($label, $value, $bold = false, $zebra = false) use ($pdf, $leftCol, $rightCol) {
+            if ($zebra) {
+                $pdf->SetFillColor(248, 250, 252);
+            }
+            $pdf->SetFont('helvetica', '', 9);
+            $pdf->SetTextColor(100, 116, 139);
+            $pdf->Cell($leftCol, 8, '  ' . $label, 0, 0, 'L', $zebra);
+            $pdf->SetTextColor(15, 23, 42);
+            $pdf->SetFont('helvetica', $bold ? 'B' : '', 9);
+            $pdf->Cell($rightCol, 8, $value, 0, 1, 'R', $zebra);
         };
 
-        $drawRow('Fecha de Pago', $payDate);
-        $drawRow('Concepto', $concept);
-        $drawRow('Forma de Pago', $payMethod);
+        $drawRow('Fecha de Pago', $payDate, false, false);
+        $drawRow('Concepto', $concept, false, true);
+        $drawRow('Forma de Pago', $payMethod, false, false);
+        $drawRow('Descripción', $description, false, true);
 
-        // Fila de importe (doble altura)
-        $y = $pdf->GetY();
-        $pdf->SetDrawColor(...$borderGray);
-        $pdf->SetTextColor(...$textDark);
-        $pdf->SetFont('helvetica', 'B', 8);
-        $pdf->SetFillColor(248, 250, 252);
-        $pdf->Cell($leftCol, 14, '  Importe', 'LTB', 0, 'L', true);
-        $pdf->SetFillColor(255, 255, 255);
-        // Importe value (dos líneas)
-        $x = $pdf->GetX();
-        $pdf->MultiCell($rightCol, 7, $amountFmt . "\n" . $amountWords, 'RTB', 'R', true, 1, $x, $y, true, 0, false, true, 14, 'M');
-
-        $drawRow('Descripción', $description);
-        $drawRow('Estatus', 'Completado');
+        // Importe row (highlighted)
+        $pdf->SetFillColor(240, 253, 244); // green-50
+        $pdf->SetFont('helvetica', '', 9);
+        $pdf->SetTextColor(100, 116, 139);
+        $pdf->Cell($leftCol, 10, '  Importe', 0, 0, 'L', true);
+        $pdf->SetTextColor(5, 150, 105);
+        $pdf->SetFont('helvetica', 'B', 11);
+        $pdf->Cell($rightCol, 10, $amountFmt, 0, 1, 'R', true);
 
         $pdf->Ln(2);
 
-        // ── TOTAL BAR (Barra verde) ──
-        $totalY = $pdf->GetY();
-        $pdf->SetFillColor(...$greenBar);
+        // ── TOTAL BAR ──
+        $pdf->SetFillColor(29, 76, 157); // #1D4C9D
         $pdf->SetTextColor(255, 255, 255);
         $pdf->SetFont('helvetica', 'B', 10);
-        $pdf->Cell($leftCol, 11, '    TOTAL (MXN):', 0, 0, 'L', true);
-        $pdf->Cell($rightCol, 11, $amountFmt . '  ', 0, 1, 'R', true);
+        $pdf->Cell($leftCol, 11, '    TOTAL (MXN)', 0, 0, 'L', true);
+        $pdf->Cell($rightCol, 11, $amountFmt, 0, 1, 'R', true);
 
-        // Texto en letras debajo del total
-        $pdf->SetTextColor(...$textMuted);
+        // Amount in words
+        $pdf->SetTextColor(100, 116, 139);
         $pdf->SetFont('helvetica', 'I', 7);
         $pdf->Cell(175.6, 6, $amountWords, 0, 1, 'R');
 
-        $pdf->Ln(10);
-
-        // ── LíNEA DIVISORIA ──
-        $pdf->SetDrawColor(...$borderGray);
-        $pdf->Line(20, $pdf->GetY(), 195.6, $pdf->GetY());
-        $pdf->Ln(5);
+        $pdf->Ln(8);
 
         // ── AVISO FISCAL ──
-        $pdf->SetFillColor(...$yellowBg);
-        $pdf->SetDrawColor(...$yellowBorder);
-        $noticeY = $pdf->GetY();
-        $pdf->Rect(20, $noticeY, 175.6, 14, 'DF');
+        $pdf->SetFillColor(255, 251, 235); // amber-50
         $pdf->SetFont('helvetica', 'B', 7);
-        $pdf->SetTextColor(120, 53, 15);
-        $pdf->SetXY(24, $noticeY + 2);
-        $pdf->Cell(168, 4, 'Aviso fiscal: Este recibo de pago no constituye un Comprobante Fiscal Digital por Internet (CFDI) y no tiene validez fiscal para', 0, 1, 'L');
-        $pdf->SetX(24);
-        $pdf->SetFont('helvetica', '', 7);
-        $pdf->Cell(168, 4, 'efectos de deducción de impuestos.', 0, 1, 'L');
+        $pdf->SetTextColor(146, 64, 14);
+        $noticeY = $pdf->GetY();
+        $pdf->Cell(175.6, 6, '  Aviso fiscal: Este recibo no constituye un CFDI y no tiene validez fiscal para efectos de deducción de impuestos.', 0, 1, 'L', true);
 
         $pdf->Ln(5);
 
         // ── OBSERVACIONES ──
-        $obsY = $pdf->GetY();
-        $pdf->SetFillColor(...$grayBg);
-        $pdf->Rect(20, $obsY, 175.6, 16, 'F');
-        $pdf->SetFont('helvetica', 'B', 8);
-        $pdf->SetTextColor(...$textDark);
-        $pdf->SetXY(24, $obsY + 2);
-        $pdf->Cell(168, 5, 'Observaciones', 0, 1, 'L');
-        $pdf->SetFont('helvetica', '', 7);
-        $pdf->SetTextColor(...$textMuted);
-        $pdf->SetX(24);
-        $pdf->Cell(168, 4, 'Conserve este recibo para sus registros. El pago se refleja en su estado de cuenta.', 0, 1, 'L');
+        $pdf->SetTextColor(15, 23, 42);
+        $pdf->SetFont('helvetica', 'B', 11);
+        $pdf->Cell(175.6, 7, 'Observaciones', 0, 1, 'L');
+        $pdf->SetDrawColor(226, 232, 240);
+        $pdf->Line(20, $pdf->GetY(), 195.6, $pdf->GetY());
+        $pdf->Ln(2);
 
-        $pdf->Ln(8);
+        $pdf->SetFont('helvetica', '', 8);
+        $pdf->SetTextColor(100, 116, 139);
+        $pdf->Cell(175.6, 5, 'Conserve este recibo para sus registros. El pago se refleja en su estado de cuenta.', 0, 1, 'L');
+
+        $pdf->Ln(10);
 
         // ── PIE ──
-        $pdf->SetTextColor(...$textMuted);
-        $pdf->SetFont('helvetica', '', 7);
-        $pdf->Cell(175.6, 5, 'Documento generado por el sistema de administración AxisCondo.', 0, 1, 'C');
-
-        $pdf->Ln(5);
-        $pdf->SetDrawColor(...$borderGray);
+        $pdf->SetDrawColor(226, 232, 240);
         $pdf->Line(20, $pdf->GetY(), 195.6, $pdf->GetY());
-        $pdf->Ln(5);
-
-        // Footer: nombre del condominio + fecha
+        $pdf->Ln(3);
         $pdf->SetFont('helvetica', 'B', 7);
-        $pdf->SetTextColor(...$textDark);
+        $pdf->SetTextColor(15, 23, 42);
         $pdf->Cell(88, 5, strtoupper($condoName), 0, 0, 'L');
         $pdf->SetFont('helvetica', '', 7);
-        $pdf->SetTextColor(...$textMuted);
-        $pdf->Cell(87.6, 5, 'Generado el ' . $emissionDate, 0, 1, 'L');
+        $pdf->SetTextColor(100, 116, 139);
+        $pdf->Cell(87.6, 5, 'Generado el ' . $emissionDate, 0, 1, 'R');
 
         // ── OUTPUT ──
         $fileName = 'Recibo de Pago - ' . $unit['unit_number'] . ' - ' . $receiptNum . '.pdf';
@@ -3173,9 +3193,9 @@ class FinanceController extends BaseController
         $pdf->SetAutoPageBreak(true, 20);
         $pdf->AddPage();
 
-        // ──HEADER BAR (Cintillo) ──
-        $pdf->SetFillColor(29, 76, 157); // dark blue
-        $pdf->Rect(20, 15, 175.6, 28, 'F');
+        // ── HEADER BAR ──
+        $pdf->SetFillColor(29, 76, 157); // #1D4C9D
+        $pdf->Rect(20, 15, 175.6, 36, 'F');
 
         $logoFile = $demoCondo['logo'] ?? '';
         if (!empty($logoFile)) {
@@ -3189,160 +3209,200 @@ class FinanceController extends BaseController
         }
 
         if ($hasLogo) {
-            // Auto-scale to fit within 20x20
-            $pdf->Image($logoPath, 25, 19, 20, 20, '', '', '', false, 300, '', false, false, 0, 'CM', false, false);
-        } else {
-            // Fake logo box
             $pdf->SetFillColor(255, 255, 255);
-            $pdf->Rect(25, 19, 20, 20, 'F');
-            $pdf->SetFillColor(0, 80, 150); // fake logo line
-            $pdf->Rect(27, 27, 16, 4, 'F');
+            $pdf->Rect(24, 19, 28, 28, 'F');
+            $pdf->Image($logoPath, 25, 20, 26, 26, '', '', '', false, 300, '', false, false, 0, 'CM', false, false);
+        } else {
+            $pdf->SetFillColor(255, 255, 255);
+            $pdf->Rect(24, 19, 28, 28, 'F');
+            $pdf->SetFillColor(29, 76, 157);
+            $pdf->Rect(28, 29, 20, 4, 'F');
         }
 
-        // Text in Header
+        // Title
         $pdf->SetTextColor(255, 255, 255);
-        $pdf->SetFont('helvetica', 'B', 14);
-        $pdf->SetXY(50, 19);
-        $pdf->Cell(120, 6, 'ESTADO DE CUENTA - ' . strtoupper($unit['unit_number']), 0, 1, 'L');
         $pdf->SetFont('helvetica', 'B', 16);
-        $pdf->SetXY(50, 26);
-        $pdf->Cell(120, 7, strtoupper($condoName), 0, 1, 'L');
-        $pdf->SetFont('helvetica', '', 9);
-        $pdf->SetXY(50, 33);
-        $pdf->Cell(120, 5, $condoAddress ?? '', 0, 1, 'L');
+        $pdf->SetXY(56, 18);
+        $pdf->Cell(136, 8, 'ESTADO DE CUENTA - ' . strtoupper($unit['unit_number']), 0, 1, 'C');
 
-        // Línea verde inferior
-        $pdf->SetFillColor(71, 85, 105);
-        $pdf->Rect(25, 41, 165.6, 0.8, 'F');
+        // Community name
+        $pdf->SetFont('helvetica', 'B', 11);
+        $pdf->SetXY(56, 27);
+        $pdf->Cell(136, 7, 'COMUNIDAD: ' . strtoupper($condoName), 0, 1, 'C');
 
-        $pdf->Ln(12);
+        // Address
+        $pdf->SetFont('helvetica', '', 8);
+        $pdf->SetTextColor(199, 210, 232);
+        $pdf->SetXY(56, 35);
+        $pdf->Cell(136, 5, strtoupper($condoAddress ?? ''), 0, 1, 'C');
+
+        // Blue accent line
+        $pdf->SetFillColor(63, 103, 172); // #3F67AC
+        $pdf->Rect(20, 51, 175.6, 1.2, 'F');
+
+        $pdf->SetY(56);
+        $pdf->SetTextColor(0, 0, 0);
 
         // ── 1. Información de la Unidad ──
-        $pdf->SetTextColor(30, 90, 60); // Green Title
+        $pdf->SetTextColor(15, 23, 42);
         $pdf->SetFont('helvetica', 'B', 11);
-        $pdf->Cell(175.6, 6, 'Información de la Unidad', 0, 1, 'L');
+        $pdf->Cell(175.6, 7, 'Información de la Unidad', 0, 1, 'L');
+        $pdf->SetDrawColor(226, 232, 240);
+        $pdf->Line(20, $pdf->GetY(), 195.6, $pdf->GetY());
+        $pdf->Ln(2);
 
-        $pdf->SetFont('helvetica', 'B', 9);
-        $pdf->SetTextColor(50, 50, 50);
-        $pdf->Cell(60, 6, 'Unidad:', 0, 0, 'L');
         $pdf->SetFont('helvetica', '', 9);
-        $pdf->Cell(115.6, 6, $unit['unit_number'], 0, 1, 'L');
-
-        $pdf->SetFillColor(249, 249, 249);
+        $pdf->SetTextColor(100, 116, 139);
+        $pdf->Cell(55, 6, 'Unidad', 0, 0, 'L');
+        $pdf->SetTextColor(15, 23, 42);
         $pdf->SetFont('helvetica', 'B', 9);
-        $pdf->Cell(60, 6, 'Fecha:', 0, 0, 'L', true);
-        $pdf->SetFont('helvetica', '', 9);
-        $pdf->Cell(115.6, 6, $emissionDate, 0, 1, 'L', true);
+        $pdf->Cell(120.6, 6, $unit['unit_number'], 0, 1, 'L');
 
-        $pdf->SetFont('helvetica', 'B', 9);
-        $pdf->Cell(60, 6, 'Propietario(s):', 0, 0, 'L');
+        $pdf->SetFillColor(248, 250, 252);
         $pdf->SetFont('helvetica', '', 9);
-        $pdf->Cell(115.6, 6, $residentName !== '—' ? $residentName : 'Sin propietarios registrados', 0, 1, 'L');
+        $pdf->SetTextColor(100, 116, 139);
+        $pdf->Cell(55, 6, 'Fecha', 0, 0, 'L', true);
+        $pdf->SetTextColor(15, 23, 42);
+        $pdf->SetFont('helvetica', '', 9);
+        $pdf->Cell(120.6, 6, $emissionDate, 0, 1, 'L', true);
 
-        $pdf->Ln(4);
+        $pdf->SetFont('helvetica', '', 9);
+        $pdf->SetTextColor(100, 116, 139);
+        $pdf->Cell(55, 6, 'Propietario(s)', 0, 0, 'L');
+        $pdf->SetTextColor(15, 23, 42);
+        $pdf->SetFont('helvetica', '', 9);
+        $pdf->Cell(120.6, 6, $residentName !== '—' ? $residentName : 'Sin propietarios registrados', 0, 1, 'L');
+
+        $pdf->Ln(6);
 
         // ── 2. Información de Pagos ──
-        $pdf->SetTextColor(30, 90, 60); // Green Title
+        $pdf->SetTextColor(15, 23, 42);
         $pdf->SetFont('helvetica', 'B', 11);
-        $pdf->Cell(175.6, 6, 'Información de Pagos', 0, 1, 'L');
+        $pdf->Cell(175.6, 7, 'Información de Pagos', 0, 1, 'L');
+        $pdf->SetDrawColor(226, 232, 240);
+        $pdf->Line(20, $pdf->GetY(), 195.6, $pdf->GetY());
+        $pdf->Ln(2);
 
-        $pdf->SetFont('helvetica', 'B', 9);
-        $pdf->SetTextColor(50, 50, 50);
-        $pdf->Cell(60, 6, 'Cuota HOA:', 0, 0, 'L');
-        $pdf->SetFont('helvetica', 'B', 9);
-        $pdf->Cell(115.6, 6, 'MX$' . number_format($unit['maintenance_fee'], 2), 0, 1, 'L');
-
-        $pdf->SetFillColor(249, 249, 249);
-        $pdf->SetFont('helvetica', 'B', 9);
-        $pdf->Cell(60, 6, 'Fecha de Vencimiento:', 0, 0, 'L', true);
         $pdf->SetFont('helvetica', '', 9);
-        $pdf->Cell(115.6, 6, 'Día ' . ($demoCondo['billing_due_day'] ?? 10) . ' de cada mes', 0, 1, 'L', true);
-
+        $pdf->SetTextColor(100, 116, 139);
+        $pdf->Cell(55, 6, 'Cuota HOA', 0, 0, 'L');
+        $pdf->SetTextColor(15, 23, 42);
         $pdf->SetFont('helvetica', 'B', 9);
-        $pdf->Cell(60, 6, 'Estado:', 0, 0, 'L');
+        $pdf->Cell(120.6, 6, 'MX$' . number_format($unit['maintenance_fee'], 2), 0, 1, 'L');
+
+        $pdf->SetFillColor(248, 250, 252);
+        $pdf->SetFont('helvetica', '', 9);
+        $pdf->SetTextColor(100, 116, 139);
+        $pdf->Cell(55, 6, 'Fecha de Vencimiento', 0, 0, 'L', true);
+        $pdf->SetTextColor(15, 23, 42);
+        $pdf->SetFont('helvetica', '', 9);
+        $pdf->Cell(120.6, 6, 'Día ' . ($demoCondo['billing_due_day'] ?? 10) . ' de cada mes', 0, 1, 'L', true);
+
+        $pdf->SetFont('helvetica', '', 9);
+        $pdf->SetTextColor(100, 116, 139);
+        $pdf->Cell(55, 6, 'Estado', 0, 0, 'L');
 
         $d = $saldoPendiente;
         $dv = $debt_vencida;
 
         if ($dv > 0.01) {
-            $pdf->SetTextColor(185, 28, 28); // b91c1c
-            $pdf->Cell(115.6, 6, 'Moroso', 0, 1, 'L');
+            $pdf->SetTextColor(185, 28, 28);
+            $pdf->SetFont('helvetica', 'B', 9);
+            $pdf->Cell(120.6, 6, 'MOROSO', 0, 1, 'L');
         } elseif ($d > 0.01) {
-            $pdf->SetTextColor(29, 78, 216); // 1d4ed8 Blue
-            $pdf->Cell(115.6, 6, 'Al corriente', 0, 1, 'L');
+            $pdf->SetTextColor(29, 78, 216);
+            $pdf->SetFont('helvetica', 'B', 9);
+            $pdf->Cell(120.6, 6, 'AL CORRIENTE', 0, 1, 'L');
         } elseif ($d < -0.01) {
-            $pdf->SetTextColor(21, 128, 61); // 15803d Green
-            $pdf->Cell(115.6, 6, 'A favor', 0, 1, 'L');
+            $pdf->SetTextColor(21, 128, 61);
+            $pdf->SetFont('helvetica', 'B', 9);
+            $pdf->Cell(120.6, 6, 'A FAVOR', 0, 1, 'L');
         } else {
-            $pdf->SetTextColor(21, 128, 61); // 15803d Green
-            $pdf->Cell(115.6, 6, 'Sin adeudos', 0, 1, 'L');
+            $pdf->SetTextColor(21, 128, 61);
+            $pdf->SetFont('helvetica', 'B', 9);
+            $pdf->Cell(120.6, 6, 'SIN ADEUDOS', 0, 1, 'L');
         }
 
-        $pdf->Ln(4);
+        $pdf->Ln(6);
 
         // ── 3. Resumen de Pagos ──
-        $pdf->SetTextColor(30, 90, 60); // Green Title
+        $pdf->SetTextColor(15, 23, 42);
         $pdf->SetFont('helvetica', 'B', 11);
-        $pdf->Cell(175.6, 6, 'Resumen de Pagos', 0, 1, 'L');
+        $pdf->Cell(175.6, 7, 'Resumen de Pagos', 0, 1, 'L');
+        $pdf->SetDrawColor(226, 232, 240);
+        $pdf->Line(20, $pdf->GetY(), 195.6, $pdf->GetY());
+        $pdf->Ln(2);
 
-        $pdf->SetDrawColor(220, 220, 220);
-        $pdf->SetTextColor(50, 50, 50);
+        $pdf->SetFillColor(240, 253, 244);
+        $pdf->SetFont('helvetica', '', 9);
+        $pdf->SetTextColor(100, 116, 139);
+        $pdf->Cell(55, 8, '  Total Pagado', 0, 0, 'L', true);
+        $pdf->SetTextColor(5, 150, 105);
         $pdf->SetFont('helvetica', 'B', 10);
-
-        $pdf->Cell(50, 8, '  Total Pagado:', 'LBT', 0, 'L');
-        $pdf->SetTextColor(50, 160, 80); // Green
-        $pdf->Cell(55, 8, 'MX$' . number_format($totalCredits, 2) . '  ', 'RBT', 1, 'R');
-
-        $pdf->SetTextColor(50, 50, 50);
-        $pdf->SetFillColor(249, 249, 249);
+        $pdf->Cell(120.6, 8, 'MX$' . number_format($totalCredits, 2), 0, 1, 'R', true);
 
         if ($saldoPendiente > 0.01) {
-            $pdf->Cell(50, 8, '  Saldo Pendiente:', 'LBT', 0, 'L', true);
-            $pdf->SetTextColor(220, 50, 50); // Red
-            $pdf->Cell(55, 8, 'MX$' . number_format($saldoPendiente, 2) . '  ', 'RBT', 1, 'R', true);
+            $pdf->SetFillColor(254, 242, 242);
+            $pdf->SetFont('helvetica', '', 9);
+            $pdf->SetTextColor(100, 116, 139);
+            $pdf->Cell(55, 8, '  Saldo Pendiente', 0, 0, 'L', true);
+            $pdf->SetTextColor(220, 38, 38);
+            $pdf->SetFont('helvetica', 'B', 10);
+            $pdf->Cell(120.6, 8, 'MX$' . number_format($saldoPendiente, 2), 0, 1, 'R', true);
         } else if ($saldoPendiente < -0.01) {
-            $pdf->Cell(50, 8, '  Saldo a favor:', 'LBT', 0, 'L', true);
-            $pdf->SetTextColor(50, 160, 80); // Green
-            $pdf->Cell(55, 8, 'MX$' . number_format(abs($saldoPendiente), 2) . '  ', 'RBT', 1, 'R', true);
+            $pdf->SetFillColor(240, 253, 244);
+            $pdf->SetFont('helvetica', '', 9);
+            $pdf->SetTextColor(100, 116, 139);
+            $pdf->Cell(55, 8, '  Saldo a favor', 0, 0, 'L', true);
+            $pdf->SetTextColor(5, 150, 105);
+            $pdf->SetFont('helvetica', 'B', 10);
+            $pdf->Cell(120.6, 8, 'MX$' . number_format(abs($saldoPendiente), 2), 0, 1, 'R', true);
         } else {
-            $pdf->Cell(50, 8, '  Saldo Pendiente:', 'LBT', 0, 'L', true);
-            $pdf->SetTextColor(50, 160, 80); // Green
-            $pdf->Cell(55, 8, 'MX$0.00  ', 'RBT', 1, 'R', true);
+            $pdf->SetFillColor(240, 253, 244);
+            $pdf->SetFont('helvetica', '', 9);
+            $pdf->SetTextColor(100, 116, 139);
+            $pdf->Cell(55, 8, '  Saldo Pendiente', 0, 0, 'L', true);
+            $pdf->SetTextColor(5, 150, 105);
+            $pdf->SetFont('helvetica', 'B', 10);
+            $pdf->Cell(120.6, 8, 'MX$0.00', 0, 1, 'R', true);
         }
 
         $pdf->Ln(6);
 
         // ── 4. Historial de Movimientos ──
-        $pdf->SetTextColor(30, 90, 60); // Green Title
+        $pdf->SetTextColor(15, 23, 42);
         $pdf->SetFont('helvetica', 'B', 11);
-        $pdf->Cell(175.6, 6, 'Historial de Movimientos', 0, 1, 'L');
+        $pdf->Cell(175.6, 7, 'Historial de Movimientos', 0, 1, 'L');
+        $pdf->SetDrawColor(226, 232, 240);
+        $pdf->Line(20, $pdf->GetY(), 195.6, $pdf->GetY());
+        $pdf->Ln(2);
 
-        $pdf->SetFillColor(71, 85, 105); // Dark Green head
+        $pdf->SetFillColor(29, 76, 157); // #1D4C9D
         $pdf->SetTextColor(255, 255, 255);
-        $pdf->SetFont('helvetica', 'B', 8);
+        $pdf->SetFont('helvetica', 'B', 7);
 
         $colW = [20, 22, 63.6, 22, 22, 26]; // Total: 175.6
-        $pdf->Cell($colW[0], 8, 'Emisión', 1, 0, 'C', true);
-        $pdf->Cell($colW[1], 8, 'Vencimiento', 1, 0, 'C', true);
-        $pdf->Cell($colW[2], 8, 'Descripción', 1, 0, 'C', true);
-        $pdf->Cell($colW[3], 8, 'Cargo', 1, 0, 'C', true);
-        $pdf->Cell($colW[4], 8, 'Pago', 1, 0, 'C', true);
-        $pdf->Cell($colW[5], 8, 'Saldo', 1, 1, 'C', true);
+        $pdf->Cell($colW[0], 7, 'EMISIÓN', 0, 0, 'C', true);
+        $pdf->Cell($colW[1], 7, 'VENCIMIENTO', 0, 0, 'C', true);
+        $pdf->Cell($colW[2], 7, 'DESCRIPCIÓN', 0, 0, 'C', true);
+        $pdf->Cell($colW[3], 7, 'CARGO', 0, 0, 'C', true);
+        $pdf->Cell($colW[4], 7, 'PAGO', 0, 0, 'C', true);
+        $pdf->Cell($colW[5], 7, 'SALDO', 0, 1, 'C', true);
 
         // Table Rows
         $pdf->SetFont('helvetica', 'B', 7);
         foreach ($statementRows as $idx => $row) {
             if ($pdf->GetY() > 230) {
                 $pdf->AddPage();
-                $pdf->SetFillColor(35, 95, 60);
+                $pdf->SetFillColor(29, 76, 157);
                 $pdf->SetTextColor(255, 255, 255);
-                $pdf->SetFont('helvetica', 'B', 8);
-                $pdf->Cell($colW[0], 8, 'Emisión', 1, 0, 'C', true);
-                $pdf->Cell($colW[1], 8, 'Vencimiento', 1, 0, 'C', true);
-                $pdf->Cell($colW[2], 8, 'Descripción', 1, 0, 'C', true);
-                $pdf->Cell($colW[3], 8, 'Cargo', 1, 0, 'C', true);
-                $pdf->Cell($colW[4], 8, 'Pago', 1, 0, 'C', true);
-                $pdf->Cell($colW[5], 8, 'Saldo', 1, 1, 'C', true);
+                $pdf->SetFont('helvetica', 'B', 7);
+                $pdf->Cell($colW[0], 7, 'EMISIÓN', 0, 0, 'C', true);
+                $pdf->Cell($colW[1], 7, 'VENCIMIENTO', 0, 0, 'C', true);
+                $pdf->Cell($colW[2], 7, 'DESCRIPCIÓN', 0, 0, 'C', true);
+                $pdf->Cell($colW[3], 7, 'CARGO', 0, 0, 'C', true);
+                $pdf->Cell($colW[4], 7, 'PAGO', 0, 0, 'C', true);
+                $pdf->Cell($colW[5], 7, 'SALDO', 0, 1, 'C', true);
                 $pdf->SetFont('helvetica', 'B', 7);
             }
 
@@ -3356,46 +3416,52 @@ class FinanceController extends BaseController
             $dueDateStr = ($row['type'] === 'charge' && $dueDateRaw) ? date('d/m/Y', strtotime($dueDateRaw)) : '—';
 
             $pdf->SetTextColor(80, 80, 80);
-            $pdf->SetDrawColor(220, 220, 220);
+            $pdf->SetDrawColor(241, 245, 249);
 
-            $pdf->Cell($colW[0], 7, '  ' . $dateStr, 1, 0, 'C');
-            $pdf->Cell($colW[1], 7, '  ' . $dueDateStr, 1, 0, 'C');
+            // Zebra striping
+            $isZebra = ($idx % 2 === 1);
+            if ($isZebra) {
+                $pdf->SetFillColor(248, 250, 252);
+            }
+
+            $pdf->Cell($colW[0], 7, '  ' . $dateStr, 0, 0, 'C', $isZebra);
+            $pdf->Cell($colW[1], 7, '  ' . $dueDateStr, 0, 0, 'C', $isZebra);
 
             $desc = mb_strtoupper(mb_substr($row['description'] ?? ($row['category_name'] ?? '—'), 0, 60));
             $pdf->SetFont('helvetica', '', 6);
-            $pdf->Cell($colW[2], 7, '  ' . $desc, 1, 0, 'L', false, '', 1);
+            $pdf->Cell($colW[2], 7, '  ' . $desc, 0, 0, 'L', $isZebra, '', 1);
             $pdf->SetFont('helvetica', 'B', 7);
 
             $pdf->SetTextColor(50, 50, 50);
             $strCharge = ($row['type'] === 'charge') ? 'MX$' . number_format((float) $row['amount'], 2) : '';
-            $pdf->Cell($colW[3], 7, $strCharge . '  ', 1, 0, 'R');
+            $pdf->Cell($colW[3], 7, $strCharge . '  ', 0, 0, 'R', $isZebra);
 
             $strPay = ($row['type'] !== 'charge') ? 'MX$' . number_format((float) $row['amount'], 2) : '';
-            $pdf->Cell($colW[4], 7, $strPay . '  ', 1, 0, 'R');
+            $pdf->Cell($colW[4], 7, $strPay . '  ', 0, 0, 'R', $isZebra);
 
             // Saldo formatting (negative red if owed)
             $rb = (float) $row['running_balance'];
             if ($rb > 0.01) {
-                $pdf->SetTextColor(220, 50, 50);
-                $pdf->Cell($colW[5], 7, '-MX$' . number_format($rb, 2) . '  ', 1, 1, 'R');
+                $pdf->SetTextColor(220, 38, 38);
+                $pdf->Cell($colW[5], 7, '-MX$' . number_format($rb, 2) . '  ', 0, 1, 'R', $isZebra);
             } else if ($rb < -0.01) {
-                $pdf->SetTextColor(50, 50, 50);
-                $pdf->Cell($colW[5], 7, 'MX$' . number_format(abs($rb), 2) . '  ', 1, 1, 'R');
+                $pdf->SetTextColor(5, 150, 105);
+                $pdf->Cell($colW[5], 7, 'MX$' . number_format(abs($rb), 2) . '  ', 0, 1, 'R', $isZebra);
             } else {
                 $pdf->SetTextColor(50, 50, 50);
-                $pdf->Cell($colW[5], 7, 'MX$0.00  ', 1, 1, 'R');
+                $pdf->Cell($colW[5], 7, 'MX$0.00  ', 0, 1, 'R', $isZebra);
             }
         }
 
         if (empty($statementRows)) {
-            $pdf->Cell(175.6, 10, 'No hay movimientos en el registro.', 1, 1, 'C');
+            $pdf->SetTextColor(100, 116, 139);
+            $pdf->SetFont('helvetica', '', 9);
+            $pdf->Cell(175.6, 10, 'No hay movimientos en el registro.', 0, 1, 'C');
         }
 
         // ── 5. Pagos Pendientes (Solo Morosos) ──
         if ($saldoPendiente > 0) {
             $pendingCharges = array_filter($statementRows, function ($r) {
-                // Incluir todas las transacciones que no sean pagos y que no estén pagadas
-                // Esto abarca 'charge' y cualquier otro tipo de cargo adeudado (ej. extraordinary, penalty)
                 $isChargeType = ($r['type'] !== 'payment' && $r['type'] !== 'credit');
                 $isPending = ($r['status'] !== 'paid' && $r['status'] !== 'cancelled');
 
@@ -3403,7 +3469,6 @@ class FinanceController extends BaseController
                     return false;
                 }
 
-                // Mostrar si es del mes actual o anterior, o si su fecha de vencimiento ya expiró
                 $dueDateMillis = isset($r['due_date']) ? strtotime($r['due_date']) : strtotime($r['created_at']);
                 $todayMillis = strtotime(date('Y-m-d') . ' 23:59:59');
                 $currentMonth = date('Y-m');
@@ -3414,25 +3479,28 @@ class FinanceController extends BaseController
 
             if (!empty($pendingCharges)) {
                 $pdf->Ln(6);
-                $pdf->SetTextColor(230, 60, 60); // Red Title
+                $pdf->SetTextColor(220, 38, 38);
                 $pdf->SetFont('helvetica', 'B', 11);
-                $pdf->Cell(175.6, 6, 'Pagos Pendientes', 0, 1, 'L');
+                $pdf->Cell(175.6, 7, 'Pagos Pendientes', 0, 1, 'L');
+                $pdf->SetDrawColor(254, 202, 202);
+                $pdf->Line(20, $pdf->GetY(), 195.6, $pdf->GetY());
+                $pdf->Ln(2);
 
-                $pdf->SetFillColor(235, 75, 75); // Red Head
+                $pdf->SetFillColor(220, 38, 38); // #dc2626
                 $pdf->SetTextColor(255, 255, 255);
-                $pdf->SetFont('helvetica', 'B', 8);
+                $pdf->SetFont('helvetica', 'B', 7);
 
                 $colP = [45, 60.6, 35, 35];
-                $pdf->Cell($colP[0], 8, 'Vencimiento', 1, 0, 'C', true);
-                $pdf->Cell($colP[1], 8, 'Concepto', 1, 0, 'C', true);
-                $pdf->Cell($colP[2], 8, 'Monto', 1, 0, 'C', true);
-                $pdf->Cell($colP[3], 8, 'Total Acumulado', 1, 1, 'C', true);
+                $pdf->Cell($colP[0], 7, 'VENCIMIENTO', 0, 0, 'C', true);
+                $pdf->Cell($colP[1], 7, 'CONCEPTO', 0, 0, 'C', true);
+                $pdf->Cell($colP[2], 7, 'MONTO', 0, 0, 'C', true);
+                $pdf->Cell($colP[3], 7, 'TOTAL ACUMULADO', 0, 1, 'C', true);
 
-                $pdf->SetFillColor(254, 242, 242); // Light pink
                 $pdf->SetTextColor(50, 50, 50);
                 $pdf->SetFont('helvetica', 'B', 7);
 
                 $acumulado = 0;
+                $pIdx = 0;
                 foreach ($pendingCharges as $pc) {
                     if ($pdf->GetY() > 230) {
                         $pdf->AddPage();
@@ -3445,20 +3513,28 @@ class FinanceController extends BaseController
                     $dateStr = date('d', strtotime($dateRaw)) . ' de ' . strtolower($mesesES[date('F', strtotime($dateRaw))] ?? date('M', strtotime($dateRaw))) . ' de ' . date('Y', strtotime($dateRaw));
                     $desc = mb_strtoupper(mb_substr($pc['description'] ?? ($pc['category_name'] ?? '—'), 0, 60));
 
+                    $isZebraP = ($pIdx % 2 === 1);
+                    if ($isZebraP) {
+                        $pdf->SetFillColor(254, 242, 242); // #fef2f2
+                    }
+
                     $pdf->SetFont('helvetica', '', 7);
-                    $pdf->Cell($colP[0], 7, '  ' . $dateStr, 1, 0, 'L', true);
+                    $pdf->Cell($colP[0], 7, '  ' . $dateStr, 0, 0, 'L', $isZebraP);
                     $pdf->SetFont('helvetica', '', 6);
-                    $pdf->Cell($colP[1], 7, '  ' . $desc, 1, 0, 'L', true, '', 1);
+                    $pdf->Cell($colP[1], 7, '  ' . $desc, 0, 0, 'L', $isZebraP, '', 1);
                     $pdf->SetFont('helvetica', 'B', 7);
-                    $pdf->Cell($colP[2], 7, 'MX$' . number_format($montoPend, 2) . '  ', 1, 0, 'R', true);
-                    $pdf->Cell($colP[3], 7, 'MX$' . number_format($acumulado, 2) . '  ', 1, 1, 'R', true);
+                    $pdf->SetTextColor(220, 38, 38);
+                    $pdf->Cell($colP[2], 7, 'MX$' . number_format($montoPend, 2) . '  ', 0, 0, 'R', $isZebraP);
+                    $pdf->Cell($colP[3], 7, 'MX$' . number_format($acumulado, 2) . '  ', 0, 1, 'R', $isZebraP);
+                    $pdf->SetTextColor(50, 50, 50);
+                    $pIdx++;
                 }
 
                 // Total footer
-                $pdf->SetFillColor(252, 218, 218); // slight darker pink
-                $pdf->SetTextColor(220, 50, 50);
+                $pdf->SetFillColor(254, 226, 226);
+                $pdf->SetTextColor(220, 38, 38);
                 $pdf->SetFont('helvetica', 'B', 9);
-                $pdf->Cell(175.6, 8, ' Total Pendiente: MX$' . number_format($saldoPendiente, 2) . '  ', 'LBR', 1, 'L', true);
+                $pdf->Cell(175.6, 8, '  Total Pendiente: MX$' . number_format($saldoPendiente, 2), 0, 1, 'L', true);
             }
         }
 
