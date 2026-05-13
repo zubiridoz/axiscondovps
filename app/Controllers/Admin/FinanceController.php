@@ -3914,150 +3914,214 @@ class FinanceController extends BaseController
         require_once ROOTPATH . 'vendor/autoload.php';
         $pdf = new class (PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false) extends \TCPDF {
             public $fechaReporte;
+            public $condoNameFooter = '';
             public function Footer()
             {
-                $this->SetY(-15);
-                $this->SetFont('helvetica', '', 8);
-                $this->SetTextColor(100, 116, 139); // #64748b
-                $pageText = 'Página ' . $this->getAliasNumPage() . ' de ' . $this->getAliasNbPages() . ' · Generado por AxisCondo el ' . $this->fechaReporte;
-                $this->Cell(0, 10, $pageText, 0, false, 'C', 0, '', 0, false, 'T', 'M');
+                $this->SetY(-12);
+                $this->SetDrawColor(226, 232, 240);
+                $this->Line(15, $this->GetY(), 195, $this->GetY());
+                $this->SetY(-10);
+                $this->SetFont('helvetica', '', 7);
+                $this->SetTextColor(148, 163, 184);
+                $this->Cell(60, 5, strtoupper($this->condoNameFooter), 0, 0, 'L');
+                $this->SetFont('helvetica', '', 7);
+                $this->Cell(60, 5, 'Generado el ' . $this->fechaReporte . ' | AxisCondo', 0, 0, 'C');
+                $this->Cell(60, 5, $this->getAliasNumPage() . ' / ' . $this->getAliasNbPages(), 0, 0, 'R');
             }
         };
         $pdf->fechaReporte = $fechaReporte;
+        $pdf->condoNameFooter = $demoCondo['name'] ?? 'AxisCondo';
 
         $pdf->SetCreator(PDF_CREATOR);
-        $pdf->SetAuthor('Condominet');
+        $pdf->SetAuthor('AxisCondo');
         $pdf->SetTitle('Reporte Financiero ' . $mesGenerado);
         $pdf->setPrintHeader(false);
         $pdf->setPrintFooter(true);
         $pdf->SetMargins(15, 15, 15);
-        $pdf->SetAutoPageBreak(TRUE, 15);
+        $pdf->SetAutoPageBreak(TRUE, 18);
 
         $pdf->AddPage();
 
-        // Generar HTML principal
-        // Mapear meses cortos: "marzo"
-        $html = '
+        // ── HEADER BAR (Native TCPDF drawing) ──
+        // Blue header area (full width)
+        $pdf->SetFillColor(29, 76, 157); // #1D4C9D
+        $pdf->Rect(15, 15, 180, 36, 'F');
+
+        // Logo with white background
+        if ($hasLogo) {
+            $pdf->SetFillColor(255, 255, 255);
+            $pdf->Rect(19, 19, 28, 28, 'F');
+            $pdf->Image($logoPath, 20, 20, 26, 26, '', '', '', false, 300, '', false, false, 0, 'CM', false, false);
+        } else {
+            $pdf->SetFillColor(255, 255, 255);
+            $pdf->Rect(19, 19, 28, 28, 'F');
+            $pdf->SetFillColor(29, 76, 157);
+            $pdf->Rect(23, 29, 20, 4, 'F');
+        }
+
+        // Title: REPORTE FINANCIERO - MES AÑO
+        $pdf->SetTextColor(255, 255, 255);
+        $pdf->SetFont('helvetica', 'B', 16);
+        $pdf->SetXY(51, 18);
+        $pdf->Cell(141, 8, 'REPORTE FINANCIERO - ' . mb_strtoupper($mesGenerado, 'UTF-8'), 0, 1, 'C');
+
+        // Subtitle: COMUNIDAD: NOMBRE
+        $pdf->SetFont('helvetica', 'B', 11);
+        $pdf->SetXY(51, 27);
+        $pdf->Cell(141, 7, 'COMUNIDAD: ' . mb_strtoupper($demoCondo['name'] ?? '', 'UTF-8'), 0, 1, 'C');
+
+        // Address
+        $pdf->SetFont('helvetica', '', 8);
+        $pdf->SetTextColor(199, 210, 232); // #c7d2e8
+        $pdf->SetXY(51, 35);
+        $pdf->Cell(141, 5, mb_strtoupper($addressStr, 'UTF-8'), 0, 1, 'C');
+
+        // Blue accent line below header
+        $pdf->SetFillColor(63, 103, 172); // #3F67AC
+        $pdf->Rect(15, 51, 180, 1.2, 'F');
+
+        $pdf->SetY(56);
+        $pdf->SetTextColor(0, 0, 0);
+
+        // Continue with HTML content
+        $html_body = '
         <style>
-            .title-box { background-color: #334155; color: #ffffff; padding: 20px; border-radius: 5px; }
-            .section-title { font-size: 13pt; font-weight: bold; color: #1e6c3d; margin-top: 20px; margin-bottom: 10px; }
-            
-            .table-data { width: 100%; border-collapse: collapse; border: 1px solid #e2e8f0; }
-            .table-data th, .table-data td { padding: 8px; border-bottom: 1px solid #e2e8f0; font-size: 9pt; }
-            .table-data th { background-color: #f8fafc; text-align: left; }
-            
-            .table-header-green { background-color: #3F67AC; color: white; font-weight: bold; text-align: center; }
-            
-            .text-success { color: #1e6c3d; font-weight: bold; }
+            .section-title { font-size: 11pt; font-weight: bold; color: #0f172a; margin-top: 18px; margin-bottom: 8px; letter-spacing: 0.02em; }
+            .table-data { width: 100%; border-collapse: collapse; }
+            .table-data th, .table-data td { padding: 7px 10px; font-size: 8.5pt; }
+            .table-data td { border-bottom: 1px solid #f1f5f9; color: #334155; }
+            .th-dark { background-color: #1D4C9D; color: #ffffff; font-weight: bold; text-align: center; font-size: 7.5pt; text-transform: uppercase; letter-spacing: 0.05em; padding: 8px 10px; }
+            .text-success { color: #059669; font-weight: bold; }
             .text-danger { color: #dc2626; font-weight: bold; }
-            .bg-success-light { background-color: #dcfce7; }
-            .bg-danger-light { background-color: #fee2e2; }
-            
             .center { text-align: center; }
             .right { text-align: right; }
         </style>
         
-        <table width="100%" cellpadding="10" bgcolor="#1D4C9D" style="color: #ffffff; border-radius: 5px;">
-            <tr>
-                <td width="20%">
-                    <img src="' . $logoSrc . '" width="60" />
-                </td>
-                <td width="80%">
-                    <div style="font-size: 14pt; font-weight: bold; text-transform: uppercase;">REPORTE FINANCIERO - ' . mb_strtoupper($mesGenerado, "UTF-8") . '</div>
-                    <div style="font-size: 12pt; font-weight: bold; text-transform: uppercase;">' . esc($demoCondo['name']) . '</div>
-                    <div style="font-size: 10pt; color: #cbd5e1;">' . esc($addressStr) . '</div>
-                </td>
-            </tr>
-        </table>
-        <div style="background-color: #3F67AC; height: 3px; width: 100%;"></div>
-       
-        
         <h3 class="section-title">Resumen Ejecutivo</h3>
-        <table class="table-data" cellpadding="8">
-            <tr bgcolor="#f8fafc">
-                <td colspan="2"><b>Período del Reporte:</b> ' . $mesGenerado . '</td>
-            </tr>
+        <table width="100%" cellpadding="0" cellspacing="0"><tr><td style="background-color: #e2e8f0; height: 1px; line-height: 1px; font-size: 1px;">&nbsp;</td></tr></table>
+        <br>
+        <table width="100%" cellpadding="0" cellspacing="0">
             <tr>
-                <td width="70%"><b>Ingresos Totales:</b></td>
-                <td width="30%" class="right text-success">MX$' . number_format($totalIngresos, 2) . '</td>
-            </tr>
-            <tr>
-                <td><b>Gastos Totales:</b></td>
-                <td class="right text-danger">MX$' . number_format($totalGastos, 2) . '</td>
-            </tr>
-            <tr class="bg-success-light">
-                <td><b>Utilidad Neta:</b></td>
-                <td class="right text-success">MX$' . number_format($utilidadNeta, 2) . '</td>
+                <td width="32%">
+                    <table width="100%" cellpadding="10" bgcolor="#f0fdf4" style="border: 1px solid #bbf7d0;">
+                        <tr><td>
+                            <div style="font-size: 7pt; color: #16a34a; text-transform: uppercase; letter-spacing: 0.1em; font-weight: bold;">INGRESOS TOTALES</div>
+                            <div style="font-size: 16pt; font-weight: bold; color: #059669;">MX$' . number_format($totalIngresos, 2) . '</div>
+                        </td></tr>
+                    </table>
+                </td>
+                <td width="2%"></td>
+                <td width="32%">
+                    <table width="100%" cellpadding="10" bgcolor="#fef2f2" style="border: 1px solid #fecaca;">
+                        <tr><td>
+                            <div style="font-size: 7pt; color: #dc2626; text-transform: uppercase; letter-spacing: 0.1em; font-weight: bold;">GASTOS TOTALES</div>
+                            <div style="font-size: 16pt; font-weight: bold; color: #dc2626;">MX$' . number_format($totalGastos, 2) . '</div>
+                        </td></tr>
+                    </table>
+                </td>
+                <td width="2%"></td>
+                <td width="32%">
+                    <table width="100%" cellpadding="10" bgcolor="' . ($utilidadNeta >= 0 ? '#f0fdf4' : '#fef2f2') . '" style="border: 1px solid ' . ($utilidadNeta >= 0 ? '#bbf7d0' : '#fecaca') . ';">
+                        <tr><td>
+                            <div style="font-size: 7pt; color: #0f172a; text-transform: uppercase; letter-spacing: 0.1em; font-weight: bold;">UTILIDAD NETA</div>
+                            <div style="font-size: 16pt; font-weight: bold; color: ' . ($utilidadNeta >= 0 ? '#059669' : '#dc2626') . ';">MX$' . number_format($utilidadNeta, 2) . '</div>
+                        </td></tr>
+                    </table>
+                </td>
             </tr>
         </table>
         <br>
-        <table class="table-data" cellpadding="8">
+        <table width="100%" cellpadding="0" cellspacing="0">
             <tr>
-                <td width="70%"><b>Tasa de Cobranza:</b></td>
-                <td width="30%" class="right"><b>' . number_format($tasaCobranza, 2) . '%</b></td>
+                <td width="32%">
+                    <table width="100%" cellpadding="10" bgcolor="#f8fafc" style="border: 1px solid #e2e8f0;">
+                        <tr><td>
+                            <div style="font-size: 7pt; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em; font-weight: bold;">Tasa de Cobranza</div>
+                            <div style="font-size: 16pt; font-weight: bold; color: #0f172a;">' . number_format($tasaCobranza, 2) . '%</div>
+                        </td></tr>
+                    </table>
+                </td>
+                <td width="2%"></td>
+                <td width="32%">
+                    <table width="100%" cellpadding="10" bgcolor="#f8fafc" style="border: 1px solid #e2e8f0;">
+                        <tr><td>
+                            <div style="font-size: 7pt; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em; font-weight: bold;">Unidades Totales</div>
+                            <div style="font-size: 16pt; font-weight: bold; color: #0f172a;">' . $unidadesTotales . '</div>
+                        </td></tr>
+                    </table>
+                </td>
+                <td width="2%"></td>
+                <td width="32%">
+                    <table width="100%" cellpadding="10" bgcolor="#f8fafc" style="border: 1px solid #e2e8f0;">
+                        <tr><td>
+                            <div style="font-size: 7pt; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em; font-weight: bold;">Período</div>
+                            <div style="font-size: 11pt; font-weight: bold; color: #0f172a;">' . $mesGenerado . '</div>
+                        </td></tr>
+                    </table>
+                </td>
             </tr>
-            <tr>
-                <td><b>Unidades Totales:</b></td>
-                <td class="right"><b>' . $unidadesTotales . '</b></td>
-            </tr>
-            
         </table>
         
         <br>
-        <h3 class="section-title">Análisis de Ingresos</h3>';
+        <h3 class="section-title">Análisis de Ingresos</h3>
+        <table width="100%" cellpadding="0" cellspacing="0"><tr><td style="background-color: #e2e8f0; height: 1px; line-height: 1px; font-size: 1px;">&nbsp;</td></tr></table>';
 
     if (empty($incomeByCat)) {
-            $html .= '
+            $html_body .= '
             <br>
-            <table width="100%" cellpadding="30"><tr><td>
-                <table width="100%" cellpadding="15" bgcolor="#f8fafc" style="border: 1px dashed #cbd5e1; border-radius: 8px;">
+            <table width="100%" cellpadding="20"><tr><td>
+                <table width="100%" cellpadding="15" bgcolor="#f8fafc" style="border: 1px dashed #cbd5e1;">
                     <tr>
                         <td align="center">
-                            <span style="font-weight: bold; font-size: 14pt; color: #3F67AC;">Sin Datos de Ingresos</span><br><br>
-                            <span style="font-size: 10pt; color: #64748b;">No se registraron ingresos durante este período.</span>
+                            <span style="font-weight: bold; font-size: 12pt; color: #64748b;">Sin Datos de Ingresos</span><br><br>
+                            <span style="font-size: 9pt; color: #94a3b8;">No se registraron ingresos durante este período.</span>
                         </td>
                     </tr>
                 </table>
             </td></tr></table>
             <br>
             ';
-            $pdf->writeHTML($html, true, false, true, false, '');
+            $pdf->writeHTML($html_body, true, false, true, false, '');
             $cy = $pdf->GetY() + 15;
         } else {
-            $html .= '
+            $html_body .= '
+            <br>
             <table class="table-data" cellpadding="8">
                 <tr>
-                    <th width="40%" class="table-header-green">Categoría</th>
-                    <th width="20%" class="table-header-green">Cantidad</th>
-                    <th width="20%" class="table-header-green">Monto</th>
-                    <th width="20%" class="table-header-green">% del Total</th>
+                    <th width="40%" class="th-dark" style="text-align: left;">Categoría</th>
+                    <th width="20%" class="th-dark">Cantidad</th>
+                    <th width="20%" class="th-dark">Monto</th>
+                    <th width="20%" class="th-dark">% del Total</th>
                 </tr>';
 
             $totalTxIncome = 0;
+            $rowIdx = 0;
             foreach ($incomeByCat as $iCat) {
                 $totalTxIncome += $iCat['count'];
                 $pct = ($totalIngresos > 0) ? ($iCat['total'] / $totalIngresos) * 100 : 0;
-                $html .= '<tr>
-                    <td width="40%">' . esc($iCat['name']) . '</td>
-                    <td width="20%" class="center">' . $iCat['count'] . '</td>
-                    <td width="20%" class="right text-success">MX$' . number_format($iCat['total'], 2) . '</td>
-                    <td width="20%" class="right">' . number_format($pct, 2) . '%</td>
+                $bgRow = ($rowIdx % 2 === 0) ? '#ffffff' : '#f8fafc';
+                $html_body .= '<tr bgcolor="' . $bgRow . '">
+                    <td width="40%" style="color: #334155; font-weight: 500;">' . esc($iCat['name']) . '</td>
+                    <td width="20%" class="center" style="color: #64748b;">' . $iCat['count'] . '</td>
+                    <td width="20%" class="right" style="color: #059669; font-weight: bold;">MX$' . number_format($iCat['total'], 2) . '</td>
+                    <td width="20%" class="right" style="color: #64748b;">' . number_format($pct, 2) . '%</td>
                 </tr>';
+                $rowIdx++;
             }
 
-            $html .= '
-                <tr bgcolor="#f8fafc">
-                    <td width="40%"><b>TOTAL INGRESOS</b></td>
-                    <td width="20%" class="center"><b>' . $totalTxIncome . '</b></td>
-                    <td width="20%" class="right text-success"><b>MX$' . number_format($totalIngresos, 2) . '</b></td>
-                    <td width="20%" class="right"><b>100%</b></td>
+            $html_body .= '
+                <tr bgcolor="#f0fdf4">
+                    <td width="40%" style="border-top: 2px solid #059669;"><b style="color: #059669;">TOTAL INGRESOS</b></td>
+                    <td width="20%" class="center" style="border-top: 2px solid #059669;"><b style="color: #059669;">' . $totalTxIncome . '</b></td>
+                    <td width="20%" class="right" style="border-top: 2px solid #059669;"><b style="color: #059669;">MX$' . number_format($totalIngresos, 2) . '</b></td>
+                    <td width="20%" class="right" style="border-top: 2px solid #059669;"><b style="color: #059669;">100%</b></td>
                 </tr>
             </table>
             <br>
             ';
 
-            $html .= '<h3 class="center" style="font-size: 11pt;">Distribución de Ingresos</h3><br>';
-            $pdf->writeHTML($html, true, false, true, false, '');
+            $html_body .= '<h3 class="center" style="font-size: 10pt; color: #334155;">Distribución de Ingresos</h3><br>';
+            $pdf->writeHTML($html_body, true, false, true, false, '');
 
             // Simular pastel con poligonos
             if ($pdf->GetY() > 210) {
@@ -4114,29 +4178,29 @@ class FinanceController extends BaseController
 
         $html2 = '
         <style>
-            .section-title { font-size: 13pt; font-weight: bold; color: #1e6c3d; margin-top: 20px; margin-bottom: 10px; }
-            .table-data { width: 100%; border-collapse: collapse; border: 1px solid #e2e8f0; }
-            .table-data th, .table-data td { padding: 8px; border-bottom: 1px solid #e2e8f0; font-size: 9pt; }
-            .table-header-green { background-color: #3F67AC; color: white; font-weight: bold; text-align: center; }
-            .text-success { color: #1e6c3d; font-weight: bold; }
+            .section-title { font-size: 11pt; font-weight: bold; color: #0f172a; margin-top: 18px; margin-bottom: 8px; letter-spacing: 0.02em; }
+            .table-data { width: 100%; border-collapse: collapse; }
+            .table-data th, .table-data td { padding: 7px 10px; font-size: 8.5pt; }
+            .table-data td { border-bottom: 1px solid #f1f5f9; color: #334155; }
+            .th-dark { background-color: #1D4C9D; color: #ffffff; font-weight: bold; text-align: center; font-size: 7.5pt; text-transform: uppercase; letter-spacing: 0.05em; padding: 8px 10px; }
+            .text-success { color: #059669; font-weight: bold; }
             .text-danger { color: #dc2626; font-weight: bold; }
-            .bg-success-light { background-color: #dcfce7; text-align: center; }
-            .bg-danger-light { background-color: #fee2e2; text-align: center; }
             .center { text-align: center; }
             .right { text-align: right; }
         </style>
         
-        <h3 class="section-title">Análisis de Gastos</h3>';
+        <h3 class="section-title">Análisis de Gastos</h3>
+        <table width="100%" cellpadding="0" cellspacing="0"><tr><td style="background-color: #e2e8f0; height: 1px; line-height: 1px; font-size: 1px;">&nbsp;</td></tr></table>';
 
         if (empty($expenseByCat)) {
             $html2 .= '
             <br>
-            <table width="100%" cellpadding="30"><tr><td>
-                <table width="100%" cellpadding="15" bgcolor="#f8fafc" style="border: 1px dashed #cbd5e1; border-radius: 8px;">
+            <table width="100%" cellpadding="20"><tr><td>
+                <table width="100%" cellpadding="15" bgcolor="#f8fafc" style="border: 1px dashed #cbd5e1;">
                     <tr>
                         <td align="center">
-                            <span style="font-weight: bold; font-size: 14pt; color: #3F67AC;">Sin Datos de Gastos</span><br><br>
-                            <span style="font-size: 10pt; color: #64748b;">No se registraron gastos durante este período.</span>
+                            <span style="font-weight: bold; font-size: 12pt; color: #64748b;">Sin Datos de Gastos</span><br><br>
+                            <span style="font-size: 9pt; color: #94a3b8;">No se registraron gastos durante este período.</span>
                         </td>
                     </tr>
                 </table>
@@ -4147,36 +4211,40 @@ class FinanceController extends BaseController
             $cy2 = $pdf->GetY() + 15;
         } else {
             $html2 .= '
+            <br>
             <table class="table-data" cellpadding="8">
                 <tr>
-                    <th width="40%" class="table-header-green">Categoría</th>
-                    <th width="20%" class="table-header-green">Cantidad</th>
-                    <th width="20%" class="table-header-green">Monto</th>
-                    <th width="20%" class="table-header-green">% del Total</th>
+                    <th width="40%" class="th-dark" style="text-align: left;">Categoría</th>
+                    <th width="20%" class="th-dark">Cantidad</th>
+                    <th width="20%" class="th-dark">Monto</th>
+                    <th width="20%" class="th-dark">% del Total</th>
                 </tr>';
 
             $totalTxExpense = 0;
+            $rowIdx = 0;
             foreach ($expenseByCat as $eCat) {
                 $totalTxExpense += $eCat['count'];
                 $pct = ($totalGastos > 0) ? ($eCat['total'] / $totalGastos) * 100 : 0;
-                $html2 .= '<tr>
-                    <td width="40%">' . esc($eCat['name']) . '</td>
-                    <td width="20%" class="center">' . $eCat['count'] . '</td>
-                    <td width="20%" class="right text-danger">MX$' . number_format($eCat['total'], 2) . '</td>
-                    <td width="20%" class="right">' . number_format($pct, 2) . '%</td>
+                $bgRow = ($rowIdx % 2 === 0) ? '#ffffff' : '#f8fafc';
+                $html2 .= '<tr bgcolor="' . $bgRow . '">
+                    <td width="40%" style="color: #334155; font-weight: 500;">' . esc($eCat['name']) . '</td>
+                    <td width="20%" class="center" style="color: #64748b;">' . $eCat['count'] . '</td>
+                    <td width="20%" class="right" style="color: #dc2626; font-weight: bold;">MX$' . number_format($eCat['total'], 2) . '</td>
+                    <td width="20%" class="right" style="color: #64748b;">' . number_format($pct, 2) . '%</td>
                 </tr>';
+                $rowIdx++;
             }
 
             $html2 .= '
-                <tr bgcolor="#f8fafc">
-                    <td width="40%"><b>TOTAL GASTOS</b></td>
-                    <td width="20%" class="center"><b>' . $totalTxExpense . '</b></td>
-                    <td width="20%" class="right text-danger"><b>MX$' . number_format($totalGastos, 2) . '</b></td>
-                    <td width="20%" class="right"><b>100%</b></td>
+                <tr bgcolor="#fef2f2">
+                    <td width="40%" style="border-top: 2px solid #dc2626;"><b style="color: #dc2626;">TOTAL GASTOS</b></td>
+                    <td width="20%" class="center" style="border-top: 2px solid #dc2626;"><b style="color: #dc2626;">' . $totalTxExpense . '</b></td>
+                    <td width="20%" class="right" style="border-top: 2px solid #dc2626;"><b style="color: #dc2626;">MX$' . number_format($totalGastos, 2) . '</b></td>
+                    <td width="20%" class="right" style="border-top: 2px solid #dc2626;"><b style="color: #dc2626;">100%</b></td>
                 </tr>
             </table>
             <br>
-            <h3 class="center" style="font-size: 11pt;">Distribución de Gastos</h3><br>';
+            <h3 class="center" style="font-size: 10pt; color: #334155;">Distribución de Gastos</h3><br>';
 
             $pdf->writeHTML($html2, true, false, true, false, '');
             if ($pdf->GetY() > 210) {
@@ -4221,42 +4289,43 @@ class FinanceController extends BaseController
 
         $html2_pt2 = '
         <br>
-        <br>
         <h3 class="section-title">Estado de Pagos por Unidad</h3>
-        <table width="100%" cellpadding="0">
+        <table width="100%" cellpadding="0" cellspacing="0"><tr><td style="background-color: #e2e8f0; height: 1px; line-height: 1px; font-size: 1px;">&nbsp;</td></tr></table>
+        <br>
+        <table width="100%" cellpadding="0" cellspacing="0">
             <tr>
                 <td width="23.5%">
-                    <table width="100%" cellpadding="10" bgcolor="#eff6ff" style="border-radius: 8px;">
+                    <table width="100%" cellpadding="10" bgcolor="#eff6ff" style="border: 1px solid #bfdbfe;">
                         <tr><td align="center">
-                            <span style="font-weight: bold; color: #1d4ed8; font-size: 9pt;">Al Corriente</span><br><br>
-                            <span style="font-weight: bold; font-size: 24pt;">' . $unidadesCorriente . '</span><br>
+                            <div style="font-size: 7pt; color: #3b82f6; text-transform: uppercase; letter-spacing: 0.1em; font-weight: bold;">Al Corriente</div>
+                            <div style="font-size: 22pt; font-weight: bold; color: #1d4ed8;">' . $unidadesCorriente . '</div>
                         </td></tr>
                     </table>
                 </td>
                 <td width="2%"></td>
                 <td width="23.5%">
-                    <table width="100%" cellpadding="10" bgcolor="#dcfce7" style="border-radius: 8px;">
+                    <table width="100%" cellpadding="10" bgcolor="#f0fdf4" style="border: 1px solid #bbf7d0;">
                         <tr><td align="center">
-                            <span style="font-weight: bold; color: #15803d; font-size: 9pt;">Sin Adeudos</span><br><br>
-                            <span style="font-weight: bold; font-size: 24pt;">' . $unidadesSinDeuda . '</span><br>
+                            <div style="font-size: 7pt; color: #059669; text-transform: uppercase; letter-spacing: 0.1em; font-weight: bold;">Sin Adeudos</div>
+                            <div style="font-size: 22pt; font-weight: bold; color: #15803d;">' . $unidadesSinDeuda . '</div>
                         </td></tr>
                     </table>
                 </td>
                 <td width="2%"></td>
                 <td width="23.5%">
-                    <table width="100%" cellpadding="10" bgcolor="#dcfce7" style="border-radius: 8px;">
+                    <table width="100%" cellpadding="10" bgcolor="#f0fdf4" style="border: 1px solid #bbf7d0;">
                         <tr><td align="center">
-                            <span style="font-weight: bold; color: #15803d; font-size: 9pt;">A Favor</span><br><br>
-                            <span style="font-weight: bold; font-size: 24pt;">' . $unidadesFavor . '</span><br>
+                            <div style="font-size: 7pt; color: #059669; text-transform: uppercase; letter-spacing: 0.1em; font-weight: bold;">A Favor</div>
+                            <div style="font-size: 22pt; font-weight: bold; color: #15803d;">' . $unidadesFavor . '</div>
                         </td></tr>
                     </table>
                 </td>
                 <td width="2%"></td>
                 <td width="23.5%">
-                    <table width="100%" cellpadding="10" bgcolor="#fee2e2" style="border-radius: 8px;">
+                    <table width="100%" cellpadding="10" bgcolor="#fef2f2" style="border: 1px solid #fecaca;">
                         <tr><td align="center">
-                            <span style="font-weight: bold; color: #b91c1c; font-size: 9pt;">Morosas</span><br><br>
-                            <span style="font-weight: bold; font-size: 24pt;">' . $unidadesMorosas . '</span><br>
+                            <div style="font-size: 7pt; color: #dc2626; text-transform: uppercase; letter-spacing: 0.1em; font-weight: bold;">Morosas</div>
+                            <div style="font-size: 22pt; font-weight: bold; color: #b91c1c;">' . $unidadesMorosas . '</div>
                         </td></tr>
                     </table>
                 </td>
@@ -4265,95 +4334,104 @@ class FinanceController extends BaseController
         
         <br>
         <h3 class="section-title">Eficiencia de Cobranza</h3>
-        <table width="100%" cellpadding="0">
+        <table width="100%" cellpadding="0" cellspacing="0"><tr><td style="background-color: #e2e8f0; height: 1px; line-height: 1px; font-size: 1px;">&nbsp;</td></tr></table>
+        <br>
+        <table width="100%" cellpadding="9" style="border: 1px solid #e2e8f0;">
+            <tr bgcolor="#f8fafc">
+                <td width="65%" style="border-bottom: 1px solid #e2e8f0; font-size: 9pt; color: #334155;"><b>Ingresos Esperados</b></td>
+                <td width="35%" align="right" style="border-bottom: 1px solid #e2e8f0; font-size: 9pt;"><b style="color: #0f172a;">MX$' . number_format($ingresosEsperados, 2) . '</b></td>
+            </tr>
             <tr>
-                <td>
-                    <table width="100%" cellpadding="10" style="border: 1px solid #cbd5e1; border-radius: 5px;">
-                        <tr>
-                            <td width="70%" style="border-bottom: 1px solid #e2e8f0;"><b>Ingresos Esperados:</b></td>
-                            <td width="30%" class="right" style="border-bottom: 1px solid #e2e8f0;"><b>MX$' . number_format($ingresosEsperados, 2) . '</b></td>
-                        </tr>
-                        <tr>
-                            <td width="70%" style="border-bottom: 1px solid #e2e8f0;"><b>Ingresos Recaudados:</b></td>
-                            <td width="30%" class="right" style="border-bottom: 1px solid #e2e8f0;"><b style="color: #10b981;">MX$' . number_format($ingresosRecaudados, 2) . '</b></td>
-                        </tr>
-                        <tr>
-                            <td width="70%"><b>Eficiencia de Cobranza:</b></td>
-                            <td width="30%" class="right"><b style="color: #ef4444;">' . number_format($eficienciaCobranza, 2) . '%</b></td>
-                        </tr>
-                    </table>
-                </td>
+                <td width="65%" style="border-bottom: 1px solid #e2e8f0; font-size: 9pt; color: #334155;"><b>Ingresos Recaudados</b></td>
+                <td width="35%" align="right" style="border-bottom: 1px solid #e2e8f0; font-size: 9pt;"><b style="color: #059669;">MX$' . number_format($ingresosRecaudados, 2) . '</b></td>
+            </tr>
+            <tr bgcolor="#f8fafc">
+                <td width="65%" style="font-size: 9pt; color: #334155;"><b>Eficiencia de Cobranza</b></td>
+                <td width="35%" align="right" style="font-size: 9pt;"><b style="color: ' . ($eficienciaCobranza >= 85 ? '#059669' : '#dc2626') . ';">' . number_format($eficienciaCobranza, 2) . '%</b></td>
             </tr>
         </table>
         ';
 
         $pdf->writeHTML($html2_pt2, true, false, true, false, '');
-        $pdf->AddPage();
+
+        // Check if we need a page break before transactions
+        if ($pdf->GetY() > 220) {
+            $pdf->AddPage();
+        } else {
+            $pdf->AddPage();
+        }
 
         $html3 = '
         <style>
-            .section-title { font-size: 13pt; font-weight: bold; color: #1e6c3d; margin-top: 20px; margin-bottom: 10px; }
+            .section-title { font-size: 11pt; font-weight: bold; color: #0f172a; margin-top: 18px; margin-bottom: 8px; letter-spacing: 0.02em; }
             .table-data { width: 100%; border-collapse: collapse; }
-            .table-data th { background-color: #3F67AC; color: white; font-weight: bold; text-align: center; border: 1px solid #cbd5e1; border-right: 1px solid #ffffff; padding: 10px; font-size: 9pt; }
-            .table-data th.last { border-right: 1px solid #cbd5e1; }
-            .table-data td { border: 1px solid #cbd5e1; padding: 10px; font-size: 8pt; vertical-align: middle; }
-            .text-success { color: #10b981; }
-            .text-danger { color: #ef4444; }
+            .th-dark { background-color: #1D4C9D; color: #ffffff; font-weight: bold; text-align: center; font-size: 7.5pt; text-transform: uppercase; letter-spacing: 0.05em; padding: 8px 10px; }
+            .table-data td { padding: 7px 10px; font-size: 8pt; border-bottom: 1px solid #f1f5f9; color: #334155; }
         </style>
         
         <h3 class="section-title">Transacciones del Período - ' . $mesGenerado . '</h3>
-        <table class="table-data" cellpadding="10">
+        <table width="100%" cellpadding="0" cellspacing="0"><tr><td style="background-color: #e2e8f0; height: 1px; line-height: 1px; font-size: 1px;">&nbsp;</td></tr></table>
+        <br>
+        <table class="table-data" cellpadding="8">
             <tr>
-                <th width="15%">Fecha</th>
-                <th width="10%">Tipo</th>
-                <th width="10%">Unidad</th>
-                <th width="20%">Categoría</th>
-                <th width="30%">Descripción</th>
-                <th width="15%" class="last">Monto</th>
+                <th width="14%" class="th-dark" style="text-align: left;">Fecha</th>
+                <th width="12%" class="th-dark">Tipo</th>
+                <th width="10%" class="th-dark">Unidad</th>
+                <th width="18%" class="th-dark">Categoría</th>
+                <th width="28%" class="th-dark" style="text-align: left;">Descripción</th>
+                <th width="18%" class="th-dark">Monto</th>
             </tr>';
 
+        $txIdx = 0;
         foreach ($transactions as $t) {
-            $tipoLabel = ($t['category_type'] === 'expense') ? '<span class="text-danger">Gasto</span>' : '<span class="text-success">Ingreso</span>';
-            $montoLabel = ($t['category_type'] === 'expense')
-                ? '<span class="text-danger">MX$' . number_format($t['amount'], 2) . '</span>'
-                : '<span class="text-success">MX$' . number_format($t['amount'], 2) . '</span>';
+            $isExpense = ($t['category_type'] === 'expense');
+            $tipoLabel = $isExpense
+                ? '<span style="color: #dc2626; font-weight: bold; font-size: 7.5pt;">GASTO</span>'
+                : '<span style="color: #059669; font-weight: bold; font-size: 7.5pt;">INGRESO</span>';
+            $montoColor = $isExpense ? '#dc2626' : '#059669';
+            $montoPrefix = $isExpense ? '-' : '+';
+            $montoLabel = '<span style="color: ' . $montoColor . '; font-weight: bold;">' . $montoPrefix . ' MX$' . number_format($t['amount'], 2) . '</span>';
 
             $mesesCortos = ['Jan' => 'Ene', 'Feb' => 'Feb', 'Mar' => 'Mar', 'Apr' => 'Abr', 'May' => 'May', 'Jun' => 'Jun', 'Jul' => 'Jul', 'Aug' => 'Ago', 'Sep' => 'Sep', 'Oct' => 'Oct', 'Nov' => 'Nov', 'Dec' => 'Dic'];
             $fechaTx = date('d', strtotime($t['created_at'])) . ' de ' . ($mesesCortos[date('M', strtotime($t['created_at']))] ?? date('M', strtotime($t['created_at']))) . ' de ' . date('Y', strtotime($t['created_at']));
-            $html3 .= '<tr>
-                <td width="15%">' . $fechaTx . '</td>
-                <td width="10%">' . $tipoLabel . '</td>
-                <td width="10%">' . esc($t['unit_number'] ?? '—') . '</td>
-                <td width="20%">' . esc($t['category_name'] ?? 'Sin Categoría') . '</td>
-                <td width="30%">' . esc($t['description'] ?? '') . '</td>
-                <td width="15%" align="left"><b>' . $montoLabel . '</b></td>
+            $bgRow = ($txIdx % 2 === 0) ? '#ffffff' : '#f8fafc';
+            $html3 .= '<tr bgcolor="' . $bgRow . '">
+                <td width="14%" style="color: #64748b; font-size: 7.5pt;">' . $fechaTx . '</td>
+                <td width="12%" align="center">' . $tipoLabel . '</td>
+                <td width="10%" align="center" style="font-weight: 600; color: #0f172a;">' . esc($t['unit_number'] ?? '—') . '</td>
+                <td width="18%" style="color: #475569; font-size: 7.5pt;">' . esc($t['category_name'] ?? 'Sin Categoría') . '</td>
+                <td width="28%" style="color: #64748b; font-size: 7.5pt;">' . esc($t['description'] ?? '') . '</td>
+                <td width="18%" align="right">' . $montoLabel . '</td>
             </tr>';
+            $txIdx++;
         }
 
         $html3 .= '</table>
         <br><br>
         <h3 class="section-title">Observaciones</h3>
-        <table width="100%" cellpadding="10" bgcolor="#fafafa" style="border: 1px solid #e2e8f0;">';
+        <table width="100%" cellpadding="0" cellspacing="0"><tr><td style="background-color: #e2e8f0; height: 1px; line-height: 1px; font-size: 1px;">&nbsp;</td></tr></table>
+        <br>
+        <table width="100%" cellpadding="10" style="border: 1px solid #e2e8f0;">';
 
      // Reglas
         if ($tasaCobranza < 85) {
-            $html3 .= '<tr><td><span style="color: #dc2626; font-size: 10pt; font-weight: bold;">La tasa de cobranza está por debajo del 85%. Se recomienda implementar acciones de cobranza.</span></td></tr>';
+            $html3 .= '<tr><td style="border-bottom: 1px solid #f1f5f9; font-size: 9pt; color: #dc2626;">La tasa de cobranza esta por debajo del 85%. Se recomienda implementar acciones de cobranza.</td></tr>';
         } else {
-            $html3 .= '<tr><td><span style="color: #16a34a; font-size: 10pt; font-weight: bold;">La tasa de cobranza es excelente, manteniendo buenas finanzas sanas.</span></td></tr>';
+            $html3 .= '<tr><td style="border-bottom: 1px solid #f1f5f9; font-size: 9pt; color: #059669;">La tasa de cobranza es excelente, manteniendo buenas finanzas sanas.</td></tr>';
         }
 
         if ($utilidadNeta > 0) {
-            $html3 .= '<tr><td><span style="color: #16a34a; font-size: 10pt; font-weight: bold;">El período muestra utilidades positivas.</span></td></tr>';
+            $html3 .= '<tr><td style="border-bottom: 1px solid #f1f5f9; font-size: 9pt; color: #059669;">El periodo muestra utilidades positivas.</td></tr>';
         } else if ($utilidadNeta < 0) {
-            $html3 .= '<tr><td><span style="color: #dc2626; font-size: 10pt; font-weight: bold;">El período muestra utilidades negativas. Revisa tus gastos.</span></td></tr>';
+            $html3 .= '<tr><td style="border-bottom: 1px solid #f1f5f9; font-size: 9pt; color: #dc2626;">El periodo muestra utilidades negativas. Revisa tus gastos.</td></tr>';
         } else {
-            $html3 .= '<tr><td><span style="color: #d97706; font-size: 10pt; font-weight: bold;">El período no reporta utilidad ni pérdida.</span></td></tr>';
+            $html3 .= '<tr><td style="border-bottom: 1px solid #f1f5f9; font-size: 9pt; color: #d97706;">El periodo no reporta utilidad ni perdida.</td></tr>';
         }
 
         if ($unidadesMorosas > 0) {
-            $html3 .= '<tr><td><span style="color: #d97706; font-size: 10pt; font-weight: bold;">' . $unidadesMorosas . ' unidades requieren seguimiento de cobranza.</span></td></tr>';
+            $html3 .= '<tr><td style="font-size: 9pt; color: #d97706;">' . $unidadesMorosas . ' unidades requieren seguimiento de cobranza.</td></tr>';
         } else {
-            $html3 .= '<tr><td><span style="color: #16a34a; font-size: 10pt; font-weight: bold;">Todas las unidades se encuentran al corriente.</span></td></tr>';
+            $html3 .= '<tr><td style="font-size: 9pt; color: #059669;">Todas las unidades se encuentran al corriente.</td></tr>';
         }
         $html3 .= '</table>';
 
