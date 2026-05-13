@@ -2890,11 +2890,18 @@ class FinanceController extends BaseController
         $pdf->SetXY(56, 27);
         $pdf->Cell(136, 7, 'COMUNIDAD: ' . strtoupper($condoName), 0, 1, 'C');
 
-        // Address
-        $pdf->SetFont('helvetica', '', 8);
+        // Address (auto-fit font size)
+        $addrText = strtoupper($condoAddress);
+        $addrFontSize = 7;
+        $pdf->SetFont('helvetica', '', $addrFontSize);
+        $addrWidth = $pdf->GetStringWidth($addrText);
+        if ($addrWidth > 132) {
+            $addrFontSize = 6;
+            $pdf->SetFont('helvetica', '', $addrFontSize);
+        }
         $pdf->SetTextColor(199, 210, 232);
         $pdf->SetXY(56, 35);
-        $pdf->Cell(136, 5, strtoupper($condoAddress), 0, 1, 'C');
+        $pdf->Cell(136, 5, $addrText, 0, 1, 'C');
 
         // Blue accent line
         $pdf->SetFillColor(63, 103, 172);
@@ -3230,11 +3237,18 @@ class FinanceController extends BaseController
         $pdf->SetXY(56, 27);
         $pdf->Cell(136, 7, 'COMUNIDAD: ' . strtoupper($condoName), 0, 1, 'C');
 
-        // Address
-        $pdf->SetFont('helvetica', '', 8);
+        // Address (auto-fit font size)
+        $addrText = strtoupper($condoAddress ?? '');
+        $addrFontSize = 7;
+        $pdf->SetFont('helvetica', '', $addrFontSize);
+        $addrWidth = $pdf->GetStringWidth($addrText);
+        if ($addrWidth > 132) {
+            $addrFontSize = 6;
+            $pdf->SetFont('helvetica', '', $addrFontSize);
+        }
         $pdf->SetTextColor(199, 210, 232);
         $pdf->SetXY(56, 35);
-        $pdf->Cell(136, 5, strtoupper($condoAddress ?? ''), 0, 1, 'C');
+        $pdf->Cell(136, 5, $addrText, 0, 1, 'C');
 
         // Blue accent line
         $pdf->SetFillColor(63, 103, 172); // #3F67AC
@@ -4046,11 +4060,18 @@ class FinanceController extends BaseController
         $pdf->SetXY(51, 27);
         $pdf->Cell(141, 7, 'COMUNIDAD: ' . mb_strtoupper($demoCondo['name'] ?? '', 'UTF-8'), 0, 1, 'C');
 
-        // Address
-        $pdf->SetFont('helvetica', '', 8);
+        // Address (auto-fit font size)
+        $addrText = mb_strtoupper($addressStr, 'UTF-8');
+        $addrFontSize = 7;
+        $pdf->SetFont('helvetica', '', $addrFontSize);
+        $addrWidth = $pdf->GetStringWidth($addrText);
+        if ($addrWidth > 137) {
+            $addrFontSize = 6;
+            $pdf->SetFont('helvetica', '', $addrFontSize);
+        }
         $pdf->SetTextColor(199, 210, 232); // #c7d2e8
         $pdf->SetXY(51, 35);
-        $pdf->Cell(141, 5, mb_strtoupper($addressStr, 'UTF-8'), 0, 1, 'C');
+        $pdf->Cell(141, 5, $addrText, 0, 1, 'C');
 
         // Blue accent line below header
         $pdf->SetFillColor(63, 103, 172); // #3F67AC

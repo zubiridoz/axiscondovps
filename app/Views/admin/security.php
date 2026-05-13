@@ -1723,13 +1723,15 @@
                             <thead class="bg-light">
                                 <tr>
                                     <th class="ps-4 border-0 py-3 th-sortable active" data-sort="visitante"
-                                        style="width: 25%;">Visitante <i class="bi bi-arrow-down-up"></i></th>
-                                    <th class="border-0 py-3 th-sortable" data-sort="tipo_pase" style="width: 15%;">Tipo de
+                                        style="width: 20%;">Visitante <i class="bi bi-arrow-down-up"></i></th>
+                                    <th class="border-0 py-3 th-sortable" data-sort="tipo_pase" style="width: 12%;">Tipo de
                                         Pase <i class="bi bi-arrow-down-up"></i></th>
-                                    <th class="border-0 py-3 th-sortable" data-sort="proposito" style="width: 15%;">
+                                    <th class="border-0 py-3 th-sortable" data-sort="proposito" style="width: 12%;">
                                         Propósito <i class="bi bi-arrow-down-up"></i></th>
-                                    <th class="border-0 py-3 th-sortable" data-sort="vehiculo" style="width: 15%;">Vehículo
+                                    <th class="border-0 py-3 th-sortable" data-sort="vehiculo" style="width: 10%;">Vehículo
                                     </th>
+                                    <th class="border-0 py-3 th-sortable" data-sort="unidad" style="width: 10%;">Unidad <i
+                                            class="bi bi-arrow-down-up"></i></th>
                                     <th class="border-0 py-3 th-sortable" data-sort="valido_desde">Válido Desde <i
                                             class="bi bi-arrow-down"></i></th>
                                     <th class="border-0 py-3 th-sortable" data-sort="valido_hasta">Válido Hasta <i
@@ -1808,6 +1810,9 @@
                                         </td>
                                         <td class="text-secondary" style="font-size: 0.82rem;">
                                             <?= esc($qr['vehicle_type'] === 'Sin vehículo' ? 'Sin vehículo' : 'Auto') ?>
+                                        </td>
+                                        <td>
+                                            <span class="fw-bold text-dark" style="font-size: 0.82rem;"><?= esc($qr['unit_number'] ?: '-') ?></span>
                                         </td>
                                         <td>
                                             <div class="text-dark" style="font-size: 0.82rem; margin-bottom: 2px;">
