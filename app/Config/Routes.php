@@ -276,6 +276,8 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin', 'filter' => ['a
     $routes->post('configuracion/sections/delete', 'SettingsController::deleteSection');
     // Preferencias Financieras
     $routes->post('configuracion/financial-access', 'SettingsController::saveFinancialAccess');
+    $routes->post('settings/finance-categories/toggle', 'SettingsController::toggleFinancialCategory');
+    $routes->post('settings/finance-categories/add', 'SettingsController::addFinancialCategory');
     // Preferencias Muro
     $routes->post('configuracion/wall-access', 'SettingsController::saveWallAccess');
     // Restricciones por Morosidad

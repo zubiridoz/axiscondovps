@@ -33,6 +33,27 @@ class SettingsController extends BaseController
         $sections = $sectionModel->orderBy('name', 'ASC')->findAll();
         $units = $unitModel->orderBy('unit_number', 'ASC')->findAll();
 
+        $db = \Config\Database::connect();
+        $categoriesRaw = $db->table('financial_categories')
+            ->where('condominium_id', $condo['id'] ?? 0)
+            ->orderBy('is_system', 'DESC')
+            ->orderBy('id', 'ASC')
+            ->get()
+            ->getResultArray();
+            
+        $financialCategories = [
+            'income' => [],
+            'expense' => []
+        ];
+        
+        foreach ($categoriesRaw as $cat) {
+            if ($cat['type'] === 'income') {
+                $financialCategories['income'][] = $cat;
+            } elseif ($cat['type'] === 'expense') {
+                $financialCategories['expense'][] = $cat;
+            }
+        }
+
         return view('admin/settings', [
             'me' => [
                 'first_name' => $me['first_name'] ?? '',
@@ -78,6 +99,7 @@ class SettingsController extends BaseController
             ],
             'sections' => $sections,
             'units'    => $units,
+            'financial_categories' => $financialCategories,
             'payment_reminders' => \App\Services\PaymentReminderService::getRemindersForCondominium($condo['id'] ?? 0)
         ]);
     }
@@ -158,6 +180,98 @@ class SettingsController extends BaseController
 
         return $this->response->setJSON(['success' => true]);
     }
+
+    /**
+     * Toggle active status of a financial category via AJAX.
+     */
+    public function toggleFinancialCategory()
+    {
+        $this->bootstrapTenant();
+        
+        $condoModel = new CondominiumModel();
+        $condo = $condoModel->first();
+        if (! $condo) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Comunidad no encontrada.'])->setStatusCode(404);
+        }
+
+        $id = (int) $this->request->getPost('id');
+        $isActive = $this->request->getPost('is_active') === '1' || $this->request->getPost('is_active') === 'true' ? 1 : 0;
+
+        $db = \Config\Database::connect();
+        $category = $db->table('financial_categories')
+            ->where('id', $id)
+            ->where('condominium_id', $condo['id'])
+            ->get()
+            ->getRowArray();
+
+        if (! $category) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Categoría no encontrada.'])->setStatusCode(404);
+        }
+
+        $db->table('financial_categories')->where('id', $id)->update(['is_active' => $isActive]);
+
+        return $this->response->setJSON(['success' => true]);
+    }
+
+    /**
+     * Add a custom financial category via AJAX.
+     */
+    public function addFinancialCategory()
+    {
+        $this->bootstrapTenant();
+        
+        $condoModel = new CondominiumModel();
+        $condo = $condoModel->first();
+        if (! $condo) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Comunidad no encontrada.'])->setStatusCode(404);
+        }
+
+        $name = trim((string) $this->request->getPost('name'));
+        $type = $this->request->getPost('type') === 'expense' ? 'expense' : 'income';
+        $icon = trim((string) $this->request->getPost('icon')) ?: 'bi-tag';
+
+        if ($name === '') {
+            return $this->response->setJSON(['success' => false, 'message' => 'El nombre de la categoría es obligatorio.'])->setStatusCode(422);
+        }
+
+        $db = \Config\Database::connect();
+        
+        // Prevent duplicate names
+        $exists = $db->table('financial_categories')
+            ->where('condominium_id', $condo['id'])
+            ->where('name', $name)
+            ->where('type', $type)
+            ->countAllResults();
+            
+        if ($exists > 0) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Ya existe una categoría con este nombre y tipo.'])->setStatusCode(409);
+        }
+
+        $db->table('financial_categories')->insert([
+            'condominium_id' => $condo['id'],
+            'name'           => $name,
+            'type'           => $type,
+            'is_system'      => 0,
+            'is_active'      => 1,
+            'icon'           => $icon,
+            'created_at'     => date('Y-m-d H:i:s'),
+            'updated_at'     => date('Y-m-d H:i:s')
+        ]);
+
+        return $this->response->setJSON([
+            'success' => true, 
+            'message' => 'Categoría agregada correctamente.',
+            'category' => [
+                'id' => $db->insertID(),
+                'name' => $name,
+                'type' => $type,
+                'icon' => $icon,
+                'is_active' => 1,
+                'is_system' => 0
+            ]
+        ]);
+    }
+
 
     /**
      * Update wall/announcements access preferences.

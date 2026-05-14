@@ -684,6 +684,8 @@ class FinanceController extends BaseController
             $categories = $db->table('financial_categories')->where('condominium_id', $demoCondo['id'])->orderBy('id', 'ASC')->get()->getResultArray();
         }
 
+        $activeCategories = array_filter($categories, fn($c) => $c['is_active'] == 1);
+
         // Cargar unidades activas para el panel lateral de selección masiva
         $builderU = $db->table('units');
         $builderU->select('units.id, units.unit_number as label, units.maintenance_fee, sec.name as section_name');
@@ -705,7 +707,7 @@ class FinanceController extends BaseController
 
         $data = [
             'condo' => $demoCondo,
-            'categories' => $categories,
+            'categories' => $activeCategories,
             'groupedUnits' => $groupedUnits,
             'totalUnits' => $totalUnits
         ];

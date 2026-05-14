@@ -720,38 +720,7 @@
                                         <?php else: ?>
                                             <?php foreach ($categories as $index => $cat): ?>
                                                 <?php
-                                                $name = strtolower($cat['name']);
-                                                $icon = 'bi-tag'; // Default
-                                                if (strpos($name, 'mora') !== false)
-                                                    $icon = 'bi-exclamation-circle';
-                                                elseif (strpos($name, 'reserva') !== false)
-                                                    $icon = 'bi-calendar-check';
-                                                elseif (strpos($name, 'multa de amenidad') !== false)
-                                                    $icon = 'bi-exclamation-triangle';
-                                                elseif (strpos($name, 'estacionamiento') !== false)
-                                                    $icon = 'bi-car-front';
-                                                elseif (strpos($name, 'mascota') !== false)
-                                                    $icon = 'bi-bug'; // closest to paw in standard bootstrap
-                                                elseif (strpos($name, 'infracción') !== false || strpos($name, 'infraccion') !== false)
-                                                    $icon = 'bi-slash-circle';
-                                                elseif (strpos($name, 'otro ingreso') !== false)
-                                                    $icon = 'bi-cash';
-                                                elseif (strpos($name, 'salario') !== false || strpos($name, 'personal') !== false)
-                                                    $icon = 'bi-people';
-                                                elseif (strpos($name, 'mantenimiento') !== false)
-                                                    $icon = 'bi-wrench';
-                                                elseif (strpos($name, 'públicos') !== false || strpos($name, 'publicos') !== false)
-                                                    $icon = 'bi-lightning';
-                                                elseif (strpos($name, 'suministros') !== false)
-                                                    $icon = 'bi-box';
-                                                elseif (strpos($name, 'profesionales') !== false || strpos($name, 'servicios') !== false)
-                                                    $icon = 'bi-bag';
-                                                elseif (strpos($name, 'seguro') !== false)
-                                                    $icon = 'bi-shield';
-                                                elseif (strpos($name, 'otro') !== false)
-                                                    $icon = 'bi-graph-down';
-                                                if ($name === 'cuota de mantenimiento')
-                                                    $icon = 'bi-currency-dollar';
+                                                $icon = !empty($cat['icon']) ? $cat['icon'] : 'bi-tag';
                                                 ?>
                                                 <div class="koti-select-option d-flex justify-content-between align-items-center <?= $index === 0 ? 'bg-light' : '' ?> cat-option"
                                                     data-value="<?= esc($cat['id']) ?>" data-type="<?= esc($cat['type']) ?>"

@@ -1671,7 +1671,112 @@ $community = array_merge([
                         </button>
                     </div>
                 </div>
+                </div>
+
+            <!-- CATEGORIAS FINANCIERAS -->
+            <div style="border: 1px solid #e2e8f0; border-radius: 0.65rem; background:#fff; overflow:hidden; margin-bottom: 1.5rem; margin-top: 2.5rem;">
+                <div style="padding: 1.25rem; border-bottom: 1px solid #e2e8f0;">
+                    <div style="display:flex; align-items:center; justify-content: space-between;">
+                        <div style="display:flex; align-items:center; gap:0.6rem;">
+                            <i class="bi bi-tags" style="color:#10b981; font-size:1.1rem;"></i>
+                            <span style="font-weight:600; color:#0f172a; font-size:0.95rem;">Categorías de Transacciones</span>
+                        </div>
+                        <button type="button" class="btn-cfg-save" onclick="openAddCategoryModal()" style="padding: 0.35rem 0.8rem; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.4rem; background: #3F67AC; color: white; border: none; border-radius: 4px;">
+                            <i class="bi bi-plus-lg"></i> Agregar Categoría
+                        </button>
+                    </div>
+                    <div style="font-size: 0.8rem; color: #64748b; margin-top: 0.5rem; padding-left: 1.7rem;">
+                        Gestiona las categorías disponibles para ingresos y gastos. Desactiva las que no utilices.
+                    </div>
+                </div>
+
+                <div style="padding:0; overflow:hidden;">
+                    <div class="accordion" id="accordionCategories">
+                        <!-- Ingresos Accordion -->
+                        <div class="accordion-item" style="border:none; border-bottom: 1px solid #e2e8f0;">
+                            <h2 class="accordion-header" id="headingIncome">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseIncome" aria-expanded="true" aria-controls="collapseIncome" style="background: #f8fafc; color: #1e293b; font-weight: 600; font-size: 0.95rem; box-shadow: none; padding: 1rem 1.5rem;">
+                                    Categorías de Ingresos <span class="badge bg-light text-dark ms-2 border" style="font-weight: 500;"><?= count($financial_categories['income'] ?? []) ?></span>
+                                </button>
+                            </h2>
+                            <div id="collapseIncome" class="accordion-collapse collapse show" aria-labelledby="headingIncome" data-bs-parent="#accordionCategories">
+                                <div class="accordion-body" style="padding: 0;">
+                                    <?php if(empty($financial_categories['income'])): ?>
+                                        <div style="padding: 1.5rem; text-align: center; color: #64748b; font-size: 0.9rem;">No hay categorías de ingresos.</div>
+                                    <?php else: ?>
+                                        <div style="display: flex; flex-direction: column;">
+                                            <?php foreach($financial_categories['income'] as $cat): ?>
+                                                <div style="display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.5rem; border-bottom: 1px solid #f1f5f9;">
+                                                    <div style="display: flex; align-items: center; gap: 1rem;">
+                                                        <div style="width: 36px; height: 36px; border-radius: 8px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; color: #475569;">
+                                                            <i class="bi <?= esc($cat['icon']) ?> fs-5"></i>
+                                                        </div>
+                                                        <div>
+                                                            <div style="font-weight: 500; color: #1e293b; font-size: 0.95rem;">
+                                                                <?= esc($cat['name']) ?>
+                                                                <?php if($cat['is_system']): ?>
+                                                                    <span class="badge bg-light text-muted ms-2 border" style="font-size: 0.7rem; font-weight: normal;">Sistema</span>
+                                                                <?php endif; ?>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div style="display:flex; align-items:center; gap: 1rem;">
+                                                        <div class="form-check form-switch" style="margin: 0;">
+                                                            <input class="form-check-input" type="checkbox" role="switch" <?= $cat['is_active'] ? 'checked' : '' ?> onchange="toggleCategory(<?= $cat['id'] ?>, this.checked)" style="cursor: pointer; width: 2.5em; height: 1.25em;">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Gastos Accordion -->
+                        <div class="accordion-item" style="border:none;">
+                            <h2 class="accordion-header" id="headingExpense">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseExpense" aria-expanded="false" aria-controls="collapseExpense" style="background: #f8fafc; color: #1e293b; font-weight: 600; font-size: 0.95rem; box-shadow: none; padding: 1rem 1.5rem;">
+                                    Categorías de Gastos <span class="badge bg-light text-dark ms-2 border" style="font-weight: 500;"><?= count($financial_categories['expense'] ?? []) ?></span>
+                                </button>
+                            </h2>
+                            <div id="collapseExpense" class="accordion-collapse collapse" aria-labelledby="headingExpense" data-bs-parent="#accordionCategories">
+                                <div class="accordion-body" style="padding: 0;">
+                                    <?php if(empty($financial_categories['expense'])): ?>
+                                        <div style="padding: 1.5rem; text-align: center; color: #64748b; font-size: 0.9rem;">No hay categorías de gastos.</div>
+                                    <?php else: ?>
+                                        <div style="display: flex; flex-direction: column;">
+                                            <?php foreach($financial_categories['expense'] as $cat): ?>
+                                                <div style="display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.5rem; border-bottom: 1px solid #f1f5f9;">
+                                                    <div style="display: flex; align-items: center; gap: 1rem;">
+                                                        <div style="width: 36px; height: 36px; border-radius: 8px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; color: #475569;">
+                                                            <i class="bi <?= esc($cat['icon']) ?> fs-5"></i>
+                                                        </div>
+                                                        <div>
+                                                            <div style="font-weight: 500; color: #1e293b; font-size: 0.95rem;">
+                                                                <?= esc($cat['name']) ?>
+                                                                <?php if($cat['is_system']): ?>
+                                                                    <span class="badge bg-light text-muted ms-2 border" style="font-size: 0.7rem; font-weight: normal;">Sistema</span>
+                                                                <?php endif; ?>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div style="display:flex; align-items:center; gap: 1rem;">
+                                                        <div class="form-check form-switch" style="margin: 0;">
+                                                            <input class="form-check-input" type="checkbox" role="switch" <?= $cat['is_active'] ? 'checked' : '' ?> onchange="toggleCategory(<?= $cat['id'] ?>, this.checked)" style="cursor: pointer; width: 2.5em; height: 1.25em;">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
+
         </div>
 
         <!-- ═══ TAB: Perfil ═══ -->
@@ -1831,6 +1936,67 @@ $community = array_merge([
 <?= $this->endSection() ?>
 
 <?= $this->section('modals') ?>
+
+<!-- Modal: Agregar Categoría Financiera -->
+<div class="modal fade cfg-modal" id="modalAddCategory" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:550px;">
+        <div class="modal-content">
+            <div class="modal-header d-block">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5 class="modal-title">Agregar Categoría Personalizada</h5>
+                        <p class="cfg-modal-subtitle mb-0">Crea una nueva categoría para ingresos o gastos.</p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <form id="formAddCategory">
+                    <div class="mb-3">
+                        <label class="form-label" style="font-weight: 500; font-size: 0.85rem; color: #475569;">Nombre de la Categoría</label>
+                        <input type="text" class="form-control" id="catName" placeholder="Ej. Alquiler de Piscina" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" style="font-weight: 500; font-size: 0.85rem; color: #475569;">Tipo</label>
+                        <select class="form-select" id="catType" required>
+                            <option value="income">Ingreso</option>
+                            <option value="expense">Gasto</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" style="font-weight: 500; font-size: 0.85rem; color: #475569;">Ícono</label>
+                        <select class="form-select" id="catIcon" required style="font-family: 'bootstrap-icons', Inter, sans-serif;">
+                            <option value="bi-tag">&#xf5d3; Etiqueta (Genérico)</option>
+                            <option value="bi-cash">&#xf289; Dinero</option>
+                            <option value="bi-currency-dollar">&#xf2db; Cuota / Dólar</option>
+                            <option value="bi-calendar-check">&#xf234; Reserva / Calendario</option>
+                            <option value="bi-exclamation-triangle">&#xf33a; Multa / Advertencia</option>
+                            <option value="bi-wrench">&#xf62e; Mantenimiento</option>
+                            <option value="bi-lightning">&#xf4b2; Electricidad / Servicios</option>
+                            <option value="bi-droplet">&#xf30b; Agua</option>
+                            <option value="bi-wifi">&#xf614; Internet</option>
+                            <option value="bi-shield">&#xf53e; Seguro</option>
+                            <option value="bi-people">&#xf4d3; Personal / Salarios</option>
+                            <option value="bi-box">&#xf1c7; Suministros</option>
+                            <option value="bi-bag">&#xf13a; Compras</option>
+                            <option value="bi-graph-down">&#xf40c; Otro Gasto</option>
+                            <option value="bi-piggy-bank">&#xf696; Fondo / Ahorro</option>
+                            <option value="bi-building">&#xf1d1; Edificio / Infraestructura</option>
+                            <option value="bi-tree">&#xf5f5; Jardinería / Áreas Verdes</option>
+                            <option value="bi-trash">&#xf5de; Basura / Limpieza</option>
+                            <option value="bi-car-front">&#xf22b; Estacionamiento</option>
+                            <option value="bi-bug">&#xf1e2; Control de Plagas / Mascotas</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer bg-light border-top-0 d-flex justify-content-end p-3">
+                <button type="button" class="btn btn-light bg-white border" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="saveNewCategory()" style="background: #3F67AC; border: none;">Guardar Categoría</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- ═══════════════════════════════════════════════ -->
 <!-- Modal: Agregar/Editar Sección                   -->
@@ -2370,6 +2536,8 @@ $community = array_merge([
             setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateY(12px)'; }, 2800);
             setTimeout(() => toast.remove(), 3200);
         }
+        window.showToast = showToast;
+
 
         // ───────────── Edit Info Modal ─────────────
         const modalInfoEl = document.getElementById('modalEditInfo');
@@ -3920,5 +4088,72 @@ $community = array_merge([
         };
 
     });
+
+    // ─── CATEGORÍAS FINANCIERAS ─── //
+    function toggleCategory(id, isActive) {
+        const payload = new FormData();
+        payload.append('id', id);
+        payload.append('is_active', isActive ? 1 : 0);
+
+        fetch('<?= site_url('admin/settings/finance-categories/toggle') ?>', {
+            method: 'POST',
+            body: payload
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (!data.success) {
+                showToast(data.message || 'Error al actualizar categoría.', 'error');
+            } else {
+                showToast('Categoría actualizada correctamente.', 'success');
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            showToast('Ocurrió un error inesperado.', 'error');
+        });
+    }
+
+    let modalAddCategoryInstance = null;
+    function openAddCategoryModal() {
+        if (!modalAddCategoryInstance) {
+            modalAddCategoryInstance = new bootstrap.Modal(document.getElementById('modalAddCategory'));
+        }
+        document.getElementById('formAddCategory').reset();
+        modalAddCategoryInstance.show();
+    }
+
+    function saveNewCategory() {
+        const name = document.getElementById('catName').value.trim();
+        const type = document.getElementById('catType').value;
+        const icon = document.getElementById('catIcon').value;
+
+        if (!name) {
+            showToast('El nombre es obligatorio.', 'error');
+            return;
+        }
+
+        const payload = new FormData();
+        payload.append('name', name);
+        payload.append('type', type);
+        payload.append('icon', icon);
+
+        fetch('<?= site_url('admin/settings/finance-categories/add') ?>', {
+            method: 'POST',
+            body: payload
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, 'success');
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                showToast(data.message || 'Error al agregar categoría.', 'error');
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            showToast('Ocurrió un error inesperado.', 'error');
+        });
+    }
 </script>
 <?= $this->endSection() ?>
