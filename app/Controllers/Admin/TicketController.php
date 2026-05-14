@@ -1037,6 +1037,16 @@ class TicketController extends BaseController
                 'created_at'     => $now,
                 'updated_at'     => $now,
             ]);
+
+            // Enviar notificación Push al dispositivo del residente
+            $pushService = new \App\Services\Notifications\PushNotificationService();
+            $pushService->sendToUser(
+                $residentUserId,
+                $title,
+                $body,
+                $extraData
+            );
+            
         } catch (\Throwable $e) {
             log_message('error', '[TICKET_NOTIF] notifyTicketResident failed: ' . $e->getMessage());
         }
