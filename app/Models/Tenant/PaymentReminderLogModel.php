@@ -15,6 +15,7 @@ class PaymentReminderLogModel extends Model
     protected $allowedFields    = [
         'reminder_id',
         'user_id',
+        'unit_id',
         'sent_date',
     ];
 

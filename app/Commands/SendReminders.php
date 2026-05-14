@@ -146,6 +146,7 @@ class SendReminders extends BaseCommand
                         $alreadySent = $db->table('payment_reminder_logs')
                             ->where('reminder_id', $reminder['id'])
                             ->where('user_id', $resident['user_id'])
+                            ->where('unit_id', $unit['id'])
                             ->where('sent_date', $todayStr)
                             ->limit(1)
                             ->get()
@@ -168,6 +169,7 @@ class SendReminders extends BaseCommand
                                 $db->table('payment_reminder_logs')->insert([
                                     'reminder_id' => $reminder['id'],
                                     'user_id'     => $resident['user_id'],
+                                    'unit_id'     => $unit['id'],
                                     'sent_date'   => $todayStr
                                 ]);
                             } catch (\Exception $e) {
