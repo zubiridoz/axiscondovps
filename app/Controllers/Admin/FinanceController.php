@@ -1809,7 +1809,7 @@ class FinanceController extends BaseController
             'saldoPendiente' => $saldoPendiente,
             'saldoVencido' => $saldoVencido,
             'cuotaMensual' => $cuotaMensual,
-            'nextDueDate' => $nextDue->format('j \d\e F \d\e Y'),
+            'nextDueDate' => (new \IntlDateFormatter('es_MX', \IntlDateFormatter::LONG, \IntlDateFormatter::NONE, null, null, "d 'de' MMMM 'de' yyyy"))->format($nextDue),
             'daysLeft' => $daysLeft,
             'pendingRows' => array_values($pendingRows),
             'statementRows' => array_values($statementRows),

@@ -3879,8 +3879,8 @@ $community = array_merge([
                         <div style="font-size:0.85rem;color:#a16207;line-height:1.5;">
                             Tu plan es gestionado directamente por el equipo de AxisCondo. Para cambios de plan, renovaciones o consultas sobre tu facturación, contacta a tu ejecutivo de cuenta.
                         </div>
-                        <a href="mailto:soporte@axiscondo.mx" style="display:inline-flex;align-items:center;gap:0.4rem;margin-top:0.75rem;padding:0.5rem 1rem;background:#1D4C9D;color:#fff;border-radius:8px;font-weight:600;font-size:0.85rem;text-decoration:none;transition:all 0.2s;" onmouseover="this.style.background='#334155';" onmouseout="this.style.background='#1D4C9D';">
-                            <i class="bi bi-envelope" style="margin:0;"></i> soporte@axiscondo.mx
+                        <a href="mailto:hola@axiscondo.mx" style="display:inline-flex;align-items:center;gap:0.4rem;margin-top:0.75rem;padding:0.5rem 1rem;background:#1D4C9D;color:#fff;border-radius:8px;font-weight:600;font-size:0.85rem;text-decoration:none;transition:all 0.2s;" onmouseover="this.style.background='#334155';" onmouseout="this.style.background='#1D4C9D';">
+                            <i class="bi bi-envelope" style="margin:0;"></i> hola@axiscondo.mx
                         </a>
                     </div>
                 </div>`;

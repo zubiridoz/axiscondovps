@@ -720,6 +720,10 @@ $baseUrl = base_url('admin/finanzas/pagos-por-unidad/');
 $prevUrl = $prevId ? ($baseUrl . $prevId) : null;
 $nextUrl = $nextId ? ($baseUrl . $nextId) : null;
 $formatMXN = fn($v) => 'MX$' . number_format((float) $v, 2);
+$formatDateEs = function($dateStr) {
+    if (empty($dateStr)) return '—';
+    return (new IntlDateFormatter('es_MX', IntlDateFormatter::MEDIUM, IntlDateFormatter::NONE, null, null, "d MMM yyyy"))->format(strtotime($dateStr));
+};
 ?>
 
 <div class="ppu-container">
@@ -856,7 +860,8 @@ $formatMXN = fn($v) => 'MX$' . number_format((float) $v, 2);
                     <table class="ud-table">
                         <thead>
                             <tr>
-                                <th>Fecha</th>
+                                <th>Fecha de Emisión</th>
+                                <th>Fecha de Vencimiento</th>
                                 <th>Descripción</th>
                                 <th>Categoría</th>
                                 <th style="text-align:right;">Monto</th>
@@ -866,7 +871,10 @@ $formatMXN = fn($v) => 'MX$' . number_format((float) $v, 2);
                             <?php foreach ($pendingRows as $row): ?>
                                 <tr>
                                     <td style="color: var(--ud-info);">
-                                        <?= date('j M Y', strtotime(!empty($row['issue_date']) ? $row['issue_date'] : $row['created_at'])) ?>
+                                        <?= $formatDateEs(!empty($row['issue_date']) ? $row['issue_date'] : $row['created_at']) ?>
+                                    </td>
+                                    <td style="color: var(--ud-muted);">
+                                        <?= $formatDateEs($row['due_date']) ?>
                                     </td>
                                     <td><?= esc($row['description']) ?></td>
                                     <td>
@@ -883,7 +891,7 @@ $formatMXN = fn($v) => 'MX$' . number_format((float) $v, 2);
                         </tbody>
                         <tfoot>
                             <tr>
-                                <td colspan="3">Total Pendiente</td>
+                                <td colspan="4">Total Pendiente</td>
                                 <td style="text-align:right;" class="balance-pos"><?= $formatMXN($saldoPendiente) ?></td>
                             </tr>
                         </tfoot>
@@ -905,7 +913,8 @@ $formatMXN = fn($v) => 'MX$' . number_format((float) $v, 2);
                     <thead>
                         <tr>
                             <th style="width:36px"><input type="checkbox" id="selectAllEs"></th>
-                            <th>Fecha <i class="bi bi-arrow-up"></i></th>
+                            <th>Fecha de Emisión <i class="bi bi-arrow-up"></i></th>
+                            <th>Fecha de Vencimiento</th>
                             <th>Descripción</th>
                             <th>Tipo</th>
                             <th style="text-align:right;">Monto</th>
@@ -917,6 +926,7 @@ $formatMXN = fn($v) => 'MX$' . number_format((float) $v, 2);
                         <!-- Saldo Inicial -->
                         <tr class="initial-row">
                             <td></td>
+                            <td style="color: var(--ud-muted);">—</td>
                             <td style="color: var(--ud-muted);">—</td>
                             <td><strong>Saldo Inicial</strong></td>
                             <td><span class="badge-initial">Inicial</span></td>
@@ -951,7 +961,10 @@ $formatMXN = fn($v) => 'MX$' . number_format((float) $v, 2);
                             <tr>
                                 <td><input type="checkbox"></td>
                                 <td style="color: var(--ud-info);">
-                                    <?= date('j M Y', strtotime(!empty($row['issue_date']) ? $row['issue_date'] : $row['created_at'])) ?>
+                                    <?= $formatDateEs(!empty($row['issue_date']) ? $row['issue_date'] : $row['created_at']) ?>
+                                </td>
+                                <td style="color: var(--ud-muted);">
+                                    <?= $formatDateEs($row['due_date'] ?? null) ?>
                                 </td>
                                 <td><?= esc($row['description']) ?></td>
                                 <td>
@@ -1031,7 +1044,7 @@ $formatMXN = fn($v) => 'MX$' . number_format((float) $v, 2);
                         <tbody>
                             <?php foreach ($paymentHistory as $ph): ?>
                                 <tr>
-                                    <td style="color: var(--ud-info);"><?= date('j M Y', strtotime(!empty($ph['issue_date']) ? $ph['issue_date'] : $ph['created_at'])) ?></td>
+                                    <td style="color: var(--ud-info);"><?= $formatDateEs(!empty($ph['issue_date']) ? $ph['issue_date'] : $ph['created_at']) ?></td>
                                     <td style="font-family: 'SF Mono', ui-monospace, monospace; font-size: 0.85rem; font-weight: 600; color: #64748B;">#REC-<?= strtoupper(substr(md5($ph['id'] . ($ph['issue_date'] ?? $ph['created_at'])), 0, 8)) ?></td>
                                     <td><strong><?= strtoupper(esc($ph['description'])) ?></strong></td>
                                     <td>MX$<?= number_format((float) $ph['amount'], 2) ?></td>
@@ -1126,7 +1139,7 @@ $formatMXN = fn($v) => 'MX$' . number_format((float) $v, 2);
                                     </td>
                                     <td style="font-weight:600;">MX$<?= number_format((float) ($v['amount'] ?? 0), 2) ?></td>
                                     <td><?= $methodLabel ?></td>
-                                    <td style="color: var(--ud-info);"><?= date('j M Y', strtotime(!empty($v['issue_date']) ? $v['issue_date'] : $v['created_at'])) ?></td>
+                                    <td style="color: var(--ud-info);"><?= $formatDateEs(!empty($v['issue_date']) ? $v['issue_date'] : $v['created_at']) ?></td>
                                     <td><span class="<?= $statusClass ?>"><?= $statusLabel ?></span></td>
                                     <td>
                                         <div class="actions-cell" style="justify-content:center;">
