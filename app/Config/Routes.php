@@ -285,6 +285,7 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin', 'filter' => ['a
     // Finanzas - Datos Bancarios y Configuración de Pagos
     $routes->post('configuracion/bank-details', 'SettingsController::saveBankDetails');
     $routes->post('configuracion/payment-config', 'SettingsController::savePaymentConfig');
+    $routes->post('configuracion/late-fee-config', 'SettingsController::saveLateFeeConfig');
     // Suscripción
     $routes->get('configuracion/subscription', 'SettingsController::getSubscription');
     $routes->post('configuracion/change-plan', 'SettingsController::changePlan');

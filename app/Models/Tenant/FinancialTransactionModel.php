@@ -21,6 +21,7 @@ class FinancialTransactionModel extends BaseTenantModel
         'description',
         'due_date',
         'status',
+        'late_fee_applied',
         'attachment',
         'payment_method',
         'source'

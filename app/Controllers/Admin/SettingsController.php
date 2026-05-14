@@ -96,6 +96,14 @@ class SettingsController extends BaseController
                 'billing_due_day'       => (int)($condo['billing_due_day'] ?? 15),
                 'billing_start_date'    => $condo['billing_start_date'] ?? null,
                 'is_billing_active'     => !empty($condo['is_billing_active']),
+                'late_fee_enabled'       => !empty($condo['late_fee_enabled']),
+                'late_fee_type'          => $condo['late_fee_type'] ?? 'fixed',
+                'late_fee_amount'        => (float)($condo['late_fee_amount'] ?? 0),
+                'late_fee_percentage'    => (float)($condo['late_fee_percentage'] ?? 0),
+                'late_fee_max_amount'    => $condo['late_fee_max_amount'] !== null ? (float)$condo['late_fee_max_amount'] : null,
+                'late_fee_grace_enabled' => !empty($condo['late_fee_grace_enabled']),
+                'late_fee_grace_days'    => (int)($condo['late_fee_grace_days'] ?? 0),
+                'late_fee_categories'    => json_decode($condo['late_fee_categories'] ?? '[]', true) ?: [],
             ],
             'sections' => $sections,
             'units'    => $units,
@@ -1032,6 +1040,73 @@ class SettingsController extends BaseController
         return $this->response->setJSON([
             'success' => true,
             'message' => 'Configuración de pagos actualizada correctamente'
+        ]);
+    }
+
+    /**
+     * Save late fee configuration via AJAX
+     */
+    public function saveLateFeeConfig()
+    {
+        $this->bootstrapTenant();
+
+        $condoModel = new CondominiumModel();
+        $condo = $condoModel->first();
+        if (!$condo) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Condominio no encontrado']);
+        }
+
+        $enabled = $this->request->getPost('late_fee_enabled') === 'true' || $this->request->getPost('late_fee_enabled') === '1';
+        $type = $this->request->getPost('late_fee_type');
+        $amount = (float) $this->request->getPost('late_fee_amount');
+        $percentage = (float) $this->request->getPost('late_fee_percentage');
+        
+        $maxAmountRaw = $this->request->getPost('late_fee_max_amount');
+        $maxAmount = ($maxAmountRaw === '' || $maxAmountRaw === null) ? null : (float) $maxAmountRaw;
+        
+        $graceEnabled = $this->request->getPost('late_fee_grace_enabled') === 'true' || $this->request->getPost('late_fee_grace_enabled') === '1';
+        $graceDays = (int) $this->request->getPost('late_fee_grace_days');
+        
+        $categoriesRaw = $this->request->getPost('late_fee_categories');
+        $categories = [];
+        if (!empty($categoriesRaw)) {
+            $decoded = json_decode($categoriesRaw, true);
+            if (is_array($decoded)) {
+                $categories = array_map('intval', $decoded);
+            }
+        }
+
+        // Validations
+        if (!in_array($type, ['fixed', 'percentage'])) {
+            $type = 'fixed';
+        }
+        if ($type === 'percentage') {
+            $amount = 0;
+            if ($percentage < 0) $percentage = 0;
+            if ($percentage > 100) $percentage = 100;
+        } else {
+            $percentage = 0;
+            $maxAmount = null;
+            if ($amount < 0) $amount = 0;
+        }
+
+        if ($graceDays < 0) $graceDays = 0;
+        if ($graceDays > 365) $graceDays = 365;
+
+        $condoModel->update($condo['id'], [
+            'late_fee_enabled'       => $enabled ? 1 : 0,
+            'late_fee_type'          => $type,
+            'late_fee_amount'        => $amount,
+            'late_fee_percentage'    => $percentage,
+            'late_fee_max_amount'    => $maxAmount,
+            'late_fee_grace_enabled' => $graceEnabled ? 1 : 0,
+            'late_fee_grace_days'    => $graceDays,
+            'late_fee_categories'    => json_encode($categories)
+        ]);
+
+        return $this->response->setJSON([
+            'success' => true,
+            'message' => 'Configuración de recargos por mora actualizada correctamente'
         ]);
     }
 

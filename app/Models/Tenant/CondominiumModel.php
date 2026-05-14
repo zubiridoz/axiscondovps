@@ -47,6 +47,14 @@ class CondominiumModel extends BaseTenantModel
         'stripe_customer_id',
         'stripe_subscription_id',
         'payment_approval_mode',
+        'late_fee_enabled',
+        'late_fee_type',
+        'late_fee_amount',
+        'late_fee_percentage',
+        'late_fee_max_amount',
+        'late_fee_grace_enabled',
+        'late_fee_grace_days',
+        'late_fee_categories',
     ];
 
     // Dates

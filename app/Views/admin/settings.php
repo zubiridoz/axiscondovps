@@ -1671,7 +1671,98 @@ $community = array_merge([
                         </button>
                     </div>
                 </div>
+            </div>
+
+            <!-- ── Configuración de Cargo por Mora ── -->
+            <div style="border: 1px solid #e2e8f0; border-radius: 0.65rem; background:#fff; overflow:hidden; margin-bottom: 1.5rem; margin-top: 2.5rem;">
+                <div style="padding: 1.25rem; border-bottom: 1px solid #e2e8f0;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div style="display:flex; align-items:center; gap:0.6rem;">
+                            <i class="bi bi-clock-history" style="color:#f59e0b; font-size:1.1rem;"></i>
+                            <span style="font-weight:600; color:#0f172a; font-size:0.95rem;">Configuración de Cargo por Mora</span>
+                        </div>
+                        <button type="button" class="btn-cfg-cancel" style="padding:0.35rem 0.8rem; font-size:0.85rem; display:inline-flex; align-items:center; gap:0.4rem;" onclick="openLateFeeModal()">
+                            <i class="bi bi-pencil"></i> Editar
+                        </button>
+                    </div>
+                    <p style="color:#64748b; font-size:0.85rem; margin:0.4rem 0 0 0;">
+                        Configure cargos automáticos por mora para pagos vencidos de HOA. Los cargos se aplicarán de acuerdo a su configuración.
+                    </p>
                 </div>
+                <div style="padding: 1.25rem;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 1.5rem;">
+                        <div>
+                            <span style="color:#0f172a; font-weight:500; font-size:0.9rem;">Habilitar Cargos por Mora</span>
+                        </div>
+                        <div>
+                            <?php if ($community['late_fee_enabled']): ?>
+                                <span class="badge" style="background-color: #dcfce7; color: #166534; font-weight: 500; padding: 0.4rem 0.8rem; border-radius: 9999px;">Habilitado</span>
+                            <?php else: ?>
+                                <span class="badge" style="background-color: #f1f5f9; color: #475569; font-weight: 500; padding: 0.4rem 0.8rem; border-radius: 9999px;">Deshabilitado</span>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    
+                    <?php if ($community['late_fee_enabled']): ?>
+                    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:1.5rem; margin-bottom:1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid #e2e8f0;">
+                        <div>
+                            <span style="color:#64748b; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em; font-weight:500;">Tipo de Cargo</span>
+                            <div style="color:#0f172a; font-weight:600; font-size:0.95rem; margin-top:0.25rem;">
+                                <?= $community['late_fee_type'] === 'fixed' ? 'Monto Fijo' : 'Porcentaje' ?>
+                            </div>
+                        </div>
+                        <div>
+                            <span style="color:#64748b; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em; font-weight:500;">Valor del Cargo</span>
+                            <div style="color:#0f172a; font-weight:600; font-size:0.95rem; margin-top:0.25rem;">
+                                <?php if ($community['late_fee_type'] === 'fixed'): ?>
+                                    $<?= number_format($community['late_fee_amount'], 2) ?> <?= $community['currency'] ?>
+                                <?php else: ?>
+                                    <?= number_format($community['late_fee_percentage'], 2) ?>%
+                                    <?php if ($community['late_fee_max_amount'] > 0): ?>
+                                        <span style="font-size: 0.8rem; color: #64748b; font-weight: normal;">(Max: $<?= number_format($community['late_fee_max_amount'], 2) ?>)</span>
+                                    <?php endif; ?>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <div>
+                            <span style="color:#64748b; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em; font-weight:500;">Período de Gracia</span>
+                            <div style="color:#0f172a; font-weight:600; font-size:0.95rem; margin-top:0.25rem;">
+                                <?= $community['late_fee_grace_enabled'] ? $community['late_fee_grace_days'] . ' días' : 'Sin período de gracia' ?>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <span style="color:#64748b; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em; font-weight:500; display:flex; align-items:center; gap:0.3rem; margin-bottom: 0.5rem;">
+                            Categorías que cuentan como pagos atrasados
+                            <i class="bi bi-info-circle" style="font-size:0.7rem; color:#94a3b8;" title="Selecciona las categorías de cuotas que generarán cargo por mora."></i>
+                        </span>
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                            <?php if (empty($community['late_fee_categories'])): ?>
+                                <span style="background: #f1f5f9; color: #475569; padding: 0.3rem 0.8rem; border-radius: 4px; font-size: 0.85rem; border: 1px solid #e2e8f0;">
+                                    Cualquier saldo pendiente
+                                </span>
+                            <?php else: ?>
+                                <?php 
+                                    $selectedCount = 0;
+                                    foreach ($financial_categories['income'] ?? [] as $cat) {
+                                        if (in_array($cat['id'], $community['late_fee_categories'])) {
+                                            echo '<span style="background: #e0f2fe; color: #0369a1; padding: 0.3rem 0.8rem; border-radius: 4px; font-size: 0.85rem; border: 1px solid #bae6fd; display: flex; align-items: center; gap: 0.4rem;">';
+                                            echo '<i class="bi ' . esc($cat['icon']) . '"></i> ' . esc($cat['name']);
+                                            echo '</span>';
+                                            $selectedCount++;
+                                        }
+                                    }
+                                    if ($selectedCount === 0) {
+                                        echo '<span style="color: #ef4444; font-size: 0.85rem;">Categorías no encontradas o eliminadas. Se cobrará a cualquier saldo.</span>';
+                                    }
+                                ?>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+                </div>
+            </div>
 
             <!-- CATEGORIAS FINANCIERAS -->
             <div style="border: 1px solid #e2e8f0; border-radius: 0.65rem; background:#fff; overflow:hidden; margin-bottom: 1.5rem; margin-top: 2.5rem;">
@@ -4155,5 +4246,306 @@ $community = array_merge([
             showToast('Ocurrió un error inesperado.', 'error');
         });
     }
+
+    /* ── Late Fee Modal Logic ── */
+    let lateFeeModalInstance = null;
+
+    function openLateFeeModal() {
+        const el = document.getElementById('modalLateFee');
+        if(!el) return;
+        if(!lateFeeModalInstance) {
+            lateFeeModalInstance = new bootstrap.Modal(el);
+        }
+        
+        // Reset dynamic text
+        updateLateFeeHowItWorks();
+        toggleLateFeeFields();
+        
+        lateFeeModalInstance.show();
+    }
+
+    function toggleLateFeeFields() {
+        const isEnabled = document.getElementById('lateFeeEnabled').checked;
+        const configBlock = document.getElementById('lateFeeConfigBlock');
+        
+        if (isEnabled) {
+            configBlock.style.display = 'block';
+            // slight animation
+            configBlock.style.opacity = '0';
+            setTimeout(() => {
+                configBlock.style.transition = 'opacity 0.3s ease';
+                configBlock.style.opacity = '1';
+            }, 10);
+        } else {
+            configBlock.style.display = 'none';
+        }
+        
+        onLateFeeTypeChange();
+        toggleGracePeriod();
+        updateLateFeeHowItWorks();
+    }
+
+    function onLateFeeTypeChange() {
+        const type = document.getElementById('lateFeeType').value;
+        const fixedBlock = document.getElementById('lateFeeFixedBlock');
+        const percentageBlock = document.getElementById('lateFeePercentageBlock');
+        
+        if (type === 'fixed') {
+            fixedBlock.style.display = 'block';
+            percentageBlock.style.display = 'none';
+        } else {
+            fixedBlock.style.display = 'none';
+            percentageBlock.style.display = 'block';
+        }
+        updateLateFeeHowItWorks();
+    }
+
+    function toggleGracePeriod() {
+        const isEnabled = document.getElementById('lateFeeGraceEnabled').checked;
+        const daysBlock = document.getElementById('lateFeeGraceDaysBlock');
+        
+        if (isEnabled) {
+            daysBlock.style.display = 'block';
+        } else {
+            daysBlock.style.display = 'none';
+        }
+        updateLateFeeHowItWorks();
+    }
+
+    function updateLateFeeHowItWorks() {
+        const isEnabled = document.getElementById('lateFeeEnabled').checked;
+        const textEl = document.getElementById('lateFeeHowItWorksText');
+        
+        if (!isEnabled) {
+            textEl.innerHTML = "Los cargos automáticos por mora están desactivados. No se cobrarán recargos adicionales a las unidades morosas.";
+            return;
+        }
+
+        const type = document.getElementById('lateFeeType').value;
+        const amount = document.getElementById('lateFeeAmount').value || '0';
+        const percentage = document.getElementById('lateFeePercentage').value || '0';
+        const maxAmount = document.getElementById('lateFeeMaxAmount').value;
+        
+        const graceEnabled = document.getElementById('lateFeeGraceEnabled').checked;
+        const graceDays = document.getElementById('lateFeeGraceDays').value || '0';
+        
+        let currency = '<?= $community['currency'] ?? 'MXN' ?>';
+
+        let timeText = graceEnabled && parseInt(graceDays) > 0 
+            ? `si el pago no se recibe dentro de <b>${graceDays} días</b> después de la fecha de vencimiento`
+            : "inmediatamente después de la fecha de vencimiento si el pago no se recibe a tiempo";
+
+        let chargeText = type === 'fixed'
+            ? `un cargo por mora fijo de <b>$${amount} ${currency}</b>`
+            : `un cargo por mora del <b>${percentage}%</b> de su cuota vencida`;
+
+        let result = `Todas las unidades morosas recibirán ${chargeText} ${timeText}.`;
+
+        if (type === 'percentage' && maxAmount && parseFloat(maxAmount) > 0) {
+            result += ` El cargo máximo está limitado a <b>$${maxAmount} ${currency}</b>.`;
+        }
+
+        textEl.innerHTML = result;
+    }
+
+    function saveLateFeeConfig() {
+        const btn = document.getElementById('btnSaveLateFee');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Guardando...';
+        btn.disabled = true;
+
+        // Collect categories
+        const categoryCheckboxes = document.querySelectorAll('.late-fee-category-cb:checked');
+        const categories = Array.from(categoryCheckboxes).map(cb => cb.value);
+
+        const payload = new FormData();
+        payload.append('late_fee_enabled', document.getElementById('lateFeeEnabled').checked ? '1' : '0');
+        payload.append('late_fee_type', document.getElementById('lateFeeType').value);
+        payload.append('late_fee_amount', document.getElementById('lateFeeAmount').value);
+        payload.append('late_fee_percentage', document.getElementById('lateFeePercentage').value);
+        payload.append('late_fee_max_amount', document.getElementById('lateFeeMaxAmount').value);
+        payload.append('late_fee_grace_enabled', document.getElementById('lateFeeGraceEnabled').checked ? '1' : '0');
+        payload.append('late_fee_grace_days', document.getElementById('lateFeeGraceDays').value);
+        payload.append('late_fee_categories', JSON.stringify(categories));
+
+        fetch('<?= site_url('admin/configuracion/late-fee-config') ?>', {
+            method: 'POST',
+            body: payload
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, 'success');
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                showToast(data.message || 'Error al guardar configuración', 'error');
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            showToast('Ocurrió un error inesperado.', 'error');
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        });
+    }
+
+    // Attach listeners dynamically
+    document.addEventListener('DOMContentLoaded', () => {
+        const lfAmount = document.getElementById('lateFeeAmount');
+        const lfPerc = document.getElementById('lateFeePercentage');
+        const lfMax = document.getElementById('lateFeeMaxAmount');
+        const lfDays = document.getElementById('lateFeeGraceDays');
+        
+        if(lfAmount) lfAmount.addEventListener('input', updateLateFeeHowItWorks);
+        if(lfPerc) lfPerc.addEventListener('input', updateLateFeeHowItWorks);
+        if(lfMax) lfMax.addEventListener('input', updateLateFeeHowItWorks);
+        if(lfDays) lfDays.addEventListener('input', updateLateFeeHowItWorks);
+    });
 </script>
+
+<!-- LATE FEE MODAL -->
+<div class="modal fade cfg-modal" id="modalLateFee" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:600px;">
+        <div class="modal-content">
+            <div class="modal-header d-block">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <div style="display:flex; align-items:center; gap:0.6rem;">
+                        <div style="width:32px; height:32px; border-radius:8px; background:#fffbeb; color:#f59e0b; display:flex; align-items:center; justify-content:center;">
+                            <i class="bi bi-clock-history"></i>
+                        </div>
+                        <h5 class="modal-title">Configuración de Cargos por Mora</h5>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <p class="text-muted small mb-0 ms-5" style="padding-left:0.2rem;">Aplica cargos automáticos a unidades con pagos vencidos.</p>
+            </div>
+            
+            <div class="modal-body" style="padding: 1.5rem;">
+                
+                <div class="form-check form-switch d-flex align-items-center justify-content-between" style="padding: 1rem; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 1.5rem; background: #f8fafc; cursor: pointer;" onclick="document.getElementById('lateFeeEnabled').click()">
+                    <div>
+                        <label class="form-check-label fw-bold" for="lateFeeEnabled" style="color: #0f172a; cursor: pointer;">Habilitar Cargos por Mora</label>
+                        <div class="small text-muted mt-1">Activa la automatización de recargos.</div>
+                    </div>
+                    <input class="form-check-input" type="checkbox" role="switch" id="lateFeeEnabled" style="width: 3em; height: 1.5em; cursor: pointer;" onchange="toggleLateFeeFields()" onclick="event.stopPropagation()" <?= $community['late_fee_enabled'] ? 'checked' : '' ?>>
+                </div>
+
+                <div id="lateFeeConfigBlock" style="display: none;">
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted fw-semibold" style="font-size:0.85rem;">
+                                Tipo de Cargo
+                                <i class="bi bi-info-circle ms-1" data-bs-toggle="tooltip" title="Monto fijo cobra una cantidad exacta. Porcentaje calcula sobre la cuota vencida"></i>
+                            </label>
+                            <select class="form-select shadow-none" id="lateFeeType" onchange="onLateFeeTypeChange()">
+                                <option value="fixed" <?= ($community['late_fee_type'] ?? 'fixed') === 'fixed' ? 'selected' : '' ?>>Monto Fijo</option>
+                                <option value="percentage" <?= ($community['late_fee_type'] ?? '') === 'percentage' ? 'selected' : '' ?>>Porcentaje</option>
+                            </select>
+                        </div>
+
+                        <!-- Fixed Block -->
+                        <div class="col-md-6" id="lateFeeFixedBlock">
+                            <label class="form-label text-muted fw-semibold" style="font-size:0.85rem;">Monto del Cargo</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0 text-muted">$</span>
+                                <input type="number" step="0.01" min="0" class="form-control shadow-none border-start-0 ps-0" id="lateFeeAmount" value="<?= $community['late_fee_amount'] ?? '0' ?>">
+                                <span class="input-group-text bg-light text-muted" style="font-size:0.8rem;"><?= $community['currency'] ?? 'MXN' ?></span>
+                            </div>
+                        </div>
+
+                        <!-- Percentage Block -->
+                        <div class="col-md-6" id="lateFeePercentageBlock" style="display: none;">
+                            <label class="form-label text-muted fw-semibold" style="font-size:0.85rem;">Porcentaje</label>
+                            <div class="input-group">
+                                <input type="number" step="0.01" min="0" max="100" class="form-control shadow-none" id="lateFeePercentage" value="<?= $community['late_fee_percentage'] ?? '0' ?>">
+                                <span class="input-group-text bg-light text-muted">%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4" id="lateFeeMaxAmountBlock">
+                        <div class="col-md-12">
+                            <label class="form-label text-muted fw-semibold" style="font-size:0.85rem;">
+                                Monto Máximo del Cargo (Opcional)
+                                <i class="bi bi-info-circle ms-1" data-bs-toggle="tooltip" title="Límite máximo para cargos por porcentaje. Si el cálculo excede este monto, se cobra este límite. Dejar en blanco si no hay límite."></i>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0 text-muted">$</span>
+                                <input type="number" step="0.01" min="0" class="form-control shadow-none border-start-0 ps-0" id="lateFeeMaxAmount" placeholder="Sin límite" value="<?= $community['late_fee_max_amount'] ?? '' ?>">
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="text-muted opacity-25">
+
+                    <!-- Grace Period -->
+                    <div class="mb-3 d-flex align-items-center justify-content-between">
+                        <div>
+                            <label class="form-label fw-bold mb-0" style="color: #0f172a;">Período de Gracia</label>
+                            <div class="small text-muted">Días adicionales después del vencimiento antes de aplicar recargo.</div>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" id="lateFeeGraceEnabled" style="width: 2.5em; height: 1.25em; cursor: pointer;" onchange="toggleGracePeriod()" <?= !empty($community['late_fee_grace_enabled']) ? 'checked' : '' ?>>
+                        </div>
+                    </div>
+
+                    <div class="mb-4" id="lateFeeGraceDaysBlock" style="display:none;">
+                        <label class="form-label text-muted fw-semibold" style="font-size:0.85rem;">Días de Gracia</label>
+                        <div class="input-group" style="max-width: 150px;">
+                            <input type="number" min="1" max="365" class="form-control shadow-none" id="lateFeeGraceDays" value="<?= $community['late_fee_grace_days'] ?: '5' ?>">
+                            <span class="input-group-text bg-light text-muted">días</span>
+                        </div>
+                    </div>
+
+                    <!-- Categories -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold mb-1" style="color: #0f172a;">Categorías de Cuotas</label>
+                        <div class="small text-muted mb-2">Selecciona las categorías que generarán mora si no se pagan. Si no seleccionas ninguna, cualquier saldo vencido aplicará.</div>
+                        <div style="border: 1px solid #e2e8f0; border-radius: 6px; max-height: 150px; overflow-y: auto; padding: 0.5rem; background: #f8fafc;">
+                            <?php 
+                            $savedCategories = $community['late_fee_categories'] ?? [];
+                            foreach ($financial_categories['income'] ?? [] as $cat): 
+                                $isChecked = in_array($cat['id'], $savedCategories);
+                                // Skip mora category itself
+                                if ($cat['name'] === 'Cargo por Mora') continue;
+                            ?>
+                                <div class="form-check" style="margin-bottom: 0.3rem;">
+                                    <input class="form-check-input late-fee-category-cb" type="checkbox" value="<?= $cat['id'] ?>" id="lfCat_<?= $cat['id'] ?>" <?= $isChecked ? 'checked' : '' ?> style="cursor: pointer;">
+                                    <label class="form-check-label w-100" for="lfCat_<?= $cat['id'] ?>" style="cursor: pointer; font-size: 0.9rem; color: #334155;">
+                                        <i class="bi <?= esc($cat['icon']) ?> me-1 text-muted"></i> <?= esc($cat['name']) ?>
+                                    </label>
+                                </div>
+                            <?php endforeach; ?>
+                            <?php if (empty($financial_categories['income'])): ?>
+                                <div class="text-muted small p-2">No hay categorías configuradas.</div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <!-- How it works -->
+                    <div style="background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 1rem; display: flex; gap: 0.75rem;">
+                        <i class="bi bi-info-circle" style="color: #3b82f6; font-size: 1.1rem; margin-top: 0.1rem;"></i>
+                        <div>
+                            <span style="font-weight: 600; color: #1e3a8a; font-size: 0.9rem; display: block; margin-bottom: 0.25rem;">Cómo funciona</span>
+                            <span id="lateFeeHowItWorksText" style="color: #1e40af; font-size: 0.85rem; line-height: 1.4;">
+                                // Dynamic text
+                            </span>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+            
+            <div class="modal-footer bg-light border-top-0 d-flex justify-content-end p-3">
+                <button type="button" class="btn btn-light bg-white border" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="btnSaveLateFee" onclick="saveLateFeeConfig()" style="background: #3F67AC; border: none;">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <?= $this->endSection() ?>
