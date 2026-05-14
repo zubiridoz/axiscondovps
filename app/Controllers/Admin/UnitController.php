@@ -770,16 +770,34 @@ class UnitController extends BaseController
             return $this->response->setJSON(['status' => 400, 'error' => 'Término de búsqueda muy corto']);
         }
 
-        $userModel = new \App\Models\Core\UserModel();
-        // Buscar usuarios por nombre, apellido o email
-        $users = $userModel->select('id as user_id, first_name, last_name, email')
-                           ->groupStart()
-                               ->like('first_name', $q)
-                               ->orLike('last_name', $q)
-                               ->orLike('email', $q)
-                           ->groupEnd()
-                           ->limit(10)
-                           ->find();
+        $condoId = \App\Services\TenantService::getInstance()->getTenantId();
+        if (!$condoId) {
+            $demoCondo = (new \App\Models\Tenant\CondominiumModel())->first();
+            if ($demoCondo) {
+                \App\Services\TenantService::getInstance()->setTenantId((int)$demoCondo['id']);
+                $condoId = (int)$demoCondo['id'];
+            }
+        }
+
+        $db = \Config\Database::connect();
+        $builder = $db->table('users');
+        $builder->select('users.id as user_id, users.first_name, users.last_name, users.email');
+        
+        // Solo usuarios relacionados con el condominio actual
+        $builder->groupStart()
+                ->where("EXISTS (SELECT 1 FROM user_condominium_roles ucr WHERE ucr.user_id = users.id AND ucr.condominium_id = {$condoId} AND ucr.role_id = 4)")
+                ->orWhere("EXISTS (SELECT 1 FROM residents r WHERE r.user_id = users.id AND r.condominium_id = {$condoId})")
+                ->groupEnd();
+
+        // Aplicar término de búsqueda
+        $builder->groupStart()
+                    ->like('users.first_name', $q)
+                    ->orLike('users.last_name', $q)
+                    ->orLike('users.email', $q)
+                ->groupEnd();
+
+        $builder->limit(10);
+        $users = $builder->get()->getResultArray();
                            
         $formatted = [];
         foreach($users as $u) {

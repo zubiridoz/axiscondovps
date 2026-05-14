@@ -215,8 +215,9 @@
     }
 
     .koti-modal-content {
-        border: none;
-        border-radius: 12px;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        border-radius: 1.25rem;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.02);
         overflow: hidden;
     }
 
@@ -793,6 +794,46 @@
         height: 18px;
         cursor: pointer;
         accent-color: #3F67AC;
+    }
+
+    /* ===== Agregar Residente Modal Styles ===== */
+    .koti-search-input {
+        border: 1.5px solid #e2e8f0;
+        border-radius: 0.5rem;
+        padding: 0.65rem 1rem 0.65rem 2.6rem;
+        font-size: 0.95rem;
+        transition: all 0.25s ease;
+        background: #f8fafc;
+    }
+    .koti-search-input:focus {
+        background: #ffffff;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        outline: none;
+    }
+    .koti-search-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #64748b;
+        z-index: 5;
+    }
+    .koti-resident-result-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.75rem;
+        padding: 0.75rem 1rem;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .koti-resident-result-card:hover {
+        border-color: #cbd5e1;
+        background: #f8fafc;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
     }
 </style>
 
@@ -1508,20 +1549,18 @@
             </div>
 
             <div class="modal-body p-4 pt-3">
-                <div class="d-flex bg-light p-1 rounded-3 mb-4">
-                    <button type="button" id="tab-add-search" onclick="switchAddResidentTab('search')"
-                        class="btn btn-white flex-fill fw-medium shadow-sm border border-secondary border-opacity-25 py-2 active"
-                        style="font-size: 0.85rem;"><i class="bi bi-people me-1"></i> Buscar Usuarios</button>
-                    <button type="button" id="tab-add-manual" onclick="switchAddResidentTab('manual')"
-                        class="btn text-muted flex-fill fw-medium border-0 py-2" style="font-size: 0.85rem;"><i
-                            class="bi bi-person me-1"></i> Ingresar Manualmente</button>
+                <div class="csv-pill-tabs d-flex mb-4 p-1 rounded-3" style="background: #f1f5f9; border: 1px solid #e2e8f0;">
+                    <button type="button" class="csv-pill-tab active flex-fill" id="tab-add-search"
+                        onclick="switchAddResidentTab('search')"><i class="bi bi-people me-1"></i> Buscar Usuarios</button>
+                    <button type="button" class="csv-pill-tab flex-fill" id="tab-add-manual"
+                        onclick="switchAddResidentTab('manual')"><i class="bi bi-person me-1"></i> Ingresar Manualmente</button>
                 </div>
 
                 <!-- VISTA: BUSCAR USUARIO -->
                 <div id="view-add-search">
-                    <div class="input-group mb-3">
-                        <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
-                        <input type="text" id="inputSearchResident" class="form-control"
+                    <div class="position-relative mb-3">
+                        <i class="bi bi-search koti-search-icon"></i>
+                        <input type="text" id="inputSearchResident" class="koti-search-input w-100"
                             placeholder="Buscar usuarios por nombre o correo...">
                     </div>
 
@@ -2141,17 +2180,19 @@
                             result.data.forEach(user => {
                                 let initials = user.name.substring(0, 2).toUpperCase();
                                 let div = document.createElement('div');
-                                div.className = 'resident-card mb-2 cursor-pointer border shadow-sm';
+                                div.className = 'koti-resident-result-card mb-2 cursor-pointer';
                                 div.onclick = () => seleccionarResidenteMock(div, user.user_id, user.name, user.email);
                                 div.innerHTML = `
                                     <div class="d-flex align-items-center">
-                                        <div class="resident-initials" style="width:36px;height:36px;font-size:0.8rem;">${initials}</div>
+                                        <div class="resident-initials" style="width:40px;height:40px;font-size:0.9rem;">${initials}</div>
                                         <div class="lh-1">
-                                            <div class="fw-medium text-dark small mb-1">${user.name}</div>
-                                            <div class="small text-muted" style="font-size: 0.75rem;">${user.email}</div>
+                                            <div class="fw-bold text-dark small mb-1" style="font-size: 0.9rem;">${user.name}</div>
+                                            <div class="small text-muted" style="font-size: 0.8rem;">${user.email}</div>
                                         </div>
                                     </div>
-                                    <i class="bi bi-person-plus text-muted" style="font-size: 1.2rem;"></i>
+                                    <div style="background: #e0e7ff; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #4f46e5; transition: all 0.2s ease;">
+                                        <i class="bi bi-plus-lg"></i>
+                                    </div>
                                 `;
                                 resultsEl.appendChild(div);
                             });
@@ -2679,19 +2720,15 @@
         const footer = document.getElementById('footer-add-resident');
 
         if (tab === 'search') {
-            btnSearch.className = 'btn btn-white flex-fill fw-medium shadow-sm border border-secondary border-opacity-25 py-2 active';
-            btnSearch.classList.remove('text-muted');
-
-            btnManual.className = 'btn text-muted flex-fill fw-medium border-0 py-2';
+            btnSearch.className = 'csv-pill-tab active flex-fill';
+            btnManual.className = 'csv-pill-tab flex-fill';
 
             viewSearch.classList.remove('d-none');
             viewManual.classList.add('d-none');
             footer.classList.remove('d-none'); // Mostrar boton cancelar
         } else {
-            btnManual.className = 'btn btn-white flex-fill fw-medium shadow-sm border border-secondary border-opacity-25 py-2 active';
-            btnManual.classList.remove('text-muted');
-
-            btnSearch.className = 'btn text-muted flex-fill fw-medium border-0 py-2';
+            btnManual.className = 'csv-pill-tab active flex-fill';
+            btnSearch.className = 'csv-pill-tab flex-fill';
 
             viewManual.classList.remove('d-none');
             viewSearch.classList.add('d-none');
