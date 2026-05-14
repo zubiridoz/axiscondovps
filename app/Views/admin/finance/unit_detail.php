@@ -1723,7 +1723,7 @@ $formatMXN = fn($v) => 'MX$' . number_format((float) $v, 2);
         <div style="padding:1.5rem;">
             <!-- Preview del comprobante -->
             <div id="rvPreview"
-                style="background:linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%); border:1px dashed #cbd5e1; border-radius:12px; margin-bottom:1.5rem; min-height:180px; display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative;">
+                style="background:linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%); border:1px dashed #cbd5e1; border-radius:12px; margin-bottom:1rem; min-height:120px; display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative;">
             </div>
 
             <!-- Badge de estado -->
@@ -1779,19 +1779,14 @@ $formatMXN = fn($v) => 'MX$' . number_format((float) $v, 2);
                     </div>
                     <div style="margin-bottom:1.15rem;">
                         <label
-                            style="font-size:.76rem; color:#64748b; margin-bottom:.35rem; display:block; font-weight:500; text-transform:uppercase; letter-spacing:.5px;">Aplicar
-                            a cuota</label>
-                        <select id="rvChargeId"
-                            style="border:1.5px solid #e2e8f0; border-radius:10px; padding:10px 14px; width:100%; font-size:.85rem; font-weight:500; color:#1e293b; background:#fff; cursor:pointer; transition:border-color .2s; outline:none; box-sizing:border-box; max-width:100%; text-overflow:ellipsis; overflow:hidden; white-space:nowrap;"
-                            onfocus="this.style.borderColor='#1D4C9D'" onblur="this.style.borderColor='#e2e8f0'">
-                            <option value="0">— Sin asignar —</option>
-                            <?php foreach ($pendingCharges as $pc): ?>
-                                <option value="<?= $pc['id'] ?>">
-                                    <?= date('M Y', strtotime($pc['due_date'] ?? $pc['created_at'])) ?> —
-                                    MX$<?= number_format((float) $pc['amount'], 2) ?> — <?= esc($pc['description']) ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
+                            style="font-size:.76rem; color:#64748b; margin-bottom:.35rem; display:block; font-weight:500; text-transform:uppercase; letter-spacing:.5px;">Aplicación de pago</label>
+                        <div style="background-color: #f1f5f9; border-left: 4px solid #3b82f6; padding: 10px 14px; border-radius: 4px 10px 10px 4px; font-size: 0.82rem; color: #334155; display: flex; align-items: flex-start; gap: 8px;">
+                            <i class="bi bi-info-circle-fill" style="color: #3b82f6; margin-top: 2px;"></i>
+                            <div style="line-height: 1.4;">
+                                Este pago se aplicará automáticamente cubriendo primero los saldos y adeudos más antiguos de la unidad.
+                            </div>
+                        </div>
+                        <input type="hidden" id="rvChargeId" value="0">
                     </div>
                 </div>
 
@@ -1816,7 +1811,7 @@ $formatMXN = fn($v) => 'MX$' . number_format((float) $v, 2);
 
             <!-- Botones de acción -->
             <div id="rvActions"
-                style="display:flex; justify-content:flex-end; gap:.65rem; padding-top:.75rem; border-top:1px solid #f1f5f9; margin-top:.5rem;">
+                style="display:flex; justify-content:flex-end; gap:.65rem; padding-top:.75rem; padding-bottom:1.5rem; border-top:1px solid #f1f5f9; margin-top:.5rem;">
                 <button type="button" onclick="closeReviewModal()"
                     style="padding:.55rem 1.1rem; border:1.5px solid #e2e8f0; border-radius:10px; background:#fff; color:#64748b; font-size:.84rem; font-weight:600; cursor:pointer; transition:all .2s;"
                     onmouseover="this.style.background='#f8fafc';this.style.borderColor='#cbd5e1'"
@@ -2303,7 +2298,7 @@ $formatMXN = fn($v) => 'MX$' . number_format((float) $v, 2);
                     </a>
                 </div>`;
             } else if (d.proof) {
-                previewArea.innerHTML = `<img src="${proofUrl}" alt="Comprobante" style="max-width:100%; max-height:320px; border-radius:10px; cursor:pointer; object-fit:contain; display:block; margin:auto;" onclick="openLightbox('${proofUrl}')" title="Clic para ampliar">`;
+                previewArea.innerHTML = `<img src="${proofUrl}" alt="Comprobante" style="max-width:100%; max-height:200px; border-radius:10px; cursor:pointer; object-fit:contain; display:block; margin:auto;" onclick="openLightbox('${proofUrl}')" title="Clic para ampliar">`;
             } else {
                 previewArea.innerHTML = `<div style="text-align:center; padding:2.5rem; color:#94a3b8;">
                     <i class="bi bi-image" style="font-size:2.5rem; opacity:.5;"></i><br>

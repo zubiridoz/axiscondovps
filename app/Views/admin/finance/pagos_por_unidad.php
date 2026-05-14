@@ -916,7 +916,7 @@
                         <th>Fecha de Vencimiento</th>
                         <th>Estado</th>
                         <th>Saldo Pendiente</th>
-                        <th>Comprobante</th>
+                        <th>Comprobantes</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -932,9 +932,6 @@
                                         onclick="event.stopPropagation()">
                                         <?= esc($rec['unidad']) ?>
                                     </a>
-                                    <?php if (($rec['pending_vouchers'] ?? 0) > 0): ?>
-                                        <span class="badge bg-warning rounded-pill ms-1" style="font-size:.6rem; font-weight:600; vertical-align:middle;" title="<?= $rec['pending_vouchers'] ?> comprobante(s) pendiente(s)"><?= $rec['pending_vouchers'] ?></span>
-                                    <?php endif; ?>
                                 </td>
                                 <td>MX$<?= number_format($rec['cuota'], 2) ?></td>
                                 <td><?= esc($rec['vencimiento']) ?></td>
@@ -963,7 +960,11 @@
                                     <?php endif; ?>
                                 </td>
                                 <td class="text-center" onclick="event.stopPropagation()">
-                                    <i class="bi bi-file-earmark" style="color:#cbd5e1; font-size:1rem; cursor:pointer;"></i>
+                                    <?php if (($rec['pending_vouchers'] ?? 0) > 0): ?>
+                                        <span class="badge rounded-pill shadow-sm" style="font-size:0.8rem; padding: 0.35em 0.65em; font-weight:700; vertical-align:middle; background-color: #f59e0b; color: white;" title="<?= $rec['pending_vouchers'] ?> comprobante(s) pendiente(s)"><?= $rec['pending_vouchers'] ?></span>
+                                    <?php else: ?>
+                                        <span style="color:#cbd5e1;">—</span>
+                                    <?php endif; ?>
                                 </td>
                                 <td class="action-icons" onclick="event.stopPropagation()">
 
