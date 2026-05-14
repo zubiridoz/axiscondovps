@@ -865,7 +865,8 @@ class FinanceController extends BaseController
                     'attachment' => $attachmentPath,
                     'payment_method' => $paymentMethod,
                     'source' => 'manual',
-                    'created_at' => $fecha ? $fecha . ' ' . date('H:i:s') : date('Y-m-d H:i:s'),
+                    'created_at' => date('Y-m-d H:i:s'), // La fecha de emisión contable es SIEMPRE la fecha real en que se captura el cargo
+
                     'updated_at' => date('Y-m-d H:i:s')
                 ];
                 $builderTrans->insert($dataCharge);
