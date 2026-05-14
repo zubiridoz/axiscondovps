@@ -139,9 +139,10 @@ class CondominiumController extends BaseController
         }
 
         $db->table('condominiums')->where('id', $id)->update([
-            'status'       => 'active',
-            'suspended_at' => null,
-            'updated_at'   => Time::now()->toDateTimeString()
+            'status'              => 'active',
+            'subscription_status' => 'active',
+            'suspended_at'        => null,
+            'updated_at'          => Time::now()->toDateTimeString()
         ]);
 
         log_message('notice', "[SUPERADMIN] Condominio ID={$id} REACTIVADO por user_id=" . session()->get('user_id'));
