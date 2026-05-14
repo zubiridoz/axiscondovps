@@ -736,6 +736,7 @@ class FinanceController extends BaseController
         $destino = $this->request->getPost('destino');
         $transMode = $this->request->getPost('transMode'); // charge / payment / both
         $monto = $this->request->getPost('amount');
+        $issueDate = $this->request->getPost('issue_date');
         $fecha = $this->request->getPost('date');
         $desc = $this->request->getPost('description');
         $paymentMethod = $this->request->getPost('paymentMethod');
@@ -866,7 +867,7 @@ class FinanceController extends BaseController
                     'payment_method' => $paymentMethod,
                     'source' => 'manual',
                     'created_at' => date('Y-m-d H:i:s'), // La fecha de emisión contable es SIEMPRE la fecha real en que se captura el cargo
-
+                    'issue_date' => $issueDate ?: date('Y-m-d'),
                     'updated_at' => date('Y-m-d H:i:s')
                 ];
                 $builderTrans->insert($dataCharge);
@@ -890,7 +891,8 @@ class FinanceController extends BaseController
                     'attachment' => $attachmentPath,
                     'payment_method' => $paymentMethod,
                     'source' => 'manual',
-                    'created_at' => $fecha ? $fecha . ' ' . date('H:i:s') : date('Y-m-d H:i:s'),
+                    'created_at' => date('Y-m-d H:i:s', time() + 1), // Asegura que se liste después del cargo
+                    'issue_date' => $fecha ?: date('Y-m-d'), // La fecha de emisión del pago es la fecha de pago
                     'updated_at' => date('Y-m-d H:i:s')
                 ];
                 $builderTrans->insert($dataPayment);
@@ -1074,9 +1076,9 @@ class FinanceController extends BaseController
 
             $rec = [
                 'id' => $row['id'],
-                'fecha_raw' => $row['created_at'],
-                'fecha' => date('d M Y', strtotime($row['created_at'])),
-                'fecha_larga' => (new \IntlDateFormatter('es_MX', \IntlDateFormatter::LONG, \IntlDateFormatter::NONE))->format(strtotime($row['created_at'])),
+                'fecha_raw' => $row['issue_date'] ?: $row['created_at'],
+                'fecha' => date('d M Y', strtotime($row['issue_date'] ?: $row['created_at'])),
+                'fecha_larga' => (new \IntlDateFormatter('es_MX', \IntlDateFormatter::LONG, \IntlDateFormatter::NONE))->format(strtotime($row['issue_date'] ?: $row['created_at'])),
                 'descripcion' => $row['description'],
                 'categoria' => $catName,
                 'category_id' => $row['category_id'],
@@ -3423,7 +3425,7 @@ class FinanceController extends BaseController
                 $pdf->SetFont('helvetica', 'B', 7);
             }
 
-            $dateRaw = $row['created_at'];
+            $dateRaw = !empty($row['issue_date']) ? $row['issue_date'] : $row['created_at'];
             $dueDateRaw = $row['due_date'] ?? null;
 
             // Formato compacto DD/MM/YYYY
@@ -3526,7 +3528,7 @@ class FinanceController extends BaseController
                     $montoPend = (float) $pc['amount'] - (float) ($pc['amount_paid'] ?? 0);
                     $acumulado += $montoPend;
 
-                    $dateRaw = $pc['due_date'] ?? $pc['created_at'];
+                    $dateRaw = $pc['due_date'] ?? (!empty($pc['issue_date']) ? $pc['issue_date'] : $pc['created_at']);
                     $dateStr = date('d', strtotime($dateRaw)) . ' de ' . strtolower($mesesES[date('F', strtotime($dateRaw))] ?? date('M', strtotime($dateRaw))) . ' de ' . date('Y', strtotime($dateRaw));
                     $desc = mb_strtoupper(mb_substr($pc['description'] ?? ($pc['category_name'] ?? '—'), 0, 60));
 
@@ -4493,7 +4495,8 @@ class FinanceController extends BaseController
             $montoLabel = '<span style="color: ' . $montoColor . '; font-weight: bold;">' . $montoPrefix . ' MX$' . number_format($t['amount'], 2) . '</span>';
 
             $mesesCortos = ['Jan' => 'Ene', 'Feb' => 'Feb', 'Mar' => 'Mar', 'Apr' => 'Abr', 'May' => 'May', 'Jun' => 'Jun', 'Jul' => 'Jul', 'Aug' => 'Ago', 'Sep' => 'Sep', 'Oct' => 'Oct', 'Nov' => 'Nov', 'Dec' => 'Dic'];
-            $fechaTx = date('d', strtotime($t['created_at'])) . ' de ' . ($mesesCortos[date('M', strtotime($t['created_at']))] ?? date('M', strtotime($t['created_at']))) . ' de ' . date('Y', strtotime($t['created_at']));
+            $dateRef = !empty($t['issue_date']) ? $t['issue_date'] : $t['created_at'];
+            $fechaTx = date('d', strtotime($dateRef)) . ' de ' . ($mesesCortos[date('M', strtotime($dateRef))] ?? date('M', strtotime($dateRef))) . ' de ' . date('Y', strtotime($dateRef));
             $bgRow = ($txIdx % 2 === 0) ? '#ffffff' : '#f8fafc';
             $html3 .= '<tr bgcolor="' . $bgRow . '">
                 <td width="14%" style="color: #64748b; font-size: 7.5pt;">' . $fechaTx . '</td>

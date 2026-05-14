@@ -770,7 +770,7 @@
                 <div class="nr-card">
                     <div class="nr-card-title">Detalles del Pago</div>
                     <div class="row g-3 mb-3">
-                        <div class="col-md-8" id="colMonto">
+                        <div class="col-md-4" id="colMonto">
                             <label class="nr-label">Monto</label>
                             <div class="input-icon-wrapper">
                                 <i class="bi bi-currency-dollar"></i>
@@ -779,7 +779,7 @@
                             </div>
                             <span class="nr-hint">Dejar vacío para usar la cuota de cada unidad</span>
                         </div>
-                        <div class="col-md-4" id="colMetodoPago" style="display: none;">
+                        <div class="col-md-3" id="colMetodoPago" style="display: none;">
                             <label class="nr-label">Método de Pago</label>
                             <div class="custom-select-wrapper w-100">
                                 <div class="koti-select-trigger" id="dropdownMetodoPago">
@@ -810,6 +810,11 @@
                                 </div>
                             </div>
                             <input type="hidden" id="paymentMethod" name="paymentMethod" value="transferencia">
+                        </div>
+                        <div class="col-md-4" id="colFechaEmision">
+                            <label class="nr-label" id="lblFechaEmision">Fecha de Emisión <i class="bi bi-info-circle text-muted" title="Fecha contable (ej. cuando se generó)"></i></label>
+                            <input type="text" id="issueDatePicker" class="nr-control bg-white"
+                                placeholder="Seleccionar Fecha" value="<?= date('Y-m-d') ?>">
                         </div>
                         <div class="col-md-4" id="colFecha">
                             <label class="nr-label" id="lblFecha">Fecha de Vencimiento</label>
@@ -964,6 +969,7 @@
         const btnSF = document.getElementById('btnSubmitFinal');
         const colMonto = document.getElementById('colMonto');
         const colMetodoPago = document.getElementById('colMetodoPago');
+        const colFechaEmision = document.getElementById('colFechaEmision');
         const colFecha = document.getElementById('colFecha');
         const lblFecha = document.getElementById('lblFecha');
 
@@ -971,12 +977,13 @@
             nrContainer.classList.add('sidebar-hidden');
             modeCard.style.display = 'none';
             btnSF.innerHTML = '<i class="bi bi-save"></i> Crear Gasto';
-            if (colMonto) colMonto.className = 'col-md-5';
+            if (colMonto) colMonto.className = 'col-md-4';
             if (colMetodoPago) {
                 colMetodoPago.style.display = 'block';
                 colMetodoPago.className = 'col-md-4';
             }
-            if (colFecha) colFecha.className = 'col-md-3';
+            if (colFechaEmision) colFechaEmision.style.display = 'none';
+            if (colFecha) colFecha.className = 'col-md-4';
             if (lblFecha) lblFecha.innerText = 'Fecha de Pago';
 
             const checkboxes = document.querySelectorAll('.unit-checkbox');
@@ -1158,6 +1165,14 @@
                     defaultDate: "today",
                     disableMobile: true
                 });
+                flatpickr("#issueDatePicker", {
+                    locale: "es",
+                    altInput: true,
+                    altFormat: "j \\d\\e F \\d\\e Y",
+                    dateFormat: "Y-m-d",
+                    defaultDate: "today",
+                    disableMobile: true
+                });
             } else {
                 console.error("Flatpickr is not loaded via CDN.");
             }
@@ -1183,26 +1198,35 @@
                 var btnSF = document.getElementById('btnSubmitFinal');
                 const colMonto = document.getElementById('colMonto');
                 const colMetodoPago = document.getElementById('colMetodoPago');
+                const colFechaEmision = document.getElementById('colFechaEmision');
                 const colFecha = document.getElementById('colFecha');
                 const lblFecha = document.getElementById('lblFecha');
 
                 if (modeName === 'charge') {
                     if (btnSF) btnSF.innerHTML = '<i class="bi bi-save"></i> Crear Cargo';
-                    if (colMonto) colMonto.className = 'col-md-8';
+                    if (colMonto) colMonto.className = 'col-md-4';
                     if (colMetodoPago) colMetodoPago.style.display = 'none';
+                    if (colFechaEmision) { colFechaEmision.style.display = 'block'; colFechaEmision.className = 'col-md-4'; }
                     if (colFecha) colFecha.className = 'col-md-4';
                     if (lblFecha) lblFecha.innerText = 'Fecha de Vencimiento';
-                } else {
-                    if (modeName === 'payment') {
-                        if (btnSF) btnSF.innerHTML = '<i class="bi bi-save"></i> Registrar Pago';
-                    } else {
-                        if (btnSF) btnSF.innerHTML = '<i class="bi bi-save"></i> Guardar Transacción';
-                    }
-                    if (colMonto) colMonto.className = 'col-md-5';
+                } else if (modeName === 'payment') {
+                    if (btnSF) btnSF.innerHTML = '<i class="bi bi-save"></i> Registrar Pago';
+                    if (colMonto) colMonto.className = 'col-md-4';
                     if (colMetodoPago) {
                         colMetodoPago.style.display = 'block';
                         colMetodoPago.className = 'col-md-4';
                     }
+                    if (colFechaEmision) colFechaEmision.style.display = 'none';
+                    if (colFecha) colFecha.className = 'col-md-4';
+                    if (lblFecha) lblFecha.innerText = 'Fecha de Pago';
+                } else {
+                    if (btnSF) btnSF.innerHTML = '<i class="bi bi-save"></i> Guardar Transacción';
+                    if (colMonto) colMonto.className = 'col-md-3';
+                    if (colMetodoPago) {
+                        colMetodoPago.style.display = 'block';
+                        colMetodoPago.className = 'col-md-3';
+                    }
+                    if (colFechaEmision) { colFechaEmision.style.display = 'block'; colFechaEmision.className = 'col-md-3'; }
                     if (colFecha) colFecha.className = 'col-md-3';
                     if (lblFecha) lblFecha.innerText = 'Fecha de Pago';
                 }
@@ -1723,12 +1747,32 @@
                 `;
                 });
 
-                const modoTexto = (transMode === 'charge') ? 'Crear un Cargo' : (transMode === 'payment' ? 'Registrar un Pago' : 'Cargo y Pago simultáneo');
+                let titleText = 'Confirmar Creación de Cargos';
+                let subtitleText = 'Por favor revise los detalles antes de crear los cargos';
+                let confirmBtnText = '<i class="bi bi-save me-2"></i> Confirmar y Crear Cargos';
+                let dateLabelText = 'Fecha de Vencimiento:';
+
+                if (tipoTransaccion === 'expense') {
+                    titleText = 'Confirmar Creación de Gasto';
+                    subtitleText = 'Por favor revise los detalles antes de crear el gasto';
+                    confirmBtnText = '<i class="bi bi-save me-2"></i> Confirmar y Crear Gasto';
+                    dateLabelText = 'Fecha de Pago:';
+                } else if (transMode === 'payment') {
+                    titleText = 'Confirmar Registro de Pagos';
+                    subtitleText = 'Por favor revise los detalles antes de registrar los pagos';
+                    confirmBtnText = '<i class="bi bi-save me-2"></i> Confirmar y Registrar Pagos';
+                    dateLabelText = 'Fecha de Pago:';
+                } else if (transMode === 'both') {
+                    titleText = 'Confirmar Cargo y Pago Simultáneo';
+                    subtitleText = 'Por favor revise los detalles antes de procesar';
+                    confirmBtnText = '<i class="bi bi-save me-2"></i> Confirmar y Procesar';
+                    dateLabelText = 'Fecha de Pago:';
+                }
 
                 Swal.fire({
-                    title: '<span style="font-size: 1.25rem; font-weight: 700; color: #1e293b;">Confirmar Creación de Cargos</span>',
+                    title: `<span style="font-size: 1.25rem; font-weight: 700; color: #1e293b;">${titleText}</span>`,
                     html: `
-                    <p style="color: #64748b; font-size: 0.85rem; margin-top: -10px; margin-bottom: 20px;">Por favor revise los detalles antes de crear los cargos</p>
+                    <p style="color: #64748b; font-size: 0.85rem; margin-top: -10px; margin-bottom: 20px;">${subtitleText}</p>
                     
                     <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.5rem; text-align: left; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
                         <h6 style="font-weight: 700; font-size: 1.1rem; margin-bottom: 1.2rem; color: #1e293b;">Resumen</h6>
@@ -1743,7 +1787,7 @@
                                 <span style="font-weight: 500; color: #1e293b;">${categoriaTexto}</span>
                             </div>
                             <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
-                                <span style="color: #64748b;">Fecha de Vencimiento:</span>
+                                <span style="color: #64748b;">${dateLabelText}</span>
                                 <span style="font-weight: 500; color: #1e293b;">${dateFormatted}</span>
                             </div>
                             <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
@@ -1776,7 +1820,7 @@
                     showCancelButton: true,
                     confirmButtonColor: '#238b71ff',
                     cancelButtonColor: '#ffffff',
-                    confirmButtonText: '<i class="bi bi-save me-2"></i> Confirmar y Crear Cargos',
+                    confirmButtonText: confirmBtnText,
                     cancelButtonText: 'Cancelar',
                     reverseButtons: true,
                     customClass: {
@@ -1829,6 +1873,10 @@
                         formData.append('destino', destinoFinanciero);
                         formData.append('transMode', transMode);
                         formData.append('amount', amountVal);
+                        
+                        const issueDate = document.getElementById('issueDatePicker') ? document.getElementById('issueDatePicker').value : dateVal;
+                        formData.append('issue_date', issueDate);
+                        
                         formData.append('date', dateVal);
                         formData.append('description', descVal);
 

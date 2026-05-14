@@ -866,7 +866,7 @@ $formatMXN = fn($v) => 'MX$' . number_format((float) $v, 2);
                             <?php foreach ($pendingRows as $row): ?>
                                 <tr>
                                     <td style="color: var(--ud-info);">
-                                        <?= date('j M Y', strtotime($row['due_date'] ?? $row['created_at'])) ?>
+                                        <?= date('j M Y', strtotime(!empty($row['issue_date']) ? $row['issue_date'] : $row['created_at'])) ?>
                                     </td>
                                     <td><?= esc($row['description']) ?></td>
                                     <td>
@@ -951,7 +951,7 @@ $formatMXN = fn($v) => 'MX$' . number_format((float) $v, 2);
                             <tr>
                                 <td><input type="checkbox"></td>
                                 <td style="color: var(--ud-info);">
-                                    <?= date('j M Y', strtotime($row['due_date'] ?? $row['created_at'])) ?>
+                                    <?= date('j M Y', strtotime(!empty($row['issue_date']) ? $row['issue_date'] : $row['created_at'])) ?>
                                 </td>
                                 <td><?= esc($row['description']) ?></td>
                                 <td>
@@ -986,7 +986,7 @@ $formatMXN = fn($v) => 'MX$' . number_format((float) $v, 2);
                                         <i class="bi bi-pencil edit-trans-btn"
                                             style="cursor:pointer; color:var(--ud-muted);" data-id="<?= $row['id'] ?>"
                                             data-amount="<?= number_format((float) $row['amount'], 2, '.', '') ?>"
-                                            data-date="<?= !empty($row['due_date']) ? $row['due_date'] : date('Y-m-d', strtotime($row['created_at'])) ?>"
+                                            data-date="<?= !empty($row['issue_date']) ? $row['issue_date'] : date('Y-m-d', strtotime($row['created_at'])) ?>"
                                             data-desc="<?= esc($row['description']) ?>"
                                             data-cat="<?= $row['category_id'] ?>"
                                             data-type="<?= $row['type'] === 'charge' ? 'Cargo' : 'Pago' ?>"
@@ -995,7 +995,7 @@ $formatMXN = fn($v) => 'MX$' . number_format((float) $v, 2);
                                         <i class="bi bi-trash delete-trans-btn"
                                             style="cursor:pointer; color:var(--ud-danger);" data-id="<?= $row['id'] ?>"
                                             data-amount="<?= number_format((float) $row['amount'], 2, '.', '') ?>"
-                                            data-date="<?= !empty($row['due_date']) ? date('M jS, Y', strtotime($row['due_date'])) : date('M jS, Y', strtotime($row['created_at'])) ?>"
+                                            data-date="<?= !empty($row['issue_date']) ? date('M jS, Y', strtotime($row['issue_date'])) : date('M jS, Y', strtotime($row['created_at'])) ?>"
                                             data-desc="<?= esc($row['description']) ?>"
                                             data-type="<?= $row['type'] === 'charge' ? 'Cargo' : 'Pago' ?>"
                                             data-catname="<?= !empty($row['category_id']) ? esc(array_values(array_filter($categories, fn($c) => $c['id'] == $row['category_id']))[0]['name'] ?? 'General') : 'General' ?>"
@@ -1031,8 +1031,8 @@ $formatMXN = fn($v) => 'MX$' . number_format((float) $v, 2);
                         <tbody>
                             <?php foreach ($paymentHistory as $ph): ?>
                                 <tr>
-                                    <td style="color: var(--ud-info);"><?= date('j M Y', strtotime($ph['created_at'])) ?></td>
-                                    <td style="font-family: 'SF Mono', ui-monospace, monospace; font-size: 0.85rem; font-weight: 600; color: #64748B;">#REC-<?= strtoupper(substr(md5($ph['id'] . $ph['created_at']), 0, 8)) ?></td>
+                                    <td style="color: var(--ud-info);"><?= date('j M Y', strtotime(!empty($ph['issue_date']) ? $ph['issue_date'] : $ph['created_at'])) ?></td>
+                                    <td style="font-family: 'SF Mono', ui-monospace, monospace; font-size: 0.85rem; font-weight: 600; color: #64748B;">#REC-<?= strtoupper(substr(md5($ph['id'] . ($ph['issue_date'] ?? $ph['created_at'])), 0, 8)) ?></td>
                                     <td><strong><?= strtoupper(esc($ph['description'])) ?></strong></td>
                                     <td>MX$<?= number_format((float) $ph['amount'], 2) ?></td>
                                     <td><span class="badge-paid"><i class="bi bi-check-circle-fill"></i> Completado</span></td>
@@ -1044,7 +1044,7 @@ $formatMXN = fn($v) => 'MX$' . number_format((float) $v, 2);
                                                 data-amount="MX$<?= number_format((float) $ph['amount'], 2) ?>"
                                                 data-category="<?= esc($ph['category_name'] ?? 'Cuota de Mantenimiento') ?>"
                                                 data-method="<?= esc($ph['payment_method'] ?? 'Transferencia Bancaria') ?>"
-                                                data-date="<?= (new IntlDateFormatter('es_MX', IntlDateFormatter::LONG, IntlDateFormatter::NONE, null, null, "d 'de' MMMM 'de' yyyy"))->format(strtotime($ph['due_date'] ?? $ph['created_at'])) ?>"
+                                                data-date="<?= (new IntlDateFormatter('es_MX', IntlDateFormatter::LONG, IntlDateFormatter::NONE, null, null, "d 'de' MMMM 'de' yyyy"))->format(strtotime(!empty($ph['issue_date']) ? $ph['issue_date'] : $ph['created_at'])) ?>"
                                                 data-desc="<?= strtoupper(esc($ph['description'])) ?>"
                                                 data-attachment="<?= esc($ph['attachment'] ?? '') ?>"></i>
                                             <a href="<?= base_url('admin/finanzas/recibo-pago/' . $ph['id']) ?>" target="_blank"
@@ -1109,7 +1109,7 @@ $formatMXN = fn($v) => 'MX$' . number_format((float) $v, 2);
                                     data-amount="<?= number_format((float) ($v['amount'] ?? 0), 2, '.', '') ?>"
                                     data-method="<?= esc($v['payment_method'] ?? 'transfer') ?>"
                                     data-proof="<?= esc($proofUrl) ?>" data-notes="<?= esc($v['notes'] ?? '') ?>"
-                                    data-date="<?= date('Y-m-d', strtotime($v['created_at'])) ?>">
+                                    data-date="<?= date('Y-m-d', strtotime(!empty($v['issue_date']) ? $v['issue_date'] : $v['created_at'])) ?>">
                                     <td>
                                         <div style="display:flex; align-items:center; gap:.75rem;">
                                             <div
@@ -1126,7 +1126,7 @@ $formatMXN = fn($v) => 'MX$' . number_format((float) $v, 2);
                                     </td>
                                     <td style="font-weight:600;">MX$<?= number_format((float) ($v['amount'] ?? 0), 2) ?></td>
                                     <td><?= $methodLabel ?></td>
-                                    <td style="color: var(--ud-info);"><?= date('j M Y', strtotime($v['created_at'])) ?></td>
+                                    <td style="color: var(--ud-info);"><?= date('j M Y', strtotime(!empty($v['issue_date']) ? $v['issue_date'] : $v['created_at'])) ?></td>
                                     <td><span class="<?= $statusClass ?>"><?= $statusLabel ?></span></td>
                                     <td>
                                         <div class="actions-cell" style="justify-content:center;">
