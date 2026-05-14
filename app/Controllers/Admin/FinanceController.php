@@ -866,8 +866,8 @@ class FinanceController extends BaseController
                     'attachment' => $attachmentPath,
                     'payment_method' => $paymentMethod,
                     'source' => 'manual',
-                    'created_at' => date('Y-m-d H:i:s'), // La fecha de emisión contable es SIEMPRE la fecha real en que se captura el cargo
-                    'issue_date' => $issueDate ?: date('Y-m-d'),
+                    'created_at' => date('Y-m-d H:i:s'), // La fecha de captura
+                    'issue_date' => $transType === 'expense' ? ($fecha ?: date('Y-m-d')) : ($issueDate ?: date('Y-m-d')),
                     'updated_at' => date('Y-m-d H:i:s')
                 ];
                 $builderTrans->insert($dataCharge);
@@ -1051,9 +1051,11 @@ class FinanceController extends BaseController
         $builder->where('ft.source', 'manual');
         $builder->where('ft.status !=', 'cancelled');
         $builder->where('ft.type !=', 'charge'); // Solo Pagos y Gastos
-        $builder->where('MONTH(ft.created_at)', $m);
-        $builder->where('YEAR(ft.created_at)', $y);
-        $builder->orderBy('ft.created_at', 'ASC');
+        $m_int = (int)$m;
+        $y_int = (int)$y;
+        $builder->where("MONTH(COALESCE(ft.issue_date, ft.created_at)) = {$m_int}", null, false);
+        $builder->where("YEAR(COALESCE(ft.issue_date, ft.created_at)) = {$y_int}", null, false);
+        $builder->orderBy("CASE WHEN ft.issue_date IS NOT NULL THEN ft.issue_date ELSE ft.created_at END", 'ASC', false);
 
         $results = $builder->get()->getResultArray();
 
@@ -3878,7 +3880,7 @@ class FinanceController extends BaseController
             INNER JOIN financial_categories c ON c.id = ft.category_id
             WHERE ft.condominium_id = ? AND ft.type = 'credit'
               AND ft.status = 'paid' AND c.type = 'income'
-              AND ft.created_at BETWEEN ? AND ?
+              AND COALESCE(ft.issue_date, ft.created_at) BETWEEN ? AND ?
         ", [$condoId, $monthStart . ' 00:00:00', $monthEnd . ' 23:59:59'])->getRow();
         $totalIngresos = $row ? (float) $row->total : 0.00;
 
@@ -3889,7 +3891,7 @@ class FinanceController extends BaseController
             INNER JOIN financial_categories c ON c.id = ft.category_id
             WHERE ft.condominium_id = ? AND ft.type = 'credit'
               AND ft.status = 'paid' AND c.type = 'expense'
-              AND ft.created_at BETWEEN ? AND ?
+              AND COALESCE(ft.issue_date, ft.created_at) BETWEEN ? AND ?
         ", [$condoId, $monthStart . ' 00:00:00', $monthEnd . ' 23:59:59'])->getRow();
         $totalGastos = $row ? (float) $row->total : 0.00;
 
@@ -3942,7 +3944,7 @@ class FinanceController extends BaseController
             INNER JOIN financial_categories c ON c.id = ft.category_id
             WHERE ft.condominium_id = ? AND ft.type = 'credit'
               AND ft.status = 'paid' AND c.type = 'income'
-              AND ft.created_at BETWEEN ? AND ?
+              AND COALESCE(ft.issue_date, ft.created_at) BETWEEN ? AND ?
             GROUP BY c.id ORDER BY total DESC
         ", [$condoId, $monthStart . ' 00:00:00', $monthEnd . ' 23:59:59'])->getResultArray();
 
@@ -3953,7 +3955,7 @@ class FinanceController extends BaseController
             INNER JOIN financial_categories c ON c.id = ft.category_id
             WHERE ft.condominium_id = ? AND ft.type = 'credit'
               AND ft.status = 'paid' AND c.type = 'expense'
-              AND ft.created_at BETWEEN ? AND ?
+              AND COALESCE(ft.issue_date, ft.created_at) BETWEEN ? AND ?
             GROUP BY c.id ORDER BY total DESC
         ", [$condoId, $monthStart . ' 00:00:00', $monthEnd . ' 23:59:59'])->getResultArray();
 
@@ -3966,9 +3968,11 @@ class FinanceController extends BaseController
         $builder->where('ft.source', 'manual');
         $builder->where('ft.status !=', 'cancelled');
         $builder->where('ft.type !=', 'charge'); // Solo Pagos y Gastos
-        $builder->where('MONTH(ft.created_at)', $m);
-        $builder->where('YEAR(ft.created_at)', $y);
-        $builder->orderBy('ft.created_at', 'ASC');
+        $m_int = (int)$m;
+        $y_int = (int)$y;
+        $builder->where("MONTH(COALESCE(ft.issue_date, ft.created_at)) = {$m_int}", null, false);
+        $builder->where("YEAR(COALESCE(ft.issue_date, ft.created_at)) = {$y_int}", null, false);
+        $builder->orderBy("CASE WHEN ft.issue_date IS NOT NULL THEN ft.issue_date ELSE ft.created_at END", 'ASC', false);
         $transactions = $builder->get()->getResultArray();
 
        $logoFile = $demoCondo['logo'] ?? '';
