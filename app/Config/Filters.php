@@ -38,6 +38,7 @@ class Filters extends BaseFilters
         'tenant'        => \App\Filters\TenantFilter::class,
         'apiauth'       => \App\Filters\ApiAuthFilter::class,
         'superadmin'    => \App\Filters\SuperAdminFilter::class,
+        'ratelimit'     => \App\Filters\RateLimitFilter::class,
     ];
 
     /**
@@ -110,5 +111,15 @@ class Filters extends BaseFilters
      *
      * @var array<string, array<string, list<string>>>
      */
-    public array $filters = [];
+    public array $filters = [
+        'ratelimit:login'    => ['before' => ['api/v1/login']],
+        'ratelimit:uploads'  => ['before' => ['api/v1/finance/payment-proof', 'api/v1/finance/*/receipt']],
+        'ratelimit:password' => ['before' => ['api/v1/resident/update-password']],
+        'ratelimit:qr'       => ['before' => [
+            'api/v1/security/validate-qr', 
+            'api/v1/security/entry', 
+            'api/v1/security/entries', 
+            'api/v1/security/qr-entry'
+        ]],
+    ];
 }

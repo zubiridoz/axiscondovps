@@ -217,9 +217,18 @@ class FinanceController extends ResourceController
             return $this->respondError('Comprobante no proporcionado o inválido', 422);
         }
 
-        $allowedMimes = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
-        if (!in_array($file->getClientMimeType(), $allowedMimes)) {
-            return $this->respondError("Tipo de archivo no permitido. Use JPG, PNG o PDF.", 422);
+        $clientMime = strtolower($file->getClientMimeType());
+        $realMime = strtolower($file->getMimeType());
+        $ext = strtolower($file->getClientExtension());
+        
+        $allowedMimes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/heic', 'image/heif', 'application/pdf'];
+        $allowedExts = ['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif', 'pdf', '', 'tmp', 'bin'];
+
+        $mimeOk = in_array($clientMime, $allowedMimes) || in_array($realMime, $allowedMimes) || strpos($clientMime, 'octet-stream') !== false;
+        $extOk = in_array($ext, $allowedExts);
+
+        if (!$mimeOk || !$extOk) {
+            return $this->respondError('Tipo de archivo no permitido. Use JPG, PNG o PDF.', 422);
         }
 
         if ($file->getSize() > 10 * 1024 * 1024) {
@@ -1023,9 +1032,17 @@ class FinanceController extends ResourceController
             return $this->respondError('Comprobante no proporcionado o inválido', 422);
         }
 
-        // Validar tipo de archivo
-        $allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
-        if (!in_array($file->getClientMimeType(), $allowedMimes)) {
+        $clientMime = strtolower($file->getClientMimeType());
+        $realMime = strtolower($file->getMimeType());
+        $ext = strtolower($file->getClientExtension());
+        
+        $allowedMimes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/heic', 'image/heif', 'application/pdf'];
+        $allowedExts = ['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif', 'pdf', '', 'tmp', 'bin'];
+
+        $mimeOk = in_array($clientMime, $allowedMimes) || in_array($realMime, $allowedMimes) || strpos($clientMime, 'octet-stream') !== false;
+        $extOk = in_array($ext, $allowedExts);
+
+        if (!$mimeOk || !$extOk) {
             return $this->respondError('Tipo de archivo no permitido. Use JPG, PNG o PDF.', 422);
         }
 

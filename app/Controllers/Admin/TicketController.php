@@ -103,6 +103,22 @@ class TicketController extends BaseController
             }
             foreach ($files as $file) {
                 if ($file->isValid() && !$file->hasMoved()) {
+                    if ($file->getSize() > 15 * 1024 * 1024) continue;
+                    
+                    $clientMime = strtolower($file->getClientMimeType());
+                    $realMime = strtolower($file->getMimeType());
+                    $extSafe = strtolower($file->getClientExtension());
+                    
+                    $allowedMimes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/heic', 'image/heif', 'application/pdf', 'video/mp4', 'video/quicktime'];
+                    $allowedExts = ['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif', 'pdf', 'mp4', 'mov', '', 'tmp', 'bin'];
+
+                    $mimeOk = in_array($clientMime, $allowedMimes) || in_array($realMime, $allowedMimes) || strpos($clientMime, 'octet-stream') !== false;
+                    $extOk = in_array($extSafe, $allowedExts);
+
+                    if (!$mimeOk || !$extOk) {
+                        continue;
+                    }
+
                     $ext = $file->getExtension() ?: $file->getClientExtension();
                     if (empty($ext)) {
                         $mime = $file->getMimeType();
@@ -343,6 +359,22 @@ class TicketController extends BaseController
             if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
             foreach ($files as $file) {
                 if ($file->isValid() && !$file->hasMoved()) {
+                    if ($file->getSize() > 15 * 1024 * 1024) continue;
+                    
+                    $clientMime = strtolower($file->getClientMimeType());
+                    $realMime = strtolower($file->getMimeType());
+                    $extSafe = strtolower($file->getClientExtension());
+                    
+                    $allowedMimes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/heic', 'image/heif', 'application/pdf', 'video/mp4', 'video/quicktime'];
+                    $allowedExts = ['jpg', 'jpeg', 'png', 'webp', 'heic', 'heif', 'pdf', 'mp4', 'mov', '', 'tmp', 'bin'];
+
+                    $mimeOk = in_array($clientMime, $allowedMimes) || in_array($realMime, $allowedMimes) || strpos($clientMime, 'octet-stream') !== false;
+                    $extOk = in_array($extSafe, $allowedExts);
+
+                    if (!$mimeOk || !$extOk) {
+                        continue;
+                    }
+
                     $ext = $file->getExtension() ?: $file->getClientExtension();
                     if (empty($ext)) {
                         $mime = $file->getMimeType();

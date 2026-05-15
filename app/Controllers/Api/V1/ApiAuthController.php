@@ -23,6 +23,17 @@ class ApiAuthController extends ResourceController
             $user = $loginService->validateCredentials($email, $password);
             
             if (!$user) {
+                // Registro detallado de fallos (Fase 1 Throttling)
+                $logData = [
+                    'event' => 'login_failed',
+                    'email' => $email,
+                    'ip' => $this->request->getIPAddress(),
+                    'user_agent' => $this->request->getUserAgent() ? $this->request->getUserAgent()->getAgentString() : 'Unknown',
+                    'reason' => 'Credenciales incorrectas',
+                    'timestamp' => date('Y-m-d H:i:s')
+                ];
+                log_message('warning', '[AUTH_FAIL] ' . json_encode($logData));
+
                 return $this->failUnauthorized('Credenciales incorrectas');
             }
             
