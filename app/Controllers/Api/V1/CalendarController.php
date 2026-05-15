@@ -39,6 +39,7 @@ class CalendarController extends ResourceController
         }
 
         // 2. Extraer todos los user_id de los residentes en esa misma unidad
+        $residentModel = new \App\Models\Tenant\ResidentModel();
         $familyResidents = $residentModel->where('unit_id', $myResidentRecord['unit_id'])->findAll();
         
         $ids = [];
