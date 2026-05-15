@@ -217,6 +217,15 @@ class FinanceController extends ResourceController
             return $this->respondError('Comprobante no proporcionado o inválido', 422);
         }
 
+        $allowedMimes = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+        if (!in_array($file->getClientMimeType(), $allowedMimes)) {
+            return $this->respondError("Tipo de archivo no permitido. Use JPG, PNG o PDF.", 422);
+        }
+
+        if ($file->getSize() > 10 * 1024 * 1024) {
+            return $this->respondError("El archivo excede el tamaño máximo de 10MB", 422);
+        }
+
         $uploadPath = WRITEPATH . 'uploads/payments/' . $tenantId . '/';
         if (!is_dir($uploadPath)) {
             mkdir($uploadPath, 0777, true);
