@@ -211,7 +211,7 @@ class TicketApiController extends ResourceController
                     $newName = 'tk_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
                     $file->move($uploadDir, $newName);
                     $mediaUrls[] = 'writable/uploads/tickets/' . $newName;
-                    if (count($mediaUrls) >= 7) break;
+                    if (count($mediaUrls) >= 10) break;
                 }
             }
         }
@@ -371,7 +371,7 @@ class TicketApiController extends ResourceController
                     $newName = 'msg_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
                     $file->move($uploadDir, $newName);
                     $mediaUrls[] = 'writable/uploads/tickets/' . $newName;
-                    if (count($mediaUrls) >= 5) break;
+                    if (count($mediaUrls) >= 10) break;
                 }
             }
         }

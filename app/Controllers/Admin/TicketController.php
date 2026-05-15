@@ -128,7 +128,7 @@ class TicketController extends BaseController
                     $newName = 'tk_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
                     $file->move($uploadDir, $newName);
                     $mediaUrls[] = 'writable/uploads/tickets/' . $newName;
-                    if (count($mediaUrls) >= 7) break; // Limit to 7 serverside
+                    if (count($mediaUrls) >= 10) break; // Limit to 10 serverside
                 }
             }
         }
@@ -384,7 +384,7 @@ class TicketController extends BaseController
                     $newName = 'msg_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
                     $file->move($uploadDir, $newName);
                     $mediaUrls[] = 'writable/uploads/tickets/' . $newName;
-                    if (count($mediaUrls) >= 5) break;
+                    if (count($mediaUrls) >= 10) break;
                 }
             }
         }
