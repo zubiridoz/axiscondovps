@@ -1172,7 +1172,7 @@ class SettingsController extends BaseController
         if (($condo['payment_method'] ?? 'stripe') === 'manual') {
             return $this->response->setJSON([
                 'success' => false,
-                'message' => 'Tu plan es administrado manualmente. Contacta a soporte@axiscondo.mx para realizar cambios.'
+                'message' => 'Tu plan es administrado manualmente. Contacta a hola@axiscondo.mx para realizar cambios.'
             ])->setStatusCode(403);
         }
 
