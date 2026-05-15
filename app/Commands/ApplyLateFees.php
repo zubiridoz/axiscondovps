@@ -186,11 +186,25 @@ class ApplyLateFees extends BaseCommand
                             $pushService = new \App\Services\Notifications\PushNotificationService();
                             foreach ($residents as $resident) {
                                 if (!empty($resident['user_id'])) {
+                                    $title = 'Nuevo Cargo por Mora';
+                                    $body = 'Se ha aplicado un recargo automático de $' . number_format($montoMora, 2) . ' a su estado de cuenta por un recibo vencido.';
+                                    
+                                    // Notificación Push (Firebase)
                                     $pushService->sendToUser(
                                         (int)$resident['user_id'], 
-                                        'Nuevo Cargo por Mora', 
-                                        'Se ha aplicado un recargo automático de $' . number_format($montoMora, 2) . ' a su estado de cuenta por un recibo vencido.',
+                                        $title, 
+                                        $body,
                                         ['type' => 'finance']
+                                    );
+                                    
+                                    // Notificación In-App (Módulo Avisos)
+                                    \App\Models\Tenant\NotificationModel::notify(
+                                        $condo['id'],
+                                        (int)$resident['user_id'],
+                                        'finance',
+                                        $title,
+                                        $body,
+                                        ['action_url' => 'app/finances']
                                     );
                                 }
                             }
