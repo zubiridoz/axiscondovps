@@ -964,7 +964,7 @@ $formatDateEs = function($dateStr) {
                                     <?= $formatDateEs(!empty($row['issue_date']) ? $row['issue_date'] : $row['created_at']) ?>
                                 </td>
                                 <td style="color: var(--ud-muted);">
-                                    <?= $formatDateEs($row['due_date'] ?? null) ?>
+                                    <?= $row['type'] === 'charge' ? $formatDateEs($row['due_date'] ?? null) : '—' ?>
                                 </td>
                                 <td><?= esc($row['description']) ?></td>
                                 <td>
