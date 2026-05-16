@@ -2430,12 +2430,21 @@ class FinanceController extends BaseController
                         'description' => 'Cuota de Mantenimiento ' . $monthName,
                         'due_date' => $dueDateStr,
                         'status' => 'pending',
-                        'source' => 'auto'
+                        'source' => 'auto',
+                        'created_at' => $billingStartStr . ' 00:00:00',
+                        'updated_at' => $billingStartStr . ' 00:00:00'
                     ]);
                 }
             }
 
             $db->transComplete();
+
+            // Aplicar saldo a favor existente sobre los nuevos cargos
+            if ($db->transStatus() !== false) {
+                foreach ($units as $u) {
+                    $this->syncUnitFinancialState((int) $u['id']);
+                }
+            }
 
             if ($db->transStatus() === false) {
                 return $this->response->setJSON([

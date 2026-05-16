@@ -120,8 +120,8 @@ class MonthlyChargeService
                         'due_date' => $dueDateStr,
                         'status' => 'pending',
                         'source' => 'auto',
-                        'created_at' => date('Y-m-d H:i:s'),
-                        'updated_at' => date('Y-m-d H:i:s')
+                        'created_at' => $currentMonth . '-01 00:00:00',
+                        'updated_at' => $currentMonth . '-01 00:00:00'
                     ];
                     $affectedUnits[] = $u['id'];
                 }
