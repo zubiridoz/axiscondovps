@@ -18,10 +18,11 @@ class AdminFinanceApiController extends ResourceController
         $db = \Config\Database::connect();
         $units = $db->table('units u')
             ->select('u.id, u.unit_number')
-            ->select('CONCAT(us.first_name, " ", us.last_name) as resident_name')
-            ->join('residents r', 'r.unit_id = u.id AND r.condominium_id = u.condominium_id', 'left')
+            ->select('GROUP_CONCAT(CONCAT(us.first_name, " ", us.last_name) SEPARATOR ", ") as resident_name')
+            ->join('residents r', 'r.unit_id = u.id AND r.condominium_id = u.condominium_id AND r.is_active = 1', 'left')
             ->join('users us', 'us.id = r.user_id', 'left')
             ->where('u.condominium_id', $tenantId)
+            ->groupBy('u.id, u.unit_number')
             ->orderBy('u.unit_number', 'ASC')
             ->get()
             ->getResultArray();
