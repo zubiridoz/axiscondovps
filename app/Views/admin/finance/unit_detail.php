@@ -864,11 +864,16 @@ $formatDateEs = function($dateStr) {
                                 <th>Fecha de Vencimiento</th>
                                 <th>Descripción</th>
                                 <th>Categoría</th>
-                                <th style="text-align:right;">Monto</th>
+                                <th style="text-align:right;">Monto Original</th>
+                                <th style="text-align:right;">Abonado</th>
+                                <th style="text-align:right;">Pendiente</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach ($pendingRows as $row): ?>
+                            <?php foreach ($pendingRows as $row):
+                                $remaining = (float) $row['amount'] - (float) ($row['amount_paid'] ?? 0);
+                                if ($remaining <= 0.01) continue;
+                            ?>
                                 <tr>
                                     <td style="color: var(--ud-info);">
                                         <?= $formatDateEs(!empty($row['issue_date']) ? $row['issue_date'] : $row['created_at']) ?>
@@ -884,14 +889,20 @@ $formatDateEs = function($dateStr) {
                                             <span style="color:var(--ud-muted);">—</span>
                                         <?php endif; ?>
                                     </td>
-                                    <td style="text-align:right;" class="balance-pos">
+                                    <td style="text-align:right; color: var(--ud-muted);">
                                         MX$<?= number_format((float) $row['amount'], 2) ?></td>
+                                    <td style="text-align:right; color: #059669;">
+                                        <?php $abonado = (float) ($row['amount_paid'] ?? 0); ?>
+                                        <?= $abonado > 0.01 ? 'MX$' . number_format($abonado, 2) : '—' ?>
+                                    </td>
+                                    <td style="text-align:right;" class="balance-pos">
+                                        MX$<?= number_format($remaining, 2) ?></td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
                         <tfoot>
                             <tr>
-                                <td colspan="4">Total Pendiente</td>
+                                <td colspan="6">Total Pendiente</td>
                                 <td style="text-align:right;" class="balance-pos"><?= $formatMXN($saldoPendiente) ?></td>
                             </tr>
                         </tfoot>
