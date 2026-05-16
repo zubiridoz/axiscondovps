@@ -292,8 +292,17 @@ class BookingController extends BaseController
             $fmtTime = date('H:i', strtotime($booking['start_time']));
             
             $body = "Tu solicitud de reserva para {$amenityName} el {$fmtDate} a las {$fmtTime} ha sido aprobada.";
-            \App\Models\Tenant\NotificationModel::notify($booking['condominium_id'], $booking['user_id'], 'amenidad', 'Reserva Aprobada', $body);
-        } catch (\Exception $e) {}
+            \App\Models\Tenant\NotificationModel::notify(
+                $booking['condominium_id'], 
+                $booking['user_id'], 
+                'amenidad', 
+                'Reserva Aprobada', 
+                $body,
+                ['type' => 'amenity', 'booking_id' => $id]
+            );
+        } catch (\Exception $e) {
+            log_message('error', "Error al notificar aprobación de reserva: " . $e->getMessage());
+        }
 
         return $this->response->setJSON(['status' => 200, 'message' => 'Reserva aprobada exitosamente']);
     }
@@ -324,8 +333,17 @@ class BookingController extends BaseController
             $fmtTime = date('H:i', strtotime($booking['start_time']));
             
             $body = "Tu solicitud de reserva para {$amenityName} el {$fmtDate} a las {$fmtTime} no pudo ser aprobada.";
-            \App\Models\Tenant\NotificationModel::notify($booking['condominium_id'], $booking['user_id'], 'amenidad', 'Reserva Rechazada', $body);
-        } catch (\Exception $e) {}
+            \App\Models\Tenant\NotificationModel::notify(
+                $booking['condominium_id'], 
+                $booking['user_id'], 
+                'amenidad', 
+                'Reserva Rechazada', 
+                $body,
+                ['type' => 'amenity', 'booking_id' => $id]
+            );
+        } catch (\Exception $e) {
+            log_message('error', "Error al notificar rechazo de reserva: " . $e->getMessage());
+        }
 
         return $this->response->setJSON(['status' => 200, 'message' => 'Reserva rechazada']);
     }

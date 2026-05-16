@@ -971,9 +971,10 @@ class AnnouncementController extends ResourceController
 
             $db = \Config\Database::connect();
 
-            // Obtener todos los user_id de residentes
+            // Obtener todos los user_id de residentes de manera única
             $residents = $db->table('residents')
                 ->select('user_id')
+                ->distinct()
                 ->where('condominium_id', $condominiumId)
                 ->where('user_id IS NOT NULL')
                 ->get()->getResultArray();

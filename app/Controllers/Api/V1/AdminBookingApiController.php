@@ -88,13 +88,20 @@ class AdminBookingApiController extends ResourceController
 
         $bookingModel->update($id, ['status' => 'approved']);
 
+        $db = \Config\Database::connect();
+        $amenity = $db->table('amenities')->select('name')->where('id', $booking['amenity_id'])->get()->getRowArray();
+        $amenityName = $amenity ? $amenity['name'] : 'Amenidad';
+        
+        $fmtDate = date('d/m/Y', strtotime($booking['start_time']));
+        $fmtTime = date('H:i', strtotime($booking['start_time']));
+
         // Notificar usuario
         NotificationModel::notify(
             $tenantId,
             $booking['user_id'],
             'amenidad',
             'Reserva Aprobada',
-            "Tu solicitud de reserva ha sido aprobada.",
+            "Tu solicitud de reserva para {$amenityName} el {$fmtDate} a las {$fmtTime} ha sido aprobada.",
             ['type' => 'amenity', 'booking_id' => $id]
         );
 
@@ -117,13 +124,20 @@ class AdminBookingApiController extends ResourceController
 
         $bookingModel->update($id, ['status' => 'rejected']);
 
+        $db = \Config\Database::connect();
+        $amenity = $db->table('amenities')->select('name')->where('id', $booking['amenity_id'])->get()->getRowArray();
+        $amenityName = $amenity ? $amenity['name'] : 'Amenidad';
+        
+        $fmtDate = date('d/m/Y', strtotime($booking['start_time']));
+        $fmtTime = date('H:i', strtotime($booking['start_time']));
+
         // Notificar usuario
         NotificationModel::notify(
             $tenantId,
             $booking['user_id'],
             'amenidad',
             'Reserva Rechazada',
-            "Tristemente, tu solicitud de reserva ha sido rechazada.",
+            "Tu solicitud de reserva para {$amenityName} el {$fmtDate} a las {$fmtTime} no pudo ser aprobada.",
             ['type' => 'amenity', 'booking_id' => $id]
         );
 
