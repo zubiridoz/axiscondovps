@@ -128,7 +128,7 @@ class UnitController extends BaseController
         // Obtenemos unidades base con su sección
         $unitsRaw = $unitModel->select('units.*, sections.name as section_name')
                            ->join('sections', 'sections.id = units.section_id', 'left')
-                           ->orderBy('units.unit_number', 'ASC')
+                           ->orderBy('units.id', 'ASC')
                            ->findAll();
 
         // Obtenemos todos los residentes agrupados para evitar las queries N+1
@@ -179,7 +179,7 @@ class UnitController extends BaseController
         $unitModel = new UnitModel();
         $units = $unitModel->select('units.unit_number as Nombre, units.maintenance_fee as CuotaMensual, units.indiviso_percentage as Indiviso, sections.name as Seccion')
                            ->join('sections', 'sections.id = units.section_id', 'left')
-                           ->orderBy('units.unit_number', 'ASC')
+                           ->orderBy('units.id', 'ASC')
                            ->findAll();
 
         $filename = 'Plantilla_Unidades_' . date('Y-m-d') . '.csv';

@@ -31,7 +31,7 @@ class SettingsController extends BaseController
         $unitModel = new \App\Models\Tenant\UnitModel();
         
         $sections = $sectionModel->orderBy('name', 'ASC')->findAll();
-        $units = $unitModel->orderBy('unit_number', 'ASC')->findAll();
+        $units = $unitModel->orderBy('id', 'ASC')->findAll();
 
         $db = \Config\Database::connect();
         $categoriesRaw = $db->table('financial_categories')

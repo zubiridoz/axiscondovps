@@ -692,7 +692,7 @@ class FinanceController extends BaseController
         $builderU->join('sections sec', 'sec.id = units.section_id', 'left');
         $builderU->where('units.condominium_id', $demoCondo['id']);
         $builderU->orderBy('sec.name', 'ASC');
-        $builderU->orderBy('units.unit_number', 'ASC');
+        $builderU->orderBy('units.id', 'ASC');
         $unitsRaw = $builderU->get()->getResultArray();
 
         $groupedUnits = [];
