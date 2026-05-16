@@ -149,6 +149,18 @@ class ApplyLateFees extends BaseCommand
 
                 if ($montoMora > 0) {
                     $db->transStart();
+
+                    // Construir descripción vinculada al cargo original
+                    $txnDesc = $txn->description ?? 'Cuota vencida';
+                    $txnEmision = !empty($txn->issue_date) ? $txn->issue_date : ($txn->created_at ?? date('Y-m-d'));
+                    $emisionFmt = date('d/m/Y', strtotime($txnEmision));
+
+                    if ($condo['late_fee_type'] === 'percentage') {
+                        $moraLabel = 'Mora ' . number_format((float)$condo['late_fee_percentage'], 0) . '%';
+                    } else {
+                        $moraLabel = 'Mora $' . number_format($montoMora, 2);
+                    }
+                    $moraDescription = $moraLabel . ' - ' . $txnDesc . ' (Emitida: ' . $emisionFmt . ' | Vencida: ' . date('d/m/Y', strtotime($txn->due_date)) . ')';
                     
                     // 1. Insertar el cargo por mora
                     $insertSuccess = $db->table('financial_transactions')->insert([
@@ -157,7 +169,7 @@ class ApplyLateFees extends BaseCommand
                         'category_id' => $moraCatId,
                         'type' => 'charge',
                         'amount' => $montoMora,
-                        'description' => 'Recargo automático por cuota vencida',
+                        'description' => $moraDescription,
                         'due_date' => date('Y-m-d'),
                         'status' => 'pending',
                         'source' => 'auto',
@@ -187,7 +199,7 @@ class ApplyLateFees extends BaseCommand
                             foreach ($residents as $resident) {
                                 if (!empty($resident['user_id'])) {
                                     $title = 'Nuevo Cargo por Mora';
-                                    $body = 'Se ha aplicado un recargo automático de $' . number_format($montoMora, 2) . ' a su estado de cuenta por un recibo vencido.';
+                                    $body = 'Se aplicó un recargo de $' . number_format($montoMora, 2) . ' por mora sobre: ' . $txnDesc . '.';
                                     
                                     // Notificación Push (Firebase)
                                     $pushService->sendToUser(
