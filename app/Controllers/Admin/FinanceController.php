@@ -1625,7 +1625,7 @@ class FinanceController extends BaseController
             ->join('financial_transactions ft', 'ft.unit_id = u.id AND ft.condominium_id = u.condominium_id', 'left')
             ->where('u.condominium_id', $demoCondo['id'])
             ->groupBy('u.id')
-            ->orderBy('u.unit_number', 'ASC')
+            ->orderBy('u.id', 'ASC')
             ->get()->getResultArray();
 
         $records = [];
