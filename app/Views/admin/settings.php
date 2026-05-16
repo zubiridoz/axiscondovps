@@ -992,10 +992,10 @@ $community = array_merge([
                 data-tab="financialAccess">Acceso Financiero</button>
             <button type="button" class="cfg-nav-link" style="padding-top:0.3rem; padding-bottom:0.3rem;"
                 data-tab="delinquencyRestrictions">Restricciones por Morosidad</button>
-            <button type="button" class="cfg-nav-link" style="padding-top:0.3rem; padding-bottom:0.3rem;"
+            <!--<button type="button" class="cfg-nav-link" style="padding-top:0.3rem; padding-bottom:0.3rem;"
                 disabled>Firma</button>
             <button type="button" class="cfg-nav-link" style="padding-top:0.3rem; padding-bottom:0.3rem;"
-                disabled>Alertas Comunitarias</button>
+                disabled>Alertas Comunitarias</button>-->
         </div>
 
         <div class="cfg-nav-divider"></div>
