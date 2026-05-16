@@ -22,11 +22,15 @@ class PollNotificationService
         $residentModel = new ResidentModel();
         $residents = $residentModel->where('is_active', 1)->findAll();
 
+        $notifiedUsers = [];
+
         foreach ($residents as $res) {
-            if (!empty($res['user_id'])) {
+            $uid = $res['user_id'];
+            if (!empty($uid) && !in_array($uid, $notifiedUsers)) {
+                $notifiedUsers[] = $uid;
                 NotificationModel::notify(
                     $condoId,
-                    $res['user_id'],
+                    $uid,
                     'poll_new',
                     'Nueva encuesta',
                     "📊 Nueva encuesta disponible: {$title}",
@@ -80,11 +84,15 @@ class PollNotificationService
         $residentModel = new ResidentModel();
         $residents = $residentModel->where('is_active', 1)->findAll();
 
+        $notifiedUsers = [];
+
         foreach ($residents as $res) {
-            if (!empty($res['user_id'])) {
+            $uid = $res['user_id'];
+            if (!empty($uid) && !in_array($uid, $notifiedUsers)) {
+                $notifiedUsers[] = $uid;
                 NotificationModel::notify(
                     $condoId,
-                    $res['user_id'],
+                    $uid,
                     'poll_finished',
                     'Encuesta finalizada',
                     "✅ La encuesta '{$title}' ha finalizado",

@@ -1121,8 +1121,17 @@ $eventsJsonRaw = json_encode($rawEvents, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED
                     reminder_count: +e.reminder_count || 0, recipient_count: +e.recipient_count || 0
                 };
                 events.push(ev);
-                if (!eventIndex[ev.dayKey]) eventIndex[ev.dayKey] = [];
-                eventIndex[ev.dayKey].push(ev);
+                
+                // Generar un rango de días desde 'start' hasta 'end'
+                var currentD = new Date(s.getFullYear(), s.getMonth(), s.getDate());
+                var endD = new Date(en.getFullYear(), en.getMonth(), en.getDate());
+                
+                while(currentD <= endD) {
+                    var ck = dk(currentD);
+                    if (!eventIndex[ck]) eventIndex[ck] = [];
+                    eventIndex[ck].push(ev);
+                    currentD.setDate(currentD.getDate() + 1);
+                }
             });
             Object.keys(eventIndex).forEach(function (k) { eventIndex[k].sort(function (a, b) { return a.start - b.start }) });
         }
@@ -1205,6 +1214,9 @@ $eventsJsonRaw = json_encode($rawEvents, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED
             closePopover();
             var pop = document.createElement('div'); pop.className = 'cc-popover';
             var startStr = fmtDateLong(ev.start);
+            if (dk(ev.start) !== dk(ev.end)) {
+                startStr += ' al ' + fmtDateLong(ev.end);
+            }
             var timeStr = ev.allDay ? 'Todo el día' : pad(ev.start.getHours()) + ':' + pad(ev.start.getMinutes()) + ' - ' + pad(ev.end.getHours()) + ':' + pad(ev.end.getMinutes());
             var html = '<button class="cc-popover-close" id="cc-pop-close">&times;</button>';
             html += '<h4>' + ev.title + '</h4>';
