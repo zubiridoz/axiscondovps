@@ -196,6 +196,33 @@ class ApiAuthFilter implements FilterInterface
         \App\Services\TenantService::getInstance()->setTenantId($condoId);
         @$request->user_condominio_id = $condoId;
 
+        // ── Tracking de actividad App (throttled: 1 write cada 60s) ──
+        $path = $request->getUri()->getPath();
+        $excludedPaths = ['fcm-token', 'auth/logout', 'devices/subscribe', 'devices/unsubscribe', 'condominiums/mine', 'condominiums/switch'];
+        $shouldTrack = true;
+        foreach ($excludedPaths as $excluded) {
+            if (strpos($path, $excluded) !== false) {
+                $shouldTrack = false;
+                break;
+            }
+        }
+        if ($shouldTrack) {
+            $trackKey = "app_track_{$userId}";
+            if (!isset(self::$validatedPivots[$trackKey])) {
+                try {
+                    $db2 = \Config\Database::connect();
+                    $user = $db2->table('users')->select('last_app_activity')->where('id', $userId)->get()->getRow();
+                    $lastApp = $user->last_app_activity ?? null;
+                    if (!$lastApp || (time() - strtotime($lastApp)) > 60) {
+                        $db2->table('users')->where('id', $userId)->update(['last_app_activity' => date('Y-m-d H:i:s')]);
+                    }
+                    self::$validatedPivots[$trackKey] = true;
+                } catch (\Throwable $e) {
+                    // Silenciar: tracking no debe romper el request
+                }
+            }
+        }
+
         // ═══════════════════════════════════════════════
         // PASO 3: Resolver Resident Context (multi-unidad)
         // ═══════════════════════════════════════════════

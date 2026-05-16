@@ -43,6 +43,8 @@ class DashboardController extends BaseController
                 u.first_name AS admin_first_name,
                 u.last_name AS admin_last_name,
                 u.email AS admin_email,
+                u.last_web_activity AS admin_last_web,
+                u.last_app_activity AS admin_last_app,
                 (SELECT COUNT(*) FROM units WHERE units.condominium_id = c.id) AS total_units,
                 (SELECT COUNT(*) FROM residents WHERE residents.condominium_id = c.id) AS total_residents,
                 (SELECT MAX(ft.created_at) FROM financial_transactions ft WHERE ft.condominium_id = c.id) AS last_activity

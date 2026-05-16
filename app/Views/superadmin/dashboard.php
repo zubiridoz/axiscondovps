@@ -62,6 +62,15 @@
 
     .metric-mini { display: inline-flex; align-items: center; gap: 3px; font-size: 0.75rem; color: #64748b; background: #f8fafc; padding: 2px 8px; border-radius: 4px; margin-right: 4px; }
 
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; flex-shrink: 0; }
+    .status-online { background: #22c55e; box-shadow: 0 0 6px rgba(34,197,94,0.5); }
+    .status-recent { background: #f59e0b; box-shadow: 0 0 6px rgba(245,158,11,0.4); }
+    .status-offline { background: #94a3b8; }
+    .status-badge { display: inline-flex; align-items: center; font-size: 0.72rem; font-weight: 500; padding: 0.2em 0.6em; border-radius: 5px; }
+    .status-badge.online { background: #dcfce7; color: #166534; }
+    .status-badge.recent { background: #fef3c7; color: #92400e; }
+    .status-badge.offline { background: #f1f5f9; color: #94a3b8; }
+
     .sa-detail-modal .modal-content { border: none; border-radius: 16px; box-shadow: 0 25px 60px rgba(0,0,0,0.15); }
     .sa-detail-modal .modal-header { border-bottom: 1px solid #f1f5f9; padding: 1.25rem 1.5rem; }
     .sa-detail-modal .modal-body { padding: 1.5rem; }
@@ -74,6 +83,17 @@
 <?php $this->endSection() ?>
 
 <?php $this->section('content') ?>
+
+<?php
+// Helper: computa estado online desde un datetime
+function activityStatus(?string $datetime): array {
+    if (!$datetime) return ['label' => 'Offline', 'class' => 'offline', 'dot' => 'status-offline'];
+    $diff = time() - strtotime($datetime);
+    if ($diff < 300) return ['label' => 'Online', 'class' => 'online', 'dot' => 'status-online'];
+    if ($diff < 1800) return ['label' => 'Reciente', 'class' => 'recent', 'dot' => 'status-recent'];
+    return ['label' => 'Offline', 'class' => 'offline', 'dot' => 'status-offline'];
+}
+?>
 
 <!-- Header -->
 <div class="row mb-4">
@@ -184,6 +204,8 @@
                 <tr>
                     <th>Condominio</th>
                     <th>Administrador</th>
+                    <th>Backend</th>
+                    <th>App</th>
                     <th>Plan</th>
                     <th>Estado</th>
                     <th>Métricas</th>
@@ -193,7 +215,7 @@
             </thead>
             <tbody>
                 <?php if (empty($condominiums)): ?>
-                    <tr><td colspan="7" class="text-center text-muted py-4">No hay condominios registrados.</td></tr>
+                    <tr><td colspan="9" class="text-center text-muted py-4">No hay condominios registrados.</td></tr>
                 <?php else: ?>
                     <?php foreach ($condominiums as $c):
                         $initial = strtoupper(substr($c['name'] ?? 'C', 0, 2));
@@ -224,6 +246,14 @@
                             <?php else: ?>
                                 <span style="font-size:0.8rem;color:#cbd5e1;">Sin asignar</span>
                             <?php endif; ?>
+                        </td>
+                        <td>
+                            <?php $webSt = activityStatus($c['admin_last_web'] ?? null); ?>
+                            <span class="status-badge <?= $webSt['class'] ?>"><span class="status-dot <?= $webSt['dot'] ?>"></span><?= $webSt['label'] ?></span>
+                        </td>
+                        <td>
+                            <?php $appSt = activityStatus($c['admin_last_app'] ?? null); ?>
+                            <span class="status-badge <?= $appSt['class'] ?>"><span class="status-dot <?= $appSt['dot'] ?>"></span><?= $appSt['label'] ?></span>
                         </td>
                         <td>
                             <?php if (!empty($c['plan_name'])): ?>

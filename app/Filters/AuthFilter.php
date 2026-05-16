@@ -31,6 +31,21 @@ class AuthFilter implements FilterInterface
         if (!$sessionService->hasActiveTenant() && $currentCondoId !== 0) {
             return redirect()->to('/auth/select-tenant')->with('warning', 'Debe seleccionar un condominio para continuar.');
         }
+
+        // 3. Tracking de actividad web (throttled: máximo 1 write cada 60s)
+        $userId = $session->get('user_id');
+        $lastUpdate = $session->get('_last_web_activity_update');
+        if ($userId && (!$lastUpdate || (time() - $lastUpdate) > 60)) {
+            try {
+                \Config\Database::connect()
+                    ->table('users')
+                    ->where('id', $userId)
+                    ->update(['last_web_activity' => date('Y-m-d H:i:s')]);
+                $session->set('_last_web_activity_update', time());
+            } catch (\Throwable $e) {
+                // Silenciar: tracking no debe romper la navegación
+            }
+        }
     }
 
     public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)
