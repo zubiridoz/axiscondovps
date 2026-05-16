@@ -126,7 +126,7 @@ class FinanceController extends BaseController
                 $builderU->join('financial_transactions ft', "ft.unit_id = units.id AND ft.type = 'charge' AND ft.status IN ('pending', 'partial') AND ft.due_date BETWEEN '{$monthStart}' AND '{$monthEnd}'", 'left');
                 $builderU->where('units.condominium_id', $condoId);
                 $builderU->groupBy('units.id');
-                $builderU->orderBy('units.unit_number', 'ASC');
+                $builderU->orderBy('units.id', 'ASC');
                 $unitDebtsRaw = $builderU->get()->getResultArray();
 
                 $vencido = 0.00;
@@ -284,7 +284,7 @@ class FinanceController extends BaseController
         $builderD->where('units.condominium_id', $condoId);
         $builderD->groupBy('units.id, sec.name');
         $builderD->orderBy('sec.name', 'ASC');
-        $builderD->orderBy('units.unit_number', 'ASC');
+        $builderD->orderBy('units.id', 'ASC');
         $allDetailedUnits = $builderD->get()->getResultArray();
 
         // Agrupar unidades por Torre. Solo agruparemos para la gráfica, pero mandaremos flat para la tabla
@@ -292,7 +292,7 @@ class FinanceController extends BaseController
         $flatUnits = []; // Todas se mandan, pero la vista "Tabla de morosas" solo listará las deudoras (debt > 0).
 
         foreach ($allDetailedUnits as $du) {
-            $secName = empty($du['section_name']) ? 'Sin Torre Asignada' : $du['section_name'];
+            $secName = empty($du['section_name']) ? 'SIN SECCIÓN ASIGNADA' : $du['section_name'];
             if (!isset($groupedUnits[$secName])) {
                 $groupedUnits[$secName] = [];
             }
@@ -358,7 +358,7 @@ class FinanceController extends BaseController
         $builderD->where('units.condominium_id', $condoId);
         $builderD->groupBy('units.id, sec.name');
         $builderD->orderBy('sec.name', 'ASC');
-        $builderD->orderBy('units.unit_number', 'ASC');
+        $builderD->orderBy('units.id', 'ASC');
         $allUnits = $builderD->get()->getResultArray();
 
         $morosos = [];
@@ -390,7 +390,8 @@ class FinanceController extends BaseController
         if ($format === 'csv') {
             return $this->_exportMorosidadCSV($condominiumName, $fechaGen, count($morosos), $totalOverdue, $allUnits);
         } else {
-            return $this->_exportMorosidadPDF($condominiumName, $fechaGen, $hasLogo, $logoPath, count($morosos), $totalOverdue, $allUnits);
+            $condoAddress = $demoCondo['address'] ?? '';
+            return $this->_exportMorosidadPDF($condominiumName, $condoAddress, $fechaGen, $hasLogo, $logoPath, count($morosos), $totalOverdue, $allUnits, count($allUnits));
         }
     }
 
@@ -448,166 +449,231 @@ class FinanceController extends BaseController
             ->setBody($csvData);
     }
 
-    private function _exportMorosidadPDF($condominiumName, $fechaGen, $hasLogo, $logoPath, $totalMorosas, $totalOverdue, $allUnits)
+    private function _exportMorosidadPDF($condominiumName, $condoAddress, $fechaGen, $hasLogo, $logoPath, $totalMorosas, $totalOverdue, $allUnits, $totalUnits)
     {
-        $pdf = new \TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
-        $pdf->SetCreator('Condominet');
-        $pdf->SetAuthor($condominiumName);
-        $pdf->SetTitle('Reporte de Morosidad');
+        $pdf = new class ('P', 'mm', 'LETTER', true, 'UTF-8', false) extends \TCPDF {
+            public $condoName = '';
+            public $emissionDate = '';
+            public function Footer()
+            {
+                $this->SetY(-15);
+                $this->SetDrawColor(220, 220, 220);
+                $this->Line(20, $this->GetY(), 195.6, $this->GetY());
+                $this->SetY(-13);
+                $this->SetFont('helvetica', 'B', 7);
+                $this->SetTextColor(80, 80, 80);
+                $this->Cell(60, 5, strtoupper($this->condoName), 0, 0, 'L');
+                $this->SetFont('helvetica', '', 7);
+                $this->Cell(60, 5, 'Generado el ' . $this->emissionDate, 0, 0, 'C');
+                $this->Cell(55.6, 5, $this->getAliasNumPage() . '/' . $this->getAliasNbPages(), 0, 0, 'R');
+            }
+        };
 
+        $pdf->condoName = $condominiumName;
+        $pdf->emissionDate = $fechaGen;
+
+        $pdf->SetCreator('AxisCondo');
+        $pdf->SetAuthor($condominiumName);
+        $pdf->SetTitle('Reporte de Morosidad - ' . $condominiumName);
+        $pdf->SetSubject('Reporte de Morosidad');
         $pdf->setPrintHeader(false);
-        $pdf->setPrintFooter(false);
-        $pdf->SetAutoPageBreak(TRUE, 15);
-        $pdf->SetMargins(15, 15, 15);
+        $pdf->setPrintFooter(true);
+        $pdf->SetMargins(20, 15, 20);
+        $pdf->SetAutoPageBreak(true, 20);
         $pdf->AddPage();
 
-        // ── 1. Cabecera Premium (Bordes Sutiles y Tono Dominante UI) ──
-        $pdf->SetDrawColor(28, 36, 52); // #3F67ACborde superior
-        $pdf->SetLineWidth(1.2); // Fuerte detalle visual arriba (SaaS Style header accent)
-        $pdf->Line(15, 14, 195, 14);
-
-        $pdf->SetDrawColor(226, 232, 240); // #e2e8f0 borders
-        $pdf->SetLineWidth(0.4);
-        $pdf->SetFillColor(255, 255, 255);
-        $pdf->Rect(15, 14, 180, 24, 'DF'); // Soft bounding box
+        // ── HEADER BAR (idéntico al Estado de Cuenta) ──
+        $pdf->SetFillColor(29, 76, 157); // #1D4C9D
+        $pdf->Rect(20, 15, 175.6, 36, 'F');
 
         if ($hasLogo) {
-            $pdf->Image($logoPath, 18, 16.5, 0, 20, '', '', '', false, 300, '', false, false, 0, false, false, false);
-            $pdf->SetXY(70, 21);
+            $pdf->SetFillColor(255, 255, 255);
+            $pdf->Rect(24, 19, 28, 28, 'F');
+            $pdf->Image($logoPath, 25, 20, 26, 26, '', '', '', false, 300, '', false, false, 0, 'CM', false, false);
         } else {
-            $pdf->SetXY(20, 21);
+            $pdf->SetFillColor(255, 255, 255);
+            $pdf->Rect(24, 19, 28, 28, 'F');
+            $pdf->SetFillColor(29, 76, 157);
+            $pdf->Rect(28, 29, 20, 4, 'F');
         }
 
-        $pdf->SetFont('helvetica', 'B', 14);
-        $pdf->SetTextColor(28, 36, 52); // #1D4C9D
-        $pdf->Cell(0, 8, 'Reporte de Morosidad ' . strtoupper($condominiumName), 0, 1, 'L');
+        // Title
+        $pdf->SetTextColor(255, 255, 255);
+        $pdf->SetFont('helvetica', 'B', 16);
+        $pdf->SetXY(56, 18);
+        $pdf->Cell(136, 8, 'REPORTE DE MOROSIDAD', 0, 1, 'C');
 
-        // ── 2. Fecha Generada ──
-        if ($hasLogo) {
-            $pdf->SetX(70);
-        } else {
-            $pdf->SetX(20);
+        // Community name
+        $pdf->SetFont('helvetica', 'B', 11);
+        $pdf->SetXY(56, 27);
+        $pdf->Cell(136, 7, 'COMUNIDAD: ' . strtoupper($condominiumName), 0, 1, 'C');
+
+        // Address (auto-fit: progressive shrink + truncate as fallback)
+        $addrText = strtoupper($condoAddress ?? '');
+        $maxAddrWidth = 132;
+        $addrFontSize = 7;
+        $pdf->SetFont('helvetica', '', $addrFontSize);
+        while ($pdf->GetStringWidth($addrText) > $maxAddrWidth && $addrFontSize > 5) {
+            $addrFontSize -= 0.5;
+            $pdf->SetFont('helvetica', '', $addrFontSize);
         }
-        $pdf->SetFont('helvetica', '', 9);
+        if ($pdf->GetStringWidth($addrText) > $maxAddrWidth) {
+            while ($pdf->GetStringWidth($addrText . '...') > $maxAddrWidth && mb_strlen($addrText) > 10) {
+                $addrText = mb_substr($addrText, 0, -1);
+            }
+            $addrText .= '...';
+        }
+        $pdf->SetTextColor(199, 210, 232);
+        $pdf->SetXY(56, 35);
+        $pdf->Cell(136, 5, $addrText, 0, 1, 'C');
+
+        // Blue accent line
+        $pdf->SetFillColor(63, 103, 172); // #3F67AC
+        $pdf->Rect(20, 51, 175.6, 1.2, 'F');
+
+        $pdf->SetY(56);
+
+        // ── KPI SUMMARY CARDS ──
+        $cardW = 55;
+        $cardH = 22;
+        $startX = 20;
+        $cardY = $pdf->GetY();
+        $gap = 5.3;
+
+        // Card 1: Unidades Morosas
+        $pdf->SetFillColor(254, 242, 242); // light red
+        $pdf->RoundedRect($startX, $cardY, $cardW, $cardH, 3, '1111', 'F');
+        $pdf->SetFont('helvetica', '', 7);
         $pdf->SetTextColor(100, 116, 139);
-        $pdf->Cell(0, 5, 'Generado el: ' . $fechaGen, 0, 1, 'L');
+        $pdf->SetXY($startX + 4, $cardY + 3);
+        $pdf->Cell($cardW - 8, 4, 'UNIDADES MOROSAS', 0, 1, 'L');
+        $pdf->SetFont('helvetica', 'B', 16);
+        $pdf->SetTextColor(220, 38, 38);
+        $pdf->SetXY($startX + 4, $cardY + 9);
+        $pdf->Cell($cardW - 8, 8, $totalMorosas . ' / ' . $totalUnits, 0, 1, 'L');
 
-        $pdf->SetY(44);
+        // Card 2: Monto Total Moroso
+        $card2X = $startX + $cardW + $gap;
+        $pdf->SetFillColor(255, 251, 235); // light amber
+        $pdf->RoundedRect($card2X, $cardY, $cardW, $cardH, 3, '1111', 'F');
+        $pdf->SetFont('helvetica', '', 7);
+        $pdf->SetTextColor(100, 116, 139);
+        $pdf->SetXY($card2X + 4, $cardY + 3);
+        $pdf->Cell($cardW - 8, 4, 'MONTO TOTAL MOROSO', 0, 1, 'L');
+        $pdf->SetFont('helvetica', 'B', 14);
+        $pdf->SetTextColor(180, 83, 9);
+        $pdf->SetXY($card2X + 4, $cardY + 9);
+        $pdf->Cell($cardW - 8, 8, 'MX$' . number_format($totalOverdue, 2), 0, 1, 'L');
 
-        // ── 3. Resumen ──
-        $pdf->SetFont('helvetica', 'B', 13);
-        $pdf->SetTextColor(30, 41, 59); // Slate dark #1e293b
-        $pdf->Cell(0, 8, 'Resumen', 0, 1, 'L');
+        // Card 3: Fecha del reporte
+        $card3X = $card2X + $cardW + $gap;
+        $pdf->SetFillColor(236, 253, 245); // light green
+        $pdf->RoundedRect($card3X, $cardY, $cardW, $cardH, 3, '1111', 'F');
+        $pdf->SetFont('helvetica', '', 7);
+        $pdf->SetTextColor(100, 116, 139);
+        $pdf->SetXY($card3X + 4, $cardY + 3);
+        $pdf->Cell($cardW - 8, 4, 'FECHA DEL REPORTE', 0, 1, 'L');
+        $pdf->SetFont('helvetica', 'B', 10);
+        $pdf->SetTextColor(5, 150, 105);
+        $pdf->SetXY($card3X + 4, $cardY + 10);
+        $pdf->Cell($cardW - 8, 8, $fechaGen, 0, 1, 'L');
+
+        $pdf->SetY($cardY + $cardH + 8);
+
+        // ── SECTION: Estado General de Unidades ──
+        $pdf->SetTextColor(15, 23, 42);
+        $pdf->SetFont('helvetica', 'B', 11);
+        $pdf->Cell(175.6, 7, 'Estado General de Unidades', 0, 1, 'L');
         $pdf->SetDrawColor(226, 232, 240);
-        $pdf->SetLineWidth(0.5);
-        $pdf->Line(15, $pdf->GetY(), 80, $pdf->GetY());
-        $pdf->Ln(4);
+        $pdf->Line(20, $pdf->GetY(), 195.6, $pdf->GetY());
+        $pdf->Ln(3);
 
-        $htmlResumen = '
-        <table border="1" cellpadding="6" cellspacing="0" style="border: 1px solid #e2e8f0;">
-            <thead>
-                <tr style="background-color: #1D4C9D; color: #ffffff;">
-                    <th width="60%"><b>Métrica</b></th>
-                    <th width="40%" align="right"><b>Valor</b></th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td width="60%" style="color:#3F67AC;">Total de Unidades Morosas</td>
-                    <td width="40%" align="right" style="color:#0f172a;"><b>' . $totalMorosas . '</b></td>
-                </tr>
-                <tr style="background-color: #f8fafc;">
-                    <td width="60%" style="color:#3F67AC;">Monto Total Moroso</td>
-                    <td width="40%" align="right" style="color:#0f172a;"><b>MX$' . number_format($totalOverdue, 2) . '</b></td>
-                </tr>
-            </tbody>
-        </table>';
+        // ── TABLE HEADER ──
+        $colW = [30, 40, 25, 40, 40.6]; // Sección, Unidad, Piso, Estatus, Saldo
+        $pdf->SetFillColor(29, 76, 157);
+        $pdf->SetTextColor(255, 255, 255);
+        $pdf->SetFont('helvetica', 'B', 7.5);
+        $headers = ['SECCIÓN', 'UNIDAD', 'PISO', 'ESTATUS', 'SALDO'];
+        $aligns = ['L', 'L', 'C', 'C', 'R'];
+        for ($i = 0; $i < count($headers); $i++) {
+            $pdf->Cell($colW[$i], 8, '  ' . $headers[$i], 0, 0, $aligns[$i], true);
+        }
+        $pdf->Ln();
 
-        $pdf->SetFont('helvetica', '', 9);
-        $pdf->writeHTML($htmlResumen, true, false, false, false, '');
-        $pdf->Ln(6);
+        // ── TABLE ROWS ──
+        $pdf->SetFont('helvetica', '', 7.5);
+        foreach ($allUnits as $idx => $m) {
+            if ($pdf->GetY() > 235) {
+                $pdf->AddPage();
+                // Repeat header
+                $pdf->SetFillColor(29, 76, 157);
+                $pdf->SetTextColor(255, 255, 255);
+                $pdf->SetFont('helvetica', 'B', 7.5);
+                for ($i = 0; $i < count($headers); $i++) {
+                    $pdf->Cell($colW[$i], 8, '  ' . $headers[$i], 0, 0, $aligns[$i], true);
+                }
+                $pdf->Ln();
+                $pdf->SetFont('helvetica', '', 7.5);
+            }
 
-        // ── 4. Estado General de Unidades (Añadiendo Sección) ──
-        $pdf->SetFont('helvetica', 'B', 13);
-        $pdf->SetTextColor(30, 41, 59);
-        $pdf->Cell(0, 8, 'Estado General de Unidades', 0, 1, 'L');
-        $pdf->Line(15, $pdf->GetY(), 80, $pdf->GetY());
-        $pdf->Ln(4);
+            $pdf->SetTextColor(80, 80, 80);
+            $pdf->SetDrawColor(241, 245, 249);
 
-        // Tabla con nuevo ancho fraccional
-        $htmlDetalle = '
-        <table border="1" cellpadding="6" cellspacing="0" style="border: 1px solid #e2e8f0; border-collapse:collapse;">
-            <thead>
-                <tr style="background-color: #1D4C9D; color: #ffffff;">
-                    <th width="20%"><b>Sección</b></th>
-                    <th width="25%"><b>Unidad</b></th>
-                    <th width="10%" align="center"><b>Piso</b></th>
-                    <th width="25%" align="center"><b>Estatus</b></th>
-                    <th width="20%" align="right"><b>Saldo</b></th>
-                </tr>
-            </thead>
-            <tbody>';
+            $isZebra = ($idx % 2 === 1);
+            if ($isZebra) {
+                $pdf->SetFillColor(248, 250, 252);
+            } else {
+                $pdf->SetFillColor(255, 255, 255);
+            }
 
-        $rCount = 0;
-        foreach ($allUnits as $m) {
-            $bg = ($rCount % 2 == 0) ? '#ffffff' : '#f8fafc';
-
-            $seccionText = !empty($m['section_name']) ? esc($m['section_name']) : 'General';
+            $seccionText = !empty($m['section_name']) ? $m['section_name'] : '—';
             $debtToPrint = (float) $m['debt'];
             $debtVencida = (float) $m['debt_vencida'];
 
-            $statusText = '';
-            $statusColor = '';
-
             if ($debtVencida > 0.01) {
-                $statusText = 'Moroso';
-                $statusColor = '#ef4444'; // Red
+                $statusText = 'MOROSO';
+                $sR = 220; $sG = 38; $sB = 38;
             } elseif ($debtToPrint > 0.01) {
-                $statusText = 'Al corriente';
-                $statusColor = '#0284c7'; // Blue
+                $statusText = 'AL CORRIENTE';
+                $sR = 2; $sG = 132; $sB = 199;
             } elseif ($debtToPrint < -0.01) {
-                $statusText = 'A favor';
-                $statusColor = '#059669'; // Green
+                $statusText = 'A FAVOR';
+                $sR = 5; $sG = 150; $sB = 105;
             } else {
-                $statusText = 'Sin adeudos';
-                $statusColor = '#10b981'; // Light Green
+                $statusText = 'SIN ADEUDOS';
+                $sR = 16; $sG = 185; $sB = 129;
             }
 
-            $htmlDetalle .= '
-                <tr style="background-color: ' . $bg . ';">
-                    <td width="20%" style="color:#64748b;">' . $seccionText . '</td>
-                    <td width="25%" style="color:#1e293b; font-weight:bold;">' . esc($m['label']) . '</td>
-                    <td width="10%" align="center" style="color:#64748b;">' . esc($m['floor']) . '</td>
-                    <td width="25%" align="center"><span style="color:' . $statusColor . '; font-weight:bold;">' . $statusText . '</span></td>
-                    <td width="20%" align="right"><span style="color:' . $statusColor . '; font-weight:bold;">MX$' . number_format(abs($debtToPrint), 2) . '</span></td>
-                </tr>';
-            $rCount++;
+            // Sección
+            $pdf->SetTextColor(100, 116, 139);
+            $pdf->Cell($colW[0], 7, '  ' . $seccionText, 0, 0, 'L', true);
+            // Unidad
+            $pdf->SetTextColor(15, 23, 42);
+            $pdf->SetFont('helvetica', 'B', 7.5);
+            $pdf->Cell($colW[1], 7, '  ' . $m['label'], 0, 0, 'L', true);
+            $pdf->SetFont('helvetica', '', 7.5);
+            // Piso
+            $pdf->SetTextColor(100, 116, 139);
+            $pdf->Cell($colW[2], 7, $m['floor'] ?? '—', 0, 0, 'C', true);
+            // Estatus
+            $pdf->SetTextColor($sR, $sG, $sB);
+            $pdf->SetFont('helvetica', 'B', 7);
+            $pdf->Cell($colW[3], 7, $statusText, 0, 0, 'C', true);
+            // Saldo
+            $saldoPrefix = $debtToPrint < -0.01 ? '-' : '';
+            $pdf->Cell($colW[4], 7, $saldoPrefix . 'MX$' . number_format(abs($debtToPrint), 2) . '  ', 0, 1, 'R', true);
+            $pdf->SetFont('helvetica', '', 7.5);
         }
 
         if (count($allUnits) === 0) {
-            $htmlDetalle .= '<tr><td colspan="5" align="center" style="color:#64748b;">No hay unidades registradas.</td></tr>';
+            $pdf->SetTextColor(148, 163, 184);
+            $pdf->Cell(175.6, 10, 'No hay unidades registradas.', 0, 1, 'C');
         }
 
-        $htmlDetalle .= '</tbody></table>';
-
-        $pdf->SetFont('helvetica', '', 9);
-        $pdf->writeHTML($htmlDetalle, true, false, false, false, '');
-
-        // ── 5. Pie de Página Nativo Premium ──
-        $numPages = $pdf->getNumPages();
-        for ($i = 1; $i <= $numPages; $i++) {
-            $pdf->setPage($i);
-            $pdf->SetDrawColor(226, 232, 240); // #e2e8f0
-            $pdf->Line(15, 260, 195, 260); // Línea sutil en footer
-            $pdf->SetXY(15, 263);
-            $pdf->SetFont('helvetica', '', 8);
-            $pdf->SetTextColor(100, 116, 139);
-            $pdf->Cell(60, 5, strtoupper($condominiumName), 0, 0, 'L');
-            $pdf->SetXY(75, 263);
-            $pdf->Cell(60, 5, 'Página ' . $i . ' de ' . $numPages, 0, 0, 'C');
-            $pdf->SetXY(135, 263);
-            $pdf->Cell(60, 5, date('d/m/Y'), 0, 0, 'R');
-        }
+        // Bottom line
+        $pdf->SetDrawColor(29, 76, 157);
+        $pdf->SetLineWidth(0.5);
+        $pdf->Line(20, $pdf->GetY(), 195.6, $pdf->GetY());
 
         $pdfContent = $pdf->Output('Reporte_Morosidad.pdf', 'S');
         return $this->response->setHeader('Content-Type', 'application/pdf')
@@ -1296,7 +1362,7 @@ class FinanceController extends BaseController
         $builder->join('units u', 'u.id = ft.unit_id', 'left');
         $builder->where('ft.extraordinary_fee_id', $id);
         $builder->where('ft.type', 'charge');
-        $builder->orderBy('u.unit_number', 'ASC');
+        $builder->orderBy('u.id', 'ASC');
         $charges = $builder->get()->getResultArray();
 
         // Calculos
@@ -1696,7 +1762,7 @@ class FinanceController extends BaseController
         $allUnits = $db->table('units')
             ->select('id, hash_id, unit_number')
             ->where('condominium_id', $demoCondo['id'])
-            ->orderBy('unit_number', 'ASC')
+            ->orderBy('id', 'ASC')
             ->get()->getResultArray();
 
         // Datos de la unidad principal
@@ -2311,7 +2377,7 @@ class FinanceController extends BaseController
             ->join('financial_transactions ft', 'ft.unit_id = u.id AND ft.condominium_id = u.condominium_id', 'left')
             ->where('u.condominium_id', $demoCondo['id'])
             ->groupBy('u.id')
-            ->orderBy('u.unit_number', 'ASC')
+            ->orderBy('u.id', 'ASC')
             ->get()->getResultArray();
 
         return $this->response->setJSON(['status' => 'success', 'data' => $units]);
@@ -2617,7 +2683,7 @@ class FinanceController extends BaseController
     public function historicos()
     {
         $unitModel = new UnitModel();
-        $units = $unitModel->orderBy('unit_number', 'ASC')->findAll();
+        $units = $unitModel->orderBy('id', 'ASC')->findAll();
         return view('admin/finance/historicos', ['units' => $units]);
     }
 
@@ -3282,14 +3348,20 @@ class FinanceController extends BaseController
         $pdf->SetXY(56, 27);
         $pdf->Cell(136, 7, 'COMUNIDAD: ' . strtoupper($condoName), 0, 1, 'C');
 
-        // Address (auto-fit font size)
+        // Address (auto-fit: progressive shrink + truncate as fallback)
         $addrText = strtoupper($condoAddress ?? '');
+        $maxAddrWidth = 132;
         $addrFontSize = 7;
         $pdf->SetFont('helvetica', '', $addrFontSize);
-        $addrWidth = $pdf->GetStringWidth($addrText);
-        if ($addrWidth > 132) {
-            $addrFontSize = 6;
+        while ($pdf->GetStringWidth($addrText) > $maxAddrWidth && $addrFontSize > 5) {
+            $addrFontSize -= 0.5;
             $pdf->SetFont('helvetica', '', $addrFontSize);
+        }
+        if ($pdf->GetStringWidth($addrText) > $maxAddrWidth) {
+            while ($pdf->GetStringWidth($addrText . '...') > $maxAddrWidth && mb_strlen($addrText) > 10) {
+                $addrText = mb_substr($addrText, 0, -1);
+            }
+            $addrText .= '...';
         }
         $pdf->SetTextColor(199, 210, 232);
         $pdf->SetXY(56, 35);
@@ -4156,14 +4228,20 @@ class FinanceController extends BaseController
         $pdf->SetXY(51, 27);
         $pdf->Cell(141, 7, 'COMUNIDAD: ' . mb_strtoupper($demoCondo['name'] ?? '', 'UTF-8'), 0, 1, 'C');
 
-        // Address (auto-fit font size)
+        // Address (auto-fit: progressive shrink + truncate as fallback)
         $addrText = mb_strtoupper($addressStr, 'UTF-8');
+        $maxAddrWidth = 137;
         $addrFontSize = 7;
         $pdf->SetFont('helvetica', '', $addrFontSize);
-        $addrWidth = $pdf->GetStringWidth($addrText);
-        if ($addrWidth > 137) {
-            $addrFontSize = 6;
+        while ($pdf->GetStringWidth($addrText) > $maxAddrWidth && $addrFontSize > 5) {
+            $addrFontSize -= 0.5;
             $pdf->SetFont('helvetica', '', $addrFontSize);
+        }
+        if ($pdf->GetStringWidth($addrText) > $maxAddrWidth) {
+            while ($pdf->GetStringWidth($addrText . '...') > $maxAddrWidth && mb_strlen($addrText) > 10) {
+                $addrText = mb_substr($addrText, 0, -1);
+            }
+            $addrText .= '...';
         }
         $pdf->SetTextColor(199, 210, 232); // #c7d2e8
         $pdf->SetXY(51, 35);
