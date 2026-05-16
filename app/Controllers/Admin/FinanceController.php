@@ -3400,6 +3400,29 @@ class FinanceController extends BaseController
         $pdf->SetFont('helvetica', 'B', 10);
         $pdf->Cell(120.6, 8, 'MX$' . number_format($totalCredits, 2), 0, 1, 'R', true);
 
+        // Saldo Inicial (solo si existe)
+        if (abs($initialBalance) > 0.01) {
+            if ($initialBalance > 0) {
+                // Adeudo previo
+                $pdf->SetFillColor(254, 242, 242);
+                $pdf->SetFont('helvetica', '', 9);
+                $pdf->SetTextColor(100, 116, 139);
+                $pdf->Cell(55, 8, '  Saldo Inicial (Adeudo)', 0, 0, 'L', true);
+                $pdf->SetTextColor(220, 38, 38);
+                $pdf->SetFont('helvetica', 'B', 10);
+                $pdf->Cell(120.6, 8, 'MX$' . number_format($initialBalance, 2), 0, 1, 'R', true);
+            } else {
+                // A favor
+                $pdf->SetFillColor(236, 253, 245);
+                $pdf->SetFont('helvetica', '', 9);
+                $pdf->SetTextColor(100, 116, 139);
+                $pdf->Cell(55, 8, '  Saldo Inicial (A favor)', 0, 0, 'L', true);
+                $pdf->SetTextColor(5, 150, 105);
+                $pdf->SetFont('helvetica', 'B', 10);
+                $pdf->Cell(120.6, 8, 'MX$' . number_format(abs($initialBalance), 2), 0, 1, 'R', true);
+            }
+        }
+
         if ($saldoPendiente > 0.01) {
             $pdf->SetFillColor(254, 242, 242);
             $pdf->SetFont('helvetica', '', 9);
@@ -3450,6 +3473,33 @@ class FinanceController extends BaseController
 
         // Table Rows
         $pdf->SetFont('helvetica', 'B', 7);
+        $rowIdx = 0;
+
+        // Fila especial: Saldo Inicial (si existe)
+        if (abs($initialBalance) > 0.01) {
+            $pdf->SetTextColor(80, 80, 80);
+            $pdf->SetDrawColor(241, 245, 249);
+            $pdf->SetFillColor(236, 253, 245);
+            $pdf->SetFont('helvetica', '', 7);
+            $pdf->Cell($colW[0], 7, '  —', 0, 0, 'C', true);
+            $pdf->Cell($colW[1], 7, '  —', 0, 0, 'C', true);
+            $pdf->SetFont('helvetica', 'B', 7);
+            $pdf->Cell($colW[2], 7, '  SALDO INICIAL', 0, 0, 'L', true);
+            if ($initialBalance > 0) {
+                $pdf->SetTextColor(220, 38, 38);
+                $pdf->Cell($colW[3], 7, 'MX$' . number_format($initialBalance, 2) . '  ', 0, 0, 'R', true);
+                $pdf->Cell($colW[4], 7, '', 0, 0, 'R', true);
+            } else {
+                $pdf->SetTextColor(5, 150, 105);
+                $pdf->Cell($colW[3], 7, '', 0, 0, 'R', true);
+                $pdf->Cell($colW[4], 7, 'MX$' . number_format(abs($initialBalance), 2) . '  ', 0, 0, 'R', true);
+            }
+            $pdf->SetTextColor(29, 76, 157);
+            $pdf->SetFont('helvetica', 'B', 7);
+            $pdf->Cell($colW[5], 7, 'MX$' . number_format(abs($initialBalance), 2) . '  ', 0, 1, 'R', true);
+            $rowIdx = 1;
+        }
+
         foreach ($statementRows as $idx => $row) {
             if ($pdf->GetY() > 230) {
                 $pdf->AddPage();
@@ -3478,7 +3528,7 @@ class FinanceController extends BaseController
             $pdf->SetDrawColor(241, 245, 249);
 
             // Zebra striping
-            $isZebra = ($idx % 2 === 1);
+            $isZebra = (($idx + $rowIdx) % 2 === 1);
             if ($isZebra) {
                 $pdf->SetFillColor(248, 250, 252);
             }
