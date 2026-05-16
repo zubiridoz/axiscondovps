@@ -969,8 +969,7 @@ class FinanceController extends BaseController
         if (!empty($unitIds)) {
             foreach ($unitIds as $uId) {
                 if ($uId !== null) {
-                    $this->applyFloatingCredit((int) $uId);
-                    $this->recalculateUnitBalances((int) $uId);
+                    $this->syncUnitFinancialState((int) $uId);
 
                     // Notify residents
                     $residents = $db->table('residents')
@@ -1513,7 +1512,7 @@ class FinanceController extends BaseController
         }
 
         // Recalcular saldos
-        $this->recalculateUnitBalances((int) $charge['unit_id']);
+        $this->syncUnitFinancialState((int) $charge['unit_id']);
 
         $remaining = max(0, $chargeAmount - $paidTotal);
 
@@ -1889,8 +1888,7 @@ class FinanceController extends BaseController
         $builder->where('id', $transId)->update($updateData);
 
         // Recalcular saldos de la unidad afectada para garantizar consistencia
-        $this->recalculateUnitBalances((int) $transaction['unit_id']);
-        $this->applyFloatingCredit((int) $transaction['unit_id']);
+        $this->syncUnitFinancialState((int) $transaction['unit_id']);
 
         // Si está ligado a una cuota extraordinaria, recalcular el expected_total de la cuota
         if (!empty($transaction['extraordinary_fee_id'])) {
@@ -1960,7 +1958,7 @@ class FinanceController extends BaseController
         }
 
         // Recalcular saldos de la unidad
-        $this->recalculateUnitBalances($unitId);
+        $this->syncUnitFinancialState($unitId);
 
         // Si era una cuota extraordinaria, actualizar el total esperado
         if ($feeId) {
@@ -2048,7 +2046,7 @@ class FinanceController extends BaseController
 
         // Recalcular saldos de cada unidad afectada
         foreach (array_keys($affectedUnitIds) as $unitId) {
-            $this->recalculateUnitBalances($unitId);
+            $this->syncUnitFinancialState($unitId);
         }
 
         // Actualizar cuotas extraordinarias afectadas
@@ -2083,7 +2081,6 @@ class FinanceController extends BaseController
         if (!$demoCondo)
             return;
 
-        $db->transStart();
 
         // 1. Resetear todos los cargos de la unidad
         $db->table('financial_transactions')
@@ -2137,7 +2134,34 @@ class FinanceController extends BaseController
             }
         }
 
+    }
+
+    /**
+     * Pipeline centralizado de reconciliación financiera.
+     * Debe ser el ÚNICO punto de entrada para garantizar consistencia
+     * después de cualquier mutación financiera de una unidad.
+     *
+     * Orden de operación:
+     * 1. recalculateUnitBalances — Reset FIFO de pagos registrados
+     * 2. applyFloatingCredit — Absorbe saldo a favor (initial_balance negativo)
+     */
+    private function syncUnitFinancialState(int $unitId): void
+    {
+        $db = \Config\Database::connect();
+
+        $db->transStart();
+
+        $this->recalculateUnitBalances($unitId);
+        $this->applyFloatingCredit($unitId);
+
         $db->transComplete();
+
+        if ($db->transStatus() === false) {
+            log_message('error', "[FINANCIAL_SYNC] Transaction failed for unit {$unitId}");
+            throw new \RuntimeException("Financial sync failed for unit {$unitId}");
+        }
+
+        log_message('info', "[FINANCIAL_SYNC] Unit {$unitId} reconciled successfully");
     }
 
     /**
@@ -2158,6 +2182,9 @@ class FinanceController extends BaseController
 
         $db = \Config\Database::connect();
         $db->table('units')->where('id', $unitId)->where('condominium_id', $demoCondo['id'])->update(['initial_balance' => $balance]);
+
+        // Redistribuir saldo a favor sobre cargos pendientes
+        $this->syncUnitFinancialState($unitId);
 
         return $this->response->setJSON(['status' => 'success', 'message' => 'Saldo inicial actualizado.', 'balance' => $balance]);
     }
@@ -2503,6 +2530,8 @@ class FinanceController extends BaseController
                 'status' => $newStatus,
                 'updated_at' => date('Y-m-d H:i:s')
             ]);
+
+            log_message('info', "[FLOATING_CREDIT] Applied \${$amountToApply} to charge #{$charge['id']} (unit {$unitId})");
 
             $floatingCredit -= $amountToApply;
         }
@@ -3825,8 +3854,7 @@ class FinanceController extends BaseController
         ]);
 
         if ($txnId) {
-            $this->applyFloatingCredit($unitId);
-            $this->recalculateUnitBalances($unitId);
+            $this->syncUnitFinancialState($unitId);
 
             return $this->response->setJSON([
                 'success' => true,
@@ -4664,7 +4692,7 @@ class FinanceController extends BaseController
             ]);
 
             // Recalcular saldos
-            $this->recalculateUnitBalances($unitId);
+            $this->syncUnitFinancialState($unitId);
 
             // Notificar al residente (in-app + push)
             if ($resident && !empty($resident['user_id'])) {
