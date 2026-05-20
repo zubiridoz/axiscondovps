@@ -115,8 +115,15 @@ class DashboardController extends BaseController
         // Condo Info
         $condoName = $demoCondo ? $demoCondo['name'] : 'Comunidad';
 
+        // Admin name for greeting hero
+        $userModel = new \App\Models\Core\UserModel();
+        $currentUser = $userModel->find(session()->get('user_id')) ?? [];
+        $adminFirstName = trim((string) ($currentUser['first_name'] ?? 'Administrador'));
+        if ($adminFirstName === '') $adminFirstName = 'Administrador';
+
         $data = [
             'condo_name' => $condoName,
+            'admin_first_name' => $adminFirstName,
             'metrics' => [
                 'total_units'      => $totalUnits,
                 'active_residents' => $activeResidents,

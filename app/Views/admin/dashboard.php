@@ -2,102 +2,133 @@
 
 <?php $this->section('styles') ?>
 <style>
-    /* ── Hero ── */
-    .cc-hero {
-        background: #ffffff;
-        border-radius: .5rem;
-        padding: 0.85rem 1.25rem;
-        border: 1px solid #e2e8f0;
-        margin-bottom: 1.25rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 1rem;
+    /* ── Greeting Hero ── */
+    .greeting-hero {
+        background: linear-gradient(135deg, #f0f4fb 0%, #e6edf8 35%, #dce5f4 60%, #edf2fa 100%);
+        border-radius: 16px;
+        padding: 2rem 2.25rem 1.75rem;
+        margin-bottom: 1.75rem;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(29, 76, 157, 0.08);
     }
 
-    .cc-hero-left {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
+    .greeting-hero::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20%;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(29, 76, 157, 0.06) 0%, transparent 70%);
+        border-radius: 50%;
+        pointer-events: none;
     }
 
-    .cc-hero-title {
-        margin: 0;
-        font-weight: 500;
-        font-size: 1.05rem;
-        color: #3F67AC;
+    .greeting-hero::after {
+        content: '';
+        position: absolute;
+        bottom: -30%;
+        left: -10%;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(29, 76, 157, 0.04) 0%, transparent 70%);
+        border-radius: 50%;
+        pointer-events: none;
     }
 
-    .cc-hero-divider {
-        width: 1px;
-        height: 22px;
-        background-color: #cbd5e1;
-    }
-
-    .cc-hero-breadcrumb {
+    .greeting-top-bar {
         display: flex;
         align-items: center;
         gap: 0.6rem;
-        font-size: 0.85rem;
+        margin-bottom: 1rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .live-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        background: rgba(16, 185, 129, 0.1);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+        border-radius: 20px;
+        padding: 0.3rem 0.75rem;
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: #059669;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+    }
+
+    .live-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #10b981;
+        animation: livePulse 2s ease-in-out infinite;
+    }
+
+    @keyframes livePulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.5; transform: scale(0.85); }
+    }
+
+    .greeting-meta {
+        font-size: 0.78rem;
+        font-weight: 500;
+        color: #8b8fa3;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .greeting-meta-dot {
+        width: 3px;
+        height: 3px;
+        border-radius: 50%;
+        background: #c4c7d4;
+    }
+
+    .greeting-title {
+        position: relative;
+        z-index: 1;
+        margin: 0 0 0.5rem;
+        font-size: 2rem;
+        font-weight: 800;
+        color: #1e293b;
+        line-height: 1.2;
+        letter-spacing: -0.5px;
+    }
+
+    .greeting-name {
+        background: linear-gradient(135deg, #1D4C9D 0%, #2a62c4 50%, #3F67AC 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .greeting-subtitle {
+        position: relative;
+        z-index: 1;
+        font-size: 0.92rem;
         color: #64748b;
+        margin: 0;
+        font-weight: 400;
+        line-height: 1.5;
     }
 
-    .cc-hero-breadcrumb i.bi-house-door {
-        color: #3b82f6;
-        font-size: 0.95rem;
+    @media (max-width: 576px) {
+        .greeting-hero {
+            padding: 1.5rem 1.25rem 1.25rem;
+        }
+        .greeting-title {
+            font-size: 1.5rem;
+        }
     }
 
-    .cc-hero-breadcrumb i.bi-chevron-right {
-        font-size: 0.65rem;
-        color: #94a3b8;
-    }
+    /* ── end Greeting Hero ── */
 
-    .cc-hero-btn {
-        background: #238b71ff;
-        color: #ffffff;
-        border: none;
-        border-radius: 0.45rem;
-        padding: 0.65rem 1.4rem;
-        font-size: 0.98rem;
-        font-weight: 600;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.55rem;
-        cursor: pointer;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-        transition: all 0.25s ease;
-    }
-
-    .cc-hero-btn:hover {
-        background: #5cad99ff;
-        box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
-        transform: translateY(-1px);
-    }
-
-    .cc-hero-btndark {
-        background: #1D4C9D;
-        color: #ffffff;
-        border: none;
-        border-radius: 0.45rem;
-        padding: 0.65rem 1.4rem;
-        font-size: 0.98rem;
-        font-weight: 600;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.55rem;
-        cursor: pointer;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-        transition: all 0.25s ease;
-    }
-
-    .cc-hero-btndark:hover {
-        background: #3a4864ff;
-        box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
-        transform: translateY(-1px);
-    }
-
-    /* ── end Hero ── */
 
     /* KPI Modern Cards Style (Match User Request) */
     .kpi-modern-card {
@@ -420,20 +451,45 @@ $daysLeft = max(0, ceil((strtotime($__graceUntil) - time()) / 86400));
 </div>
 <?php endif; ?>
 
-<!-- ── Hero ── -->
-<div class="cc-hero">
-    <div class="cc-hero-left">
-        <h1 class="cc-hero-title"><?= esc($condo_name ?? 'Comunidad') ?></h1>
-        <div class="cc-hero-divider"></div>
-        <div class="cc-hero-breadcrumb">
-            <i class="bi bi-house-door"></i>
-            <i class="bi bi-chevron-right"></i>
-            Resumen de la gestión de tu comunidad
+<!-- ── Greeting Hero ── -->
+<?php
+// Determine greeting based on Mexico City time (America/Mexico_City)
+$__mxTz = new \DateTimeZone('America/Mexico_City');
+$__mxNow = new \DateTime('now', $__mxTz);
+$__mxHour = (int) $__mxNow->format('G');
+$__monthNames = [
+    1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril',
+    5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto',
+    9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre'
+];
+$__mxMonth = $__monthNames[(int) $__mxNow->format('n')];
+$__mxYear = $__mxNow->format('Y');
+
+if ($__mxHour >= 5 && $__mxHour < 12) {
+    $__greeting = 'Buenos días';
+} elseif ($__mxHour >= 12 && $__mxHour < 19) {
+    $__greeting = 'Buenas tardes';
+} else {
+    $__greeting = 'Buenas noches';
+}
+?>
+<div class="greeting-hero" id="greetingHero">
+    <div class="greeting-top-bar">
+        <div class="live-badge">
+            <span class="live-dot"></span>
+            EN VIVO
+        </div>
+        <div class="greeting-meta">
+            <span class="greeting-meta-dot"></span>
+            <?= esc($__mxMonth . ' ' . $__mxYear) ?>
+            <span class="greeting-meta-dot"></span>
+            <?= esc($condo_name ?? 'Comunidad') ?>
         </div>
     </div>
-
+    <h1 class="greeting-title"><?= esc($__greeting) ?>, <span class="greeting-name"><?= esc($admin_first_name ?? 'Administrador') ?></span></h1>
+    <p class="greeting-subtitle">Todo está al día. Aquí está el resumen del condominio.</p>
 </div>
-<!-- ── END Hero ── -->
+<!-- ── END Greeting Hero ── -->
 
 
 <!-- Top Cards -->
