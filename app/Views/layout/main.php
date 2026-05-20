@@ -552,6 +552,14 @@
                         </li>
 
                         <!-- Amenidades Dropdown -->
+                        
+
+                        <li class="nav-item">
+                            <a href="<?= base_url('admin/anuncios') ?>"
+                                class="nav-link <?= strpos(uri_string(), 'admin/anuncios') === 0 ? 'active-main' : '' ?>">
+                                <i class="bi bi-megaphone"></i> Comunicados
+                            </a>
+                        </li>
                         <?php
                         $__pendingBookingsCount = 0;
                         $__amenBadgeTenantId = \App\Services\TenantService::getInstance()->getTenantId();
@@ -594,13 +602,6 @@
                                 </li>
                             </ul>
                         </li>
-
-                        <li class="nav-item">
-                            <a href="<?= base_url('admin/anuncios') ?>"
-                                class="nav-link <?= strpos(uri_string(), 'admin/anuncios') === 0 ? 'active-main' : '' ?>">
-                                <i class="bi bi-megaphone"></i> Anuncios
-                            </a>
-                        </li>
                         <?php
                         $__calEventsCount = 0;
                         $__calBadgeTenantId = \App\Services\TenantService::getInstance()->getTenantId();
@@ -616,7 +617,7 @@
                         <li class="nav-item">
                             <a href="<?= base_url('admin/calendario') ?>"
                                 class="nav-link d-flex align-items-center <?= strpos(uri_string(), 'admin/calendario') === 0 ? 'active-main' : '' ?>">
-                                <i class="bi bi-calendar3"></i> Calendario
+                                <i class="bi bi-calendar3"></i> Eventos
                                 <?php if ($__calEventsCount > 0): ?>
                                     <span class="badge bg-primary rounded-pill ms-auto"
                                         style="font-size:0.6rem;"><?= $__calEventsCount ?></span>
@@ -787,7 +788,7 @@
                         <li class="nav-item">
                             <a href="<?= base_url('admin/seguridad') ?>"
                                 class="nav-link <?= (strpos(uri_string(), 'seguridad') !== false || strpos(uri_string(), 'security') !== false) ? 'active-main' : '' ?>">
-                                <i class="bi bi-shield-check"></i> Seguridad
+                                <i class="bi bi-shield-check"></i> Accesos
                             </a>
                         </li>
 
@@ -806,7 +807,7 @@
                             <a href="<?= base_url('admin/tickets') ?>"
                                 class="nav-link d-flex align-items-center <?= strpos(uri_string(), 'tickets') !== false ? 'active-main' : '' ?>"
                                 data-bs-target="#ticketsSub">
-                                <i class="bi bi-exclamation-circle"></i> Tickets
+                                <i class="bi bi-exclamation-circle"></i> Mantenimiento
                                 <?php if ($__activeTicketsCount > 0): ?>
                                     <span class="badge bg-danger rounded-circle p-1 ms-2"
                                         style="font-size:0.6rem;"><?= esc((string) $__activeTicketsCount) ?></span>
