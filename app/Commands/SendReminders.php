@@ -4,7 +4,6 @@ namespace App\Commands;
 
 use CodeIgniter\CLI\BaseCommand;
 use CodeIgniter\CLI\CLI;
-use App\Services\Notifications\PushNotificationService;
 use App\Services\PaymentReminderService;
 
 class SendReminders extends BaseCommand
@@ -35,6 +34,9 @@ class SendReminders extends BaseCommand
                 // Set timezone to condominium's timezone
                 $timezone = $condo['timezone'] ?? 'America/Mexico_City';
                 date_default_timezone_set($timezone);
+
+                // Configurar contexto de tenant para los modelos
+                \App\Services\TenantService::getInstance()->setTenantId($condo['id']);
 
                 // Fetch reminders, using service to auto-init defaults if empty
                 $reminders = PaymentReminderService::getRemindersForCondominium($condo['id']);
@@ -156,10 +158,11 @@ class SendReminders extends BaseCommand
                             $messageBody = str_replace('{x}', $reminder['trigger_value'], $reminder['message_body']);
                             
                             try {
-                                // Send Push Notification
-                                $pushService = new PushNotificationService();
-                                $pushService->sendToUser(
+                                // Send Push Notification and Save in DB
+                                \App\Models\Tenant\NotificationModel::notify(
+                                    $condo['id'],
                                     (int) $resident['user_id'],
+                                    'payment_reminder',
                                     $reminder['message_title'],
                                     $messageBody,
                                     ['type' => 'payment_reminder', 'unit_id' => $unit['id']]
