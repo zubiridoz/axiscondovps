@@ -1928,10 +1928,8 @@
                                         // Limpiar checks
                                         checkboxes.forEach(cb => cb.checked = false);
                                         updateCount();
-                                        // Opcionalmente recargar o limpiar form
-                                        if (amountInput) amountInput.value = '';
-                                        if (descInput) descInput.value = '';
-                                        window.location.href = '<?= base_url('admin/finanzas/panel') ?>';
+                                        // Recargar la misma página para seguir en el módulo de nuevo registro
+                                        window.location.reload();
                                     });
                                 } else {
                                     Swal.fire('Error', data.message || 'Error al procesar.', 'error');
