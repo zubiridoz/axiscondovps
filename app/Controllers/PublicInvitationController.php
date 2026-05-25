@@ -44,6 +44,20 @@ class PublicInvitationController extends BaseController
      */
     public function registerManual()
     {
+        // --- PROTECCIÓN ANTI-BOTS (Solo Honeypot y Tiempo) ---
+        if (!empty($this->request->getPost('website_url'))) {
+            log_message('warning', 'Bot bloqueado (Honeypot Residente): IP=' . $this->request->getIPAddress());
+            return redirect()->back()->with('error', 'Solicitud inválida.');
+        }
+
+        $formLoadedAt = $this->request->getPost('form_loaded_at');
+        $elapsed = time() - (int)$formLoadedAt;
+        if ($elapsed < 3 || $elapsed > 86400) {
+            log_message('warning', 'Bot bloqueado (Tiempo Residente): IP=' . $this->request->getIPAddress() . ' Elapsed=' . $elapsed);
+            return redirect()->back()->with('error', 'Solicitud inválida por tiempo.');
+        }
+        // --- FIN PROTECCIÓN ANTI-BOTS ---
+
         $token = $this->request->getPost('token');
         if (empty($token)) {
             return redirect()->back()->with('error', 'El código de invitación es requerido.');

@@ -17,7 +17,7 @@ $routes->get('/', static function () {
 $routes->get('login', 'Auth\AuthController::login');
 $routes->post('login', 'Auth\AuthController::attemptLogin');
 $routes->get('app-required', 'Auth\AuthController::appRequired');
-$routes->post('register', 'Auth\RegisterController::register');
+$routes->post('register', 'Auth\RegisterController::register', ['filter' => 'csrf']);
 $routes->get('logout', 'Auth\LogoutController::logout');
 $routes->get('auth/select-tenant', 'Auth\AuthController::selectTenant');
 $routes->get('auth/select-tenant/(:num)', 'Auth\AuthController::selectTenant/$1');
@@ -323,8 +323,8 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin', 'filter' => ['a
 // RUTAS PÚBLICAS DE INVITACIÓN
 // ==========================================
 $routes->get('invite/(:segment)', 'PublicInvitationController::accept/$1');
-$routes->post('invite/(:segment)/register', 'PublicInvitationController::register/$1');
-$routes->post('register-resident', 'PublicInvitationController::registerManual');
+$routes->post('invite/(:segment)/register', 'PublicInvitationController::register/$1', ['filter' => 'csrf']);
+$routes->post('register-resident', 'PublicInvitationController::registerManual', ['filter' => 'csrf']);
 
 // API DE ADMINISTRADORES
 $routes->group('api/v1/admin', ['namespace' => 'App\Controllers\Api\V1', 'filter' => ['apiauth', 'tenant']], static function ($routes) {

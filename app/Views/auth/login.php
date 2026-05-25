@@ -243,6 +243,10 @@
 
                 <form action="<?= base_url('register') ?>" method="POST" id="registerForm">
                     <?= csrf_field() ?>
+                    <div style="position:absolute;left:-9999px;" aria-hidden="true">
+                        <input type="text" name="website_url" tabindex="-1" autocomplete="off">
+                        <input type="hidden" name="form_loaded_at" value="<?= time() ?>">
+                    </div>
                     <div class="row">
                         <div class="col-sm-6 mb-3">
                             <label class="form-label">Nombre</label>
@@ -289,6 +293,10 @@
 
                 <form action="<?= base_url('register-resident') ?>" method="POST" id="residentRegisterForm">
                     <?= csrf_field() ?>
+                    <div style="position:absolute;left:-9999px;" aria-hidden="true">
+                        <input type="text" name="website_url" tabindex="-1" autocomplete="off">
+                        <input type="hidden" name="form_loaded_at" value="<?= time() ?>">
+                    </div>
                     <div class="mb-3">
                         <label class="form-label">Código de Invitación</label>
                         <div class="input-icon-wrap">

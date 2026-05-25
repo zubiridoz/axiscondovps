@@ -13,6 +13,51 @@ class RegisterController extends BaseController
      */
     public function register()
     {
+        // --- PROTECCIÓN ANTI-BOTS ---
+        if (ENVIRONMENT !== 'production') {
+            log_message('debug', 'Registro IP='.$this->request->getIPAddress());
+        }
+        
+        // 1. Honeypot (Campo Oculto)
+        if (!empty($this->request->getPost('website_url'))) {
+            log_message('warning', 'Bot bloqueado (Honeypot): IP=' . $this->request->getIPAddress());
+            return redirect()->back()->with('error', 'Solicitud inválida.');
+        }
+
+        // 2. Tiempo mínimo y máximo (Timestamp)
+        $formLoadedAt = $this->request->getPost('form_loaded_at');
+        $elapsed = time() - (int)$formLoadedAt;
+        if ($elapsed < 3 || $elapsed > 86400) {
+            log_message('warning', 'Bot bloqueado (Tiempo): IP=' . $this->request->getIPAddress() . ' Elapsed=' . $elapsed);
+            return redirect()->back()->with('error', 'Solicitud inválida por tiempo.');
+        }
+
+        // 3. Throttling (Límite por IP)
+        $throttler = service('throttler');
+        $key = 'register_' . $this->request->getIPAddress();
+        if (! $throttler->check($key, 5, HOUR)) {
+            log_message('warning', 'Bot bloqueado (Throttling): IP=' . $this->request->getIPAddress());
+            return redirect()->back()->with('error', 'Demasiados intentos. Intenta más tarde.');
+        }
+
+        // 4. Blacklist de correos temporales
+        $email = $this->request->getPost('email');
+        if ($email) {
+            $tempDomains = [
+                'mailinator.com', 'tempmail.com', '10minutemail.com', 
+                'guerrillamail.com', 'temp-mail.org', 'yopmail.com', 
+                'trashmail.com', 'fakeinbox.com', 'maildrop.cc', 
+                'sharklasers.com', 'dispostable.com'
+            ];
+            $domain = substr(strrchr($email, "@"), 1);
+            if (in_array(strtolower($domain), $tempDomains)) {
+                log_message('warning', 'Bot bloqueado (Blacklist): IP=' . $this->request->getIPAddress() . ' Email=' . $email);
+                return redirect()->back()->with('error', 'Correo temporal no permitido. Por favor usa un correo real.');
+            }
+        }
+        
+        // --- FIN PROTECCIÓN ANTI-BOTS ---
+
         // 1. Validaciones básicas
         $rules = [
             'first_name' => 'required|min_length[2]|max_length[100]',

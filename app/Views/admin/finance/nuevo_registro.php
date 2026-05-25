@@ -942,6 +942,7 @@
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
 <script>
+
     // --- Koti-Select Global Handlers ---
     function selectKotiOption(hiddenId, textId, textVal, iconClass, elem) {
         document.getElementById(hiddenId).value = elem.getAttribute('data-value');
