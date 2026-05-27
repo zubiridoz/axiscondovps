@@ -203,7 +203,7 @@
             border-bottom: 1px solid #e2e8f0;
             display: flex;
             align-items: center;
-            justify-content: flex-end;
+            justify-content: space-between;
             padding: 0 1.5rem;
             z-index: 1040;
         }
@@ -372,6 +372,63 @@
                 opacity: 1;
                 transform: translateY(0);
             }
+        }
+
+        /* --- Responsive Sidebar --- */
+        .sidebar {
+            transition: width 0.3s ease;
+        }
+
+        .sidebar.collapsed {
+            width: 75px;
+        }
+
+        .sidebar.collapsed .condo-info,
+        .sidebar.collapsed .menu-label,
+        .sidebar.collapsed .chevron,
+        .sidebar.collapsed #condoChevron,
+        .sidebar.collapsed .nav-link .badge {
+            display: none !important;
+        }
+
+        .sidebar.collapsed .sidebar-brand-box {
+            justify-content: center;
+            padding: 1rem 0;
+        }
+
+        .sidebar.collapsed .condo-logo {
+            margin: 0;
+        }
+
+        .sidebar.collapsed .nav-link {
+            padding: 0.8rem 0;
+            justify-content: center;
+            font-size: 0; /* Oculta el texto sin necesidad de span */
+        }
+
+        .sidebar.collapsed .bi {
+            margin-right: 0 !important;
+            font-size: 1.3rem !important;
+        }
+
+        .sidebar.collapsed .submenu .nav-link {
+            padding: 0.6rem 0;
+        }
+
+        .sidebar-toggle {
+            color: #1e293b;
+            font-size: 1.3rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 50%;
+            transition: background 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sidebar-toggle:hover {
+            background: #f1f5f9;
         }
     </style>
     <?= $this->renderSection('styles') ?>
@@ -914,6 +971,11 @@
             ?>
             <!-- Top Header Ocupando el Right Space -->
             <header class="top-header">
+                <div>
+                    <div class="sidebar-toggle" onclick="toggleSidebar()">
+                        <i class="bi bi-list"></i>
+                    </div>
+                </div>
                 <div class="header-actions">
 
                     <div class="theme-toggle">
@@ -1221,6 +1283,21 @@
                 dd.style.display = 'none';
                 const chev = document.getElementById('condoChevron');
                 if (chev) chev.style.transform = '';
+            }
+        });
+
+        // ── Sidebar Toggle Responsive ──
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar) {
+                sidebar.classList.toggle('collapsed');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.innerWidth <= 768) {
+                const sidebar = document.querySelector('.sidebar');
+                if (sidebar) sidebar.classList.add('collapsed');
             }
         });
     </script>

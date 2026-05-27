@@ -176,8 +176,14 @@
         border: 1px solid var(--fin-border);
         border-radius: var(--fin-br);
         box-shadow: var(--fin-shadow-sm);
-        overflow: hidden;
         margin-bottom: 2rem;
+    }
+
+    .table-responsive {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border-radius: var(--fin-br);
     }
 
     .ppu-table {
@@ -255,6 +261,8 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
         padding: .85rem 1.5rem;
         border-top: 1px solid var(--fin-border);
     }
