@@ -841,6 +841,12 @@ $formatDateEs = function($dateStr) {
             <button class="ud-tab" data-tab="historial">Historial de Pagos</button>
             <?php $__pendingVCount = count(array_filter($vouchers, fn($v) => ($v['status'] ?? '') === 'pending')); ?>
             <button class="ud-tab" data-tab="comprobantes">Comprobantes de Pago<?php if ($__pendingVCount > 0): ?> <span class="badge bg-warning rounded-pill" style="font-size:.6rem; font-weight:600; vertical-align:middle;"><?= $__pendingVCount ?></span><?php endif; ?></button>
+            
+            <div style="margin-left: auto; padding: 0.5rem 0;">
+                <a href="<?= base_url('admin/finanzas/estado-de-cuenta/' . ($unit['hash_id'] ?? $unit['id'])) ?>" class="btn-new-reg" style="margin-bottom: 0; background-color: #238B71; float: none; padding: .5rem 1.25rem; text-decoration: none; text-transform: uppercase;" target="_blank">
+                    <i class="bi bi-download" style="font-size: 1rem;"></i> Descargar Estado de Cuenta
+                </a>
+            </div>
         </div>
 
         <div class="ud-tabs-body">
