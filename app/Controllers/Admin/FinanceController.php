@@ -2472,7 +2472,15 @@ class FinanceController extends BaseController
 
             // 3. Fecha de vencimiento armada
             $dueDateStr = date('Y-m-', strtotime($billingStartStr)) . str_pad($dueDay, 2, '0', STR_PAD_LEFT);
-            $monthName = date('F Y', strtotime($billingStartStr));
+            
+            $mesesLargos = [
+                'January' => 'Enero', 'February' => 'Febrero', 'March' => 'Marzo', 'April' => 'Abril',
+                'May' => 'Mayo', 'June' => 'Junio', 'July' => 'Julio', 'August' => 'Agosto',
+                'September' => 'Septiembre', 'October' => 'Octubre', 'November' => 'Noviembre', 'December' => 'Diciembre'
+            ];
+            $monthEng = date('F', strtotime($billingStartStr));
+            $monthEs = $mesesLargos[$monthEng] ?? $monthEng;
+            $monthName = $monthEs . ' ' . date('Y', strtotime($billingStartStr));
 
             $db = \Config\Database::connect();
             $db->transStart();
@@ -2487,7 +2495,7 @@ class FinanceController extends BaseController
                     ->countAllResults();
 
                 if ($txExists == 0) {
-                    $transactionModel->insert([
+                    $db->table('financial_transactions')->insert([
                         'condominium_id' => $demoCondo['id'],
                         'unit_id' => $u['id'],
                         'category_id' => $catId,
