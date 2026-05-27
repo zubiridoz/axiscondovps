@@ -729,6 +729,50 @@ $community = array_merge([
         border-color: #f87171;
     }
 
+    .btn-promote-founder {
+        width: 34px;
+        height: 34px;
+        border-radius: 0.4rem;
+        border: 1px solid #c4b5fd;
+        background: #fff;
+        color: #8b5cf6;
+        font-size: 0.88rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.15s;
+        flex-shrink: 0;
+    }
+
+    .btn-promote-founder:hover {
+        background: #ede9fe;
+        border-color: #a78bfa;
+        color: #6d28d9;
+    }
+
+    .btn-demote-founder {
+        width: 34px;
+        height: 34px;
+        border-radius: 0.4rem;
+        border: 1px solid #fde68a;
+        background: #fff;
+        color: #f59e0b;
+        font-size: 0.88rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.15s;
+        flex-shrink: 0;
+    }
+
+    .btn-demote-founder:hover {
+        background: #fef3c7;
+        border-color: #fbbf24;
+        color: #d97706;
+    }
+
     .admin-empty {
         text-align: center;
         padding: 2.5rem 1rem;
@@ -2866,19 +2910,45 @@ $community = array_merge([
             return ((firstName || '').charAt(0) + (lastName || '').charAt(0)).toUpperCase() || '?';
         }
 
+        const currentUserId = <?= (int) session()->get('user_id') ?>;
+
+        // Escapa caracteres HTML peligrosos para atributos y contenido
+        function escHtml(str) {
+            const d = document.createElement('div');
+            d.textContent = str;
+            return d.innerHTML;
+        }
+
         function renderAdminRow(admin, index) {
             const colorClass = ADMIN_COLORS[index % ADMIN_COLORS.length];
             const initial = getInitial(admin.first_name, admin.last_name);
             const fullName = [admin.first_name, admin.last_name].filter(Boolean).join(' ');
+            const safeName = escHtml(fullName);
+            const safeEmail = escHtml(admin.email);
             const isOwner = parseInt(admin.is_owner) === 1;
             const isCurrentUserOwner = <?= session()->get('is_owner') ? 'true' : 'false' ?>;
+            const isSelf = parseInt(admin.user_id) === currentUserId;
 
             // Badge: "Fundador" para owner, "Administrador" para co-admin
             const badgeHtml = isOwner
                 ? `<span class="admin-role-badge" style="background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe;">Fundador</span>`
                 : `<span class="admin-role-badge">Administrador</span>`;
 
-            // Solo el owner puede ver botones de eliminar, y no puede eliminarse a sí mismo (owner)
+            // Botón promover: visible para co-admins, solo si el usuario logueado es fundador
+            const promoteBtn = (!isOwner && isCurrentUserOwner)
+                ? `<button type="button" class="btn-promote-founder" data-id="${admin.assignment_id}" data-name="${safeName}" title="Hacer Fundador">
+                        <i class="bi bi-shield-check"></i>
+                   </button>`
+                : '';
+
+            // Botón revocar: visible para otros fundadores, solo si el usuario logueado es fundador
+            const demoteBtn = (isOwner && isCurrentUserOwner && !isSelf)
+                ? `<button type="button" class="btn-demote-founder" data-id="${admin.assignment_id}" data-name="${safeName}" title="Quitar rol de Fundador">
+                        <i class="bi bi-shield-x"></i>
+                   </button>`
+                : '';
+
+            // Solo el owner puede ver botones de eliminar, y no puede eliminar a un fundador
             const deleteBtn = (!isOwner && isCurrentUserOwner)
                 ? `<button type="button" class="btn-remove-admin" data-id="${admin.assignment_id}" title="Eliminar administrador">
                         <i class="bi bi-trash3"></i>
@@ -2889,11 +2959,13 @@ $community = array_merge([
             <div class="admin-row" data-id="${admin.assignment_id}">
                 <div class="admin-avatar ${colorClass}">${initial}</div>
                 <div class="admin-info">
-                    <div class="admin-name">${fullName}</div>
-                    <div class="admin-email">${admin.email}</div>
+                    <div class="admin-name">${safeName}</div>
+                    <div class="admin-email">${safeEmail}</div>
                 </div>
                 <div class="admin-tags">
                     ${badgeHtml}
+                    ${promoteBtn}
+                    ${demoteBtn}
                     ${deleteBtn}
                 </div>
             </div>
@@ -2910,6 +2982,7 @@ $community = array_merge([
                 if (data.success && data.admins.length > 0) {
                     adminContainer.innerHTML = data.admins.map((a, i) => renderAdminRow(a, i)).join('');
                     bindRemoveButtons();
+                    bindFounderButtons();
                 } else if (data.success) {
                     adminContainer.innerHTML = '<div class="admin-empty"><i class="bi bi-people"></i> No hay administradores registrados.</div>';
                 } else {
@@ -2962,6 +3035,85 @@ $community = array_merge([
                             showToast('Administrador eliminado correctamente');
                         } else {
                             showToast(data.message || 'Error al eliminar', 'error');
+                        }
+                    } catch (e) {
+                        showToast('Error de conexi\u00f3n', 'error');
+                    }
+                });
+            });
+        }
+
+        // ───────── Promote / Demote Founder ─────────
+        function bindFounderButtons() {
+            // Promover Co-Admin a Fundador
+            adminContainer.querySelectorAll('.btn-promote-founder').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const assignmentId = btn.dataset.id;
+                    const name = btn.dataset.name;
+
+                    const result = await Swal.fire({
+                        title: '\u00bfHacer Fundador?',
+                        html: `<b>${name}</b> tendr\u00e1 los mismos permisos de Fundador: gestionar suscripci\u00f3n, eliminar comunidad y agregar administradores.`,
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonColor: '#8b5cf6',
+                        cancelButtonColor: '#64748b',
+                        confirmButtonText: '<i class="bi bi-shield-check"></i> S\u00ed, hacer Fundador',
+                        cancelButtonText: 'Cancelar',
+                    });
+
+                    if (!result.isConfirmed) return;
+
+                    try {
+                        const fd = new FormData();
+                        fd.append('assignment_id', assignmentId);
+
+                        const resp = await fetch(`${BASE}/admins/promote`, { method: 'POST', body: fd });
+                        const data = await resp.json();
+
+                        if (data.success) {
+                            await loadAdmins();
+                            showToast(data.message || 'Promovido a Fundador exitosamente');
+                        } else {
+                            showToast(data.message || 'Error al promover', 'error');
+                        }
+                    } catch (e) {
+                        showToast('Error de conexi\u00f3n', 'error');
+                    }
+                });
+            });
+
+            // Revocar Fundador (degradar a Co-Admin)
+            adminContainer.querySelectorAll('.btn-demote-founder').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const assignmentId = btn.dataset.id;
+                    const name = btn.dataset.name;
+
+                    const result = await Swal.fire({
+                        title: '\u00bfQuitar rol de Fundador?',
+                        html: `<b>${name}</b> dejar\u00e1 de tener permisos de Fundador y pasar\u00e1 a ser Administrador. Perder\u00e1 acceso a las dem\u00e1s comunidades.`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#f59e0b',
+                        cancelButtonColor: '#64748b',
+                        confirmButtonText: '<i class="bi bi-shield-x"></i> S\u00ed, quitar Fundador',
+                        cancelButtonText: 'Cancelar',
+                    });
+
+                    if (!result.isConfirmed) return;
+
+                    try {
+                        const fd = new FormData();
+                        fd.append('assignment_id', assignmentId);
+
+                        const resp = await fetch(`${BASE}/admins/demote`, { method: 'POST', body: fd });
+                        const data = await resp.json();
+
+                        if (data.success) {
+                            await loadAdmins();
+                            showToast(data.message || 'Fundador revocado exitosamente');
+                        } else {
+                            showToast(data.message || 'Error al revocar', 'error');
                         }
                     } catch (e) {
                         showToast('Error de conexi\u00f3n', 'error');

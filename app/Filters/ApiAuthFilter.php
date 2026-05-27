@@ -138,7 +138,29 @@ class ApiAuthFilter implements FilterInterface
             ->getRow();
 
         if (!$pivot || $pivot->condo_deleted_at !== null) {
-            log_message('warning', "[SECURITY] Acceso denegado: user={$userId} intentó acceder a condo={$condoId} (inexistente, sin permisos o eliminado)");
+            // Distinguish: condominium deleted vs user access revoked
+            $condoExists = false;
+            if (!$pivot) {
+                $condoCheck = $db->table('condominiums')
+                    ->where('id', $condoId)
+                    ->where('deleted_at IS NULL')
+                    ->countAllResults();
+                $condoExists = ($condoCheck > 0);
+            }
+
+            if ($condoExists) {
+                // User was removed from this condominium (admin deleted their access)
+                log_message('warning', "[SECURITY] Acceso revocado: user={$userId} intentó acceder a condo={$condoId} (sin permisos)");
+                return response()
+                    ->setJSON([
+                        'success' => false,
+                        'message' => 'Ya no tienes acceso a esta comunidad.',
+                        'code'    => 'ACCESS_REVOKED'
+                    ])
+                    ->setStatusCode(403);
+            }
+
+            log_message('warning', "[SECURITY] Acceso denegado: user={$userId} intentó acceder a condo={$condoId} (inexistente o eliminado)");
             return response()
                 ->setJSON([
                     'success' => false,

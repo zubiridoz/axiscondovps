@@ -55,7 +55,7 @@ class LoginService
         
         $db = \Config\Database::connect();
         $builder = $db->table('user_condominium_roles');
-        $builder->select('user_condominium_roles.condominium_id, user_condominium_roles.role_id, roles.name as role_name, condominiums.name as condominium_name, condominiums.logo');
+        $builder->select('user_condominium_roles.condominium_id, user_condominium_roles.role_id, user_condominium_roles.is_owner, roles.name as role_name, condominiums.name as condominium_name, condominiums.logo');
         $builder->join('roles', 'roles.id = user_condominium_roles.role_id', 'left');
         $builder->join('condominiums', 'condominiums.id = user_condominium_roles.condominium_id', 'left');
         $builder->where('user_condominium_roles.user_id', $userId);

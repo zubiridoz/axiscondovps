@@ -634,6 +634,206 @@ class SettingsController extends BaseController
         return $this->response->setJSON(['success' => true]);
     }
 
+    /**
+     * Promover un Co-Admin a Fundador (AJAX).
+     * Solo ejecutable por un Fundador existente (is_owner = 1).
+     * Permite múltiples fundadores simultáneos en un condominio.
+     *
+     * POST: assignment_id (int) — ID del registro en user_condominium_roles
+     */
+    public function promoteToFounder()
+    {
+        $this->bootstrapTenant();
+
+        // 1. Solo un fundador puede promover
+        if (!session()->get('is_owner')) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Solo un Fundador puede realizar esta acción.'
+            ])->setStatusCode(403);
+        }
+
+        $condoModel = new CondominiumModel();
+        $condo = $condoModel->first();
+        if (!$condo) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Comunidad no encontrada.'])->setStatusCode(404);
+        }
+
+        $assignmentId = (int) $this->request->getPost('assignment_id');
+        if ($assignmentId <= 0) {
+            return $this->response->setJSON(['success' => false, 'message' => 'ID inválido.'])->setStatusCode(422);
+        }
+
+        $db = \Config\Database::connect();
+
+        // 2. Verificar que el target existe, pertenece a este condominio, es ADMIN y NO es ya fundador
+        $target = $db->table('user_condominium_roles')
+            ->where('id', $assignmentId)
+            ->where('condominium_id', $condo['id'])
+            ->where('role_id', 2)
+            ->get()
+            ->getRowArray();
+
+        if (!$target) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Administrador no encontrado.'])->setStatusCode(404);
+        }
+
+        if (!empty($target['is_owner'])) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Este administrador ya es Fundador.'])->setStatusCode(409);
+        }
+
+        // 3. Promover: is_owner = 1 en el condominio actual
+        $db->table('user_condominium_roles')
+            ->where('id', $assignmentId)
+            ->update(['is_owner' => 1]);
+
+        // 4. Dar acceso a TODOS los condominios donde el fundador promotor es también fundador
+        $currentUserId = session()->get('user_id');
+        $promotedUserId = (int) $target['user_id'];
+
+        $founderCondos = $db->table('user_condominium_roles')
+            ->select('condominium_id')
+            ->where('user_id', $currentUserId)
+            ->where('role_id', 2)
+            ->where('is_owner', 1)
+            ->where('condominium_id !=', $condo['id']) // Excluir el actual (ya tiene acceso)
+            ->get()
+            ->getResultArray();
+
+        $now = date('Y-m-d H:i:s');
+        foreach ($founderCondos as $fc) {
+            $otherCondoId = (int) $fc['condominium_id'];
+
+            // Verificar si ya tiene acceso a ese condominio
+            $existingEntry = $db->table('user_condominium_roles')
+                ->where('user_id', $promotedUserId)
+                ->where('condominium_id', $otherCondoId)
+                ->get()
+                ->getRowArray();
+
+            if ($existingEntry) {
+                // Ya existe: solo actualizar a is_owner = 1 si no lo es
+                if (empty($existingEntry['is_owner'])) {
+                    $db->table('user_condominium_roles')
+                        ->where('id', $existingEntry['id'])
+                        ->update(['is_owner' => 1, 'role_id' => 2]);
+                }
+            } else {
+                // No existe: crear nuevo registro como fundador
+                $db->table('user_condominium_roles')->insert([
+                    'user_id'        => $promotedUserId,
+                    'condominium_id' => $otherCondoId,
+                    'role_id'        => 2, // ADMIN
+                    'is_owner'       => 1,
+                    'created_at'     => $now,
+                ]);
+            }
+        }
+
+        $addedCount = count($founderCondos);
+        log_message('info', "[ADMIN] Fundador promovido: assignment_id={$assignmentId}, condo={$condo['id']}, +{$addedCount} condominios adicionales, por user_id={$currentUserId}");
+
+        $msg = 'Administrador promovido a Fundador exitosamente.';
+        if ($addedCount > 0) {
+            $msg .= " Se le otorgó acceso a {$addedCount} comunidad(es) adicional(es).";
+        }
+        return $this->response->setJSON(['success' => true, 'message' => $msg]);
+    }
+
+    /**
+     * Revocar rol de Fundador a otro admin (degradar a Co-Admin) (AJAX).
+     * Solo ejecutable por un Fundador existente (is_owner = 1).
+     * Protecciones:
+     * - No puede degradarse a sí mismo (nunca)
+     * - Siempre debe quedar mínimo 1 fundador en la comunidad
+     *
+     * POST: assignment_id (int) — ID del registro en user_condominium_roles
+     */
+    public function demoteFounder()
+    {
+        $this->bootstrapTenant();
+
+        // 1. Solo un fundador puede revocar
+        if (!session()->get('is_owner')) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Solo un Fundador puede realizar esta acción.'
+            ])->setStatusCode(403);
+        }
+
+        $condoModel = new CondominiumModel();
+        $condo = $condoModel->first();
+        if (!$condo) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Comunidad no encontrada.'])->setStatusCode(404);
+        }
+
+        $assignmentId = (int) $this->request->getPost('assignment_id');
+        if ($assignmentId <= 0) {
+            return $this->response->setJSON(['success' => false, 'message' => 'ID inválido.'])->setStatusCode(422);
+        }
+
+        $db = \Config\Database::connect();
+
+        // 2. Verificar que el target existe, pertenece a este condominio, es ADMIN y ES fundador
+        $target = $db->table('user_condominium_roles')
+            ->where('id', $assignmentId)
+            ->where('condominium_id', $condo['id'])
+            ->where('role_id', 2)
+            ->get()
+            ->getRowArray();
+
+        if (!$target) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Administrador no encontrado.'])->setStatusCode(404);
+        }
+
+        if (empty($target['is_owner'])) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Este administrador no es Fundador.'])->setStatusCode(409);
+        }
+
+        // 3. No permitir auto-degradación (nunca)
+        $currentUserId = session()->get('user_id');
+        if ((int) $target['user_id'] === (int) $currentUserId) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'No puedes quitarte el rol de Fundador a ti mismo.'
+            ])->setStatusCode(403);
+        }
+
+        // 4. Verificar que quede al menos 1 fundador después de la revocación
+        $founderCount = $db->table('user_condominium_roles')
+            ->where('condominium_id', $condo['id'])
+            ->where('role_id', 2)
+            ->where('is_owner', 1)
+            ->countAllResults();
+
+        if ($founderCount <= 1) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'No se puede revocar: debe existir al menos un Fundador en la comunidad.'
+            ])->setStatusCode(422);
+        }
+
+        // 5. Revocar: is_owner = 0 en el condominio actual (conserva acceso como Co-Admin)
+        $db->table('user_condominium_roles')
+            ->where('id', $assignmentId)
+            ->update(['is_owner' => 0]);
+
+        // 6. ELIMINAR acceso a los condominios que fueron otorgados por la promoción.
+        //    Solo borra los que aún tienen is_owner = 1 (creados/actualizados por promoteToFounder).
+        //    Conserva registros donde is_owner = 0 (co-admin independiente previo a la promoción).
+        $demotedUserId = (int) $target['user_id'];
+        $db->table('user_condominium_roles')
+            ->where('user_id', $demotedUserId)
+            ->where('role_id', 2)
+            ->where('is_owner', 1)
+            ->where('condominium_id !=', $condo['id'])
+            ->delete();
+
+        log_message('info', "[ADMIN] Fundador revocado y acceso removido: assignment_id={$assignmentId}, user_id={$demotedUserId}, solo conserva condo={$condo['id']}, por user_id={$currentUserId}");
+
+        return $this->response->setJSON(['success' => true, 'message' => 'Rol de Fundador revocado. Solo conserva acceso a esta comunidad.']);
+    }
+
     private function bootstrapTenant(): void
     {
         $demoCondo = (new CondominiumModel())->first();

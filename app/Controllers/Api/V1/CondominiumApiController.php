@@ -39,7 +39,8 @@ class CondominiumApiController extends ResourceController
                 c.currency,
                 c.status,
                 r.name AS role_name,
-                ucr.role_id
+                ucr.role_id,
+                ucr.is_owner
             ')
             ->join('condominiums AS c', 'c.id = ucr.condominium_id')
             ->join('roles AS r', 'r.id = ucr.role_id', 'left')
@@ -428,6 +429,245 @@ class CondominiumApiController extends ResourceController
                 'filename' => $relativePath,
                 'url'      => base_url('admin/configuracion/imagen/' . $relativePath),
             ],
+        ]);
+    }
+
+    // ══════════════════════════════════════════════════
+    //  ADMIN MANAGEMENT (Promote/Demote Founder) — Flutter API
+    // ══════════════════════════════════════════════════
+
+    /**
+     * GET /api/v1/condominiums/admins
+     * List administrators for the current condominium (admin only).
+     */
+    public function listAdmins()
+    {
+        $userId = (int) $this->request->getHeaderLine('X-Auth-UserId');
+        if (!$userId) return $this->failUnauthorized('No autorizado.');
+
+        if (!$this->isAdmin($userId)) {
+            return $this->failForbidden('No tienes permisos de administrador.');
+        }
+
+        $tenantId = \App\Services\TenantService::getInstance()->getTenantId();
+        $db = \Config\Database::connect();
+
+        $admins = $db->table('user_condominium_roles AS ucr')
+            ->select('ucr.id AS assignment_id, ucr.role_id, ucr.is_owner, ucr.user_id, u.first_name, u.last_name, u.email, r.name AS role_name')
+            ->join('users AS u', 'u.id = ucr.user_id')
+            ->join('roles AS r', 'r.id = ucr.role_id')
+            ->where('ucr.condominium_id', $tenantId)
+            ->where('ucr.role_id', 2)
+            ->where('u.deleted_at IS NULL')
+            ->orderBy('ucr.created_at', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        // Check if the current user is a founder
+        $currentUserIsOwner = false;
+        foreach ($admins as $admin) {
+            if ((int) $admin['user_id'] === $userId && (int) $admin['is_owner'] === 1) {
+                $currentUserIsOwner = true;
+                break;
+            }
+        }
+
+        return $this->respond([
+            'status' => 'success',
+            'data' => [
+                'admins' => $admins,
+                'current_user_is_owner' => $currentUserIsOwner,
+            ]
+        ]);
+    }
+
+    /**
+     * POST /api/v1/condominiums/admins/promote
+     * Promote a Co-Admin to Founder (admin only, requires current user is founder).
+     * Payload: { "assignment_id": int }
+     */
+    public function promoteToFounder()
+    {
+        $userId = (int) $this->request->getHeaderLine('X-Auth-UserId');
+        if (!$userId) return $this->failUnauthorized('No autorizado.');
+
+        $tenantId = \App\Services\TenantService::getInstance()->getTenantId();
+        $db = \Config\Database::connect();
+
+        // Verify the current user is a founder in this condominium
+        $callerRecord = $db->table('user_condominium_roles')
+            ->where('user_id', $userId)
+            ->where('condominium_id', $tenantId)
+            ->where('role_id', 2)
+            ->where('is_owner', 1)
+            ->get()
+            ->getRowArray();
+
+        if (!$callerRecord) {
+            return $this->failForbidden('Solo un Fundador puede realizar esta acción.');
+        }
+
+        $assignmentId = (int) $this->request->getVar('assignment_id');
+        if ($assignmentId <= 0) {
+            return $this->fail('ID inválido.', 422);
+        }
+
+        // Verify target exists, belongs to this condominium, is admin, and is NOT already founder
+        $target = $db->table('user_condominium_roles')
+            ->where('id', $assignmentId)
+            ->where('condominium_id', $tenantId)
+            ->where('role_id', 2)
+            ->get()
+            ->getRowArray();
+
+        if (!$target) {
+            return $this->failNotFound('Administrador no encontrado.');
+        }
+
+        if (!empty($target['is_owner'])) {
+            return $this->fail('Este administrador ya es Fundador.', 409);
+        }
+
+        $db->table('user_condominium_roles')
+            ->where('id', $assignmentId)
+            ->update(['is_owner' => 1]);
+
+        // Grant access to ALL other condominiums where the promoting founder is also a founder
+        $promotedUserId = (int) $target['user_id'];
+
+        $founderCondos = $db->table('user_condominium_roles')
+            ->select('condominium_id')
+            ->where('user_id', $userId)
+            ->where('role_id', 2)
+            ->where('is_owner', 1)
+            ->where('condominium_id !=', $tenantId)
+            ->get()
+            ->getResultArray();
+
+        $now = date('Y-m-d H:i:s');
+        foreach ($founderCondos as $fc) {
+            $otherCondoId = (int) $fc['condominium_id'];
+
+            $existingEntry = $db->table('user_condominium_roles')
+                ->where('user_id', $promotedUserId)
+                ->where('condominium_id', $otherCondoId)
+                ->get()
+                ->getRowArray();
+
+            if ($existingEntry) {
+                if (empty($existingEntry['is_owner'])) {
+                    $db->table('user_condominium_roles')
+                        ->where('id', $existingEntry['id'])
+                        ->update(['is_owner' => 1, 'role_id' => 2]);
+                }
+            } else {
+                $db->table('user_condominium_roles')->insert([
+                    'user_id'        => $promotedUserId,
+                    'condominium_id' => $otherCondoId,
+                    'role_id'        => 2,
+                    'is_owner'       => 1,
+                    'created_at'     => $now,
+                ]);
+            }
+        }
+
+        $addedCount = count($founderCondos);
+        log_message('info', "[API] Fundador promovido: assignment_id={$assignmentId}, condo={$tenantId}, +{$addedCount} condominios adicionales, por user_id={$userId}");
+
+        $msg = 'Administrador promovido a Fundador exitosamente.';
+        if ($addedCount > 0) {
+            $msg .= " Se le otorgó acceso a {$addedCount} comunidad(es) adicional(es).";
+        }
+
+        return $this->respond([
+            'status' => 'success',
+            'message' => $msg,
+        ]);
+    }
+
+    /**
+     * POST /api/v1/condominiums/admins/demote
+     * Revoke Founder role from another admin (admin only, requires current user is founder).
+     * Protections: cannot demote self, must keep at least 1 founder.
+     * Payload: { "assignment_id": int }
+     */
+    public function demoteFounder()
+    {
+        $userId = (int) $this->request->getHeaderLine('X-Auth-UserId');
+        if (!$userId) return $this->failUnauthorized('No autorizado.');
+
+        $tenantId = \App\Services\TenantService::getInstance()->getTenantId();
+        $db = \Config\Database::connect();
+
+        // Verify the current user is a founder in this condominium
+        $callerRecord = $db->table('user_condominium_roles')
+            ->where('user_id', $userId)
+            ->where('condominium_id', $tenantId)
+            ->where('role_id', 2)
+            ->where('is_owner', 1)
+            ->get()
+            ->getRowArray();
+
+        if (!$callerRecord) {
+            return $this->failForbidden('Solo un Fundador puede realizar esta acción.');
+        }
+
+        $assignmentId = (int) $this->request->getVar('assignment_id');
+        if ($assignmentId <= 0) {
+            return $this->fail('ID inválido.', 422);
+        }
+
+        // Verify target exists, belongs to this condominium, is admin, and IS founder
+        $target = $db->table('user_condominium_roles')
+            ->where('id', $assignmentId)
+            ->where('condominium_id', $tenantId)
+            ->where('role_id', 2)
+            ->get()
+            ->getRowArray();
+
+        if (!$target) {
+            return $this->failNotFound('Administrador no encontrado.');
+        }
+
+        if (empty($target['is_owner'])) {
+            return $this->fail('Este administrador no es Fundador.', 409);
+        }
+
+        // Cannot demote yourself (never)
+        if ((int) $target['user_id'] === $userId) {
+            return $this->failForbidden('No puedes quitarte el rol de Fundador a ti mismo.');
+        }
+
+        // Must keep at least 1 founder
+        $founderCount = $db->table('user_condominium_roles')
+            ->where('condominium_id', $tenantId)
+            ->where('role_id', 2)
+            ->where('is_owner', 1)
+            ->countAllResults();
+
+        if ($founderCount <= 1) {
+            return $this->fail('No se puede revocar: debe existir al menos un Fundador en la comunidad.', 422);
+        }
+
+        $db->table('user_condominium_roles')
+            ->where('id', $assignmentId)
+            ->update(['is_owner' => 0]);
+
+        // Remove only founder-granted entries in other condominiums (is_owner = 1).
+        // Entries where is_owner = 0 (independent co-admin) are preserved.
+        $demotedUserId = (int) $target['user_id'];
+        $db->table('user_condominium_roles')
+            ->where('user_id', $demotedUserId)
+            ->where('role_id', 2)
+            ->where('is_owner', 1)
+            ->where('condominium_id !=', $tenantId)
+            ->delete();
+
+        log_message('info', "[API] Fundador revocado y acceso removido: assignment_id={$assignmentId}, user_id={$demotedUserId}, solo conserva condo={$tenantId}, por user_id={$userId}");
+
+        return $this->respond([
+            'status' => 'success',
+            'message' => 'Rol de Fundador revocado. Solo conserva acceso a esta comunidad.',
         ]);
     }
 }

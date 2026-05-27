@@ -264,6 +264,8 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin', 'filter' => ['a
     $routes->get('configuracion/admins', 'SettingsController::listAdmins');
     $routes->post('configuracion/admins/add', 'SettingsController::addAdmin');
     $routes->post('configuracion/admins/remove', 'SettingsController::removeAdmin');
+    $routes->post('configuracion/admins/promote', 'SettingsController::promoteToFounder');
+    $routes->post('configuracion/admins/demote', 'SettingsController::demoteFounder');
     
     // Perfil & Seguridad
     $routes->post('configuracion/update-profile', 'SettingsController::updateProfile');
@@ -431,6 +433,12 @@ $routes->group('api/v1/condominiums', ['namespace' => 'App\Controllers\Api\V1', 
     $routes->post('settings/image', 'CondominiumApiController::uploadSettingsImage');
     $routes->options('settings/update', 'CondominiumApiController::updateSettings');
     $routes->options('settings/image', 'CondominiumApiController::uploadSettingsImage');
+    // Admin Management (Promote/Demote Founder)
+    $routes->get('admins', 'CondominiumApiController::listAdmins');
+    $routes->post('admins/promote', 'CondominiumApiController::promoteToFounder');
+    $routes->post('admins/demote', 'CondominiumApiController::demoteFounder');
+    $routes->options('admins/promote', 'CondominiumApiController::promoteToFounder');
+    $routes->options('admins/demote', 'CondominiumApiController::demoteFounder');
 });
 
 // API Finance
