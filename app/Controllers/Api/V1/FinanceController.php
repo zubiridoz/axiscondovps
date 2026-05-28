@@ -53,13 +53,29 @@ class FinanceController extends ResourceController
             $unit = $unitModel->find($res['unit_id']);
             if (!$unit) continue;
 
-            $transactions = $transactionModel->where('unit_id', $unit['id'])->findAll();
-            $debt = 0;
+            $initialBalance = (float) ($unit['initial_balance'] ?? 0);
 
-            foreach ($transactions as $txn) {
-                if ($txn['type'] === 'charge' && in_array($txn['status'], ['pending', 'partial'])) {
-                    $debt += (float) $txn['amount'];
-                }
+            $chargesRow = $db->table('financial_transactions')
+                ->selectSum('amount')
+                ->where('unit_id', $unit['id'])
+                ->where('type', 'charge')
+                ->where('status !=', 'cancelled')
+                ->where('deleted_at IS NULL')
+                ->get()->getRowArray();
+            $totalCharges = (float) ($chargesRow['amount'] ?? 0);
+
+            $creditsRow = $db->table('financial_transactions')
+                ->selectSum('amount')
+                ->where('unit_id', $unit['id'])
+                ->where('type', 'credit')
+                ->where('status !=', 'cancelled')
+                ->where('deleted_at IS NULL')
+                ->get()->getRowArray();
+            $totalCredits = (float) ($creditsRow['amount'] ?? 0);
+
+            $debt = $initialBalance + $totalCharges - $totalCredits;
+            if ($debt < 0) {
+                $debt = 0; // If they have a positive balance, we usually don't count it as 'pending balance' in a global sum, or maybe we do? We'll just use the net debt.
             }
 
             $globalBalance += $debt;
@@ -697,37 +713,56 @@ class FinanceController extends ResourceController
         // a_favor       → saldo negativo (créditos > cargos)
         // sin_adeudos   → no debe ninguna cuota (0 cargos pending/partial)
         // al_corriente  → solo debe cuotas que aún no vencen
-        // moroso        → debe 1+ cuotas vencidas (due_date < hoy)
+        // moroso        → debe 1+ cuotas vencidas (due_date < hoy) o el saldo inicial está pendiente
         $today = date('Y-m-d');
         $rawBalance = $initialBalance + $totalCharges - $totalCredits; // positivo = deuda
 
-        if ($rawBalance < -0.01) {
-            $accountStatus = 'a_favor';
-            $overdueCount = 0;
-        } else {
-            // Contar cargos pendientes/parciales
-            $pendingCount = (int) $db->table('financial_transactions')
-                ->where('unit_id', $unitId)
-                ->where('type', 'charge')
-                ->whereIn('status', ['pending', 'partial'])
-                ->where('deleted_at IS NULL')
-                ->countAllResults();
+        $overdueChargesRow = $db->table('financial_transactions')
+            ->selectSum('amount')
+            ->where('unit_id', $unitId)
+            ->where('type', 'charge')
+            ->where('status !=', 'cancelled')
+            ->where('due_date <', $today)
+            ->where('deleted_at IS NULL')
+            ->get()->getRowArray();
+        $totalOverdueCharges = (float) ($overdueChargesRow['amount'] ?? 0);
+        $debtVencida = $initialBalance + $totalOverdueCharges - $totalCredits;
 
-            if ($pendingCount === 0) {
-                $accountStatus = 'sin_adeudos';
-                $overdueCount = 0;
-            } else {
-                // Contar cuotas vencidas (due_date < hoy)
-                $overdueCount = (int) $db->table('financial_transactions')
-                    ->where('unit_id', $unitId)
-                    ->where('type', 'charge')
-                    ->whereIn('status', ['pending', 'partial'])
-                    ->where('due_date <', $today)
-                    ->where('deleted_at IS NULL')
-                    ->countAllResults();
+        // Contar cargos pendientes/parciales
+        $pendingCount = (int) $db->table('financial_transactions')
+            ->where('unit_id', $unitId)
+            ->where('type', 'charge')
+            ->whereIn('status', ['pending', 'partial'])
+            ->where('deleted_at IS NULL')
+            ->countAllResults();
 
-                $accountStatus = ($overdueCount > 0) ? 'moroso' : 'al_corriente';
+        // Contar cuotas vencidas (due_date < hoy)
+        $overdueCount = (int) $db->table('financial_transactions')
+            ->where('unit_id', $unitId)
+            ->where('type', 'charge')
+            ->whereIn('status', ['pending', 'partial'])
+            ->where('due_date <', $today)
+            ->where('deleted_at IS NULL')
+            ->countAllResults();
+
+        if ($debtVencida > 0.01) {
+            $accountStatus = 'moroso';
+            if ($overdueCount === 0) {
+                // Si está moroso solo por el saldo inicial, aseguramos que haya al menos 1 "vencida" para la UI de la app
+                $overdueCount = 1;
             }
+            if ($pendingCount === 0) {
+                $pendingCount = 1;
+            }
+        } elseif ($rawBalance > 0.01) {
+            $accountStatus = 'al_corriente';
+            if ($pendingCount === 0) {
+                $pendingCount = 1;
+            }
+        } elseif ($rawBalance < -0.01) {
+            $accountStatus = 'a_favor';
+        } else {
+            $accountStatus = 'sin_adeudos';
         }
 
         return $this->respondSuccess([

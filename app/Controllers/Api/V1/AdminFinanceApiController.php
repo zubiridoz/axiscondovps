@@ -127,31 +127,49 @@ class AdminFinanceApiController extends ResourceController
         $today = date('Y-m-d');
         $rawBalance = $initialBalance + $totalCharges - $totalCredits;
 
-        if ($rawBalance < -0.01) {
-            $accountStatus = 'a_favor';
-            $overdueCount = 0;
-        } else {
-            $pendingCount = (int) $db->table('financial_transactions')
-                ->where('unit_id', $unitId)
-                ->where('type', 'charge')
-                ->whereIn('status', ['pending', 'partial'])
-                ->where('deleted_at IS NULL')
-                ->countAllResults();
+        $overdueChargesRow = $db->table('financial_transactions')
+            ->selectSum('amount')
+            ->where('unit_id', $unitId)
+            ->where('type', 'charge')
+            ->where('status !=', 'cancelled')
+            ->where('due_date <', $today)
+            ->where('deleted_at IS NULL')
+            ->get()->getRowArray();
+        $totalOverdueCharges = (float) ($overdueChargesRow['amount'] ?? 0);
+        $debtVencida = $initialBalance + $totalOverdueCharges - $totalCredits;
 
-            if ($pendingCount === 0) {
-                $accountStatus = 'sin_adeudos';
-                $overdueCount = 0;
-            } else {
-                $overdueCount = (int) $db->table('financial_transactions')
-                    ->where('unit_id', $unitId)
-                    ->where('type', 'charge')
-                    ->whereIn('status', ['pending', 'partial'])
-                    ->where('due_date <', $today)
-                    ->where('deleted_at IS NULL')
-                    ->countAllResults();
+        $pendingCount = (int) $db->table('financial_transactions')
+            ->where('unit_id', $unitId)
+            ->where('type', 'charge')
+            ->whereIn('status', ['pending', 'partial'])
+            ->where('deleted_at IS NULL')
+            ->countAllResults();
 
-                $accountStatus = ($overdueCount > 0) ? 'moroso' : 'al_corriente';
+        $overdueCount = (int) $db->table('financial_transactions')
+            ->where('unit_id', $unitId)
+            ->where('type', 'charge')
+            ->whereIn('status', ['pending', 'partial'])
+            ->where('due_date <', $today)
+            ->where('deleted_at IS NULL')
+            ->countAllResults();
+
+        if ($debtVencida > 0.01) {
+            $accountStatus = 'moroso';
+            if ($overdueCount === 0) {
+                $overdueCount = 1;
             }
+            if ($pendingCount === 0) {
+                $pendingCount = 1;
+            }
+        } elseif ($rawBalance > 0.01) {
+            $accountStatus = 'al_corriente';
+            if ($pendingCount === 0) {
+                $pendingCount = 1;
+            }
+        } elseif ($rawBalance < -0.01) {
+            $accountStatus = 'a_favor';
+        } else {
+            $accountStatus = 'sin_adeudos';
         }
 
         return $this->respond([
