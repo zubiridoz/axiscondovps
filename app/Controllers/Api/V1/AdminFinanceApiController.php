@@ -570,7 +570,10 @@ class AdminFinanceApiController extends ResourceController
             return $this->failValidationErrors("El archivo excede el tamaño máximo de 10MB");
         }
 
-        $uploadPath = WRITEPATH . "uploads/financial/";
+        if (empty($tenantId)) {
+            return $this->failValidationErrors("Tenant ID is missing");
+        }
+        $uploadPath = WRITEPATH . "uploads/financial/" . $tenantId . "/";
         if (!is_dir($uploadPath)) {
             mkdir($uploadPath, 0777, true);
         }
@@ -579,7 +582,7 @@ class AdminFinanceApiController extends ResourceController
         $file->move($uploadPath, $newName);
 
         $db->table("financial_transactions")->where("id", $transactionId)->update([
-            "attachment"  => $newName,
+            "attachment"  => "financial/" . $tenantId . "/" . $newName,
             "status"      => "pending", // Reset status to pending validation
             "updated_at"  => date("Y-m-d H:i:s"),
         ]);

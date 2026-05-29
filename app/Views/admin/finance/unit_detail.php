@@ -2087,13 +2087,10 @@ $formatDateEs = function($dateStr) {
                 attachments.forEach(att => {
                     const filename = att.split('/').pop() || att;
                     let imgUrl;
-                    let cleanAtt;
-                    if (att.startsWith('payments/')) {
-                        cleanAtt = att.replace('payments/', '');
-                        imgUrl = '<?= base_url('media/image/payments/') ?>' + cleanAtt;
+                    if (att.startsWith('payments/') || att.startsWith('financial/')) {
+                        imgUrl = '<?= base_url('media/image/') ?>' + att;
                     } else {
-                        cleanAtt = att.replace('financial/', '');
-                        imgUrl = '<?= base_url('media/image/financial/') ?>' + cleanAtt;
+                        imgUrl = '<?= base_url('media/image/financial/') ?>' + att;
                     }
 
                     const thumb = document.createElement('div');
@@ -2101,13 +2098,13 @@ $formatDateEs = function($dateStr) {
                     thumb.style.flexShrink = '0'; // Evitar que se encojan
                     thumb.style.textAlign = 'center';
 
-                    const fileExt = cleanAtt.split('.').pop().toLowerCase();
+                    const fileExt = filename.split('.').pop().toLowerCase();
                     if (fileExt === 'pdf') {
                         thumb.innerHTML = `
                             <div style="height:80px; display:flex; align-items:center; justify-content:center; background:#f8fafc;">
                                 <i class="bi bi-file-earmark-pdf" style="font-size:2.5rem; color:#ef4444;"></i>
                             </div>
-                            <span class="pd-filename">${cleanAtt}</span>
+                            <span class="pd-filename">${filename}</span>
                         `;
                         thumb.addEventListener('click', () => window.open(imgUrl, '_blank'));
                     } else {

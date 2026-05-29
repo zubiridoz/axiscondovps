@@ -1086,7 +1086,10 @@ class FinanceController extends ResourceController
             return $this->respondError('El archivo excede el tamaño máximo de 10MB', 422);
         }
 
-        $uploadPath = WRITEPATH . 'uploads/financial/';
+        if (empty($tenantId)) {
+            return $this->respondError('Tenant ID is missing', 400);
+        }
+        $uploadPath = WRITEPATH . 'uploads/payments/' . $tenantId . '/';
         if (!is_dir($uploadPath)) {
             mkdir($uploadPath, 0777, true);
         }
@@ -1096,7 +1099,7 @@ class FinanceController extends ResourceController
 
         // Guardar referencia en la transacción
         $db->table('financial_transactions')->where('id', $transactionId)->update([
-            'attachment'  => $newName,
+            'attachment'  => 'payments/' . $tenantId . '/' . $newName,
             'updated_at'  => date('Y-m-d H:i:s'),
         ]);
 
@@ -1109,7 +1112,7 @@ class FinanceController extends ResourceController
             'amount'         => $transaction['amount'],
             'payment_method' => 'transfer',
             'reference_code' => '',
-            'proof_url'      => 'financial/' . $newName,
+            'proof_url'      => 'payments/' . $tenantId . '/' . $newName,
             'notes'          => 'Comprobante subido desde la app',
             'status'         => 'pending',
         ]);

@@ -843,8 +843,15 @@ class FinanceController extends BaseController
                     }
 
                     $newName = $file->getRandomName();
-                    $file->move(WRITEPATH . 'uploads/financial', $newName);
-                    $attachmentPaths[] = 'financial/' . $newName;
+                    
+                    if (empty($demoCondo['id'])) {
+                        throw new \RuntimeException('Tenant ID is missing. Cannot upload file.');
+                    }
+                    $uploadPath = WRITEPATH . 'uploads/financial/' . $demoCondo['id'] . '/';
+                    if (!is_dir($uploadPath)) mkdir($uploadPath, 0777, true);
+                    
+                    $file->move($uploadPath, $newName);
+                    $attachmentPaths[] = 'financial/' . $demoCondo['id'] . '/' . $newName;
                 }
             }
         }
@@ -1534,8 +1541,11 @@ class FinanceController extends BaseController
         $file = $this->request->getFile('attachment');
         if ($file && $file->isValid() && !$file->hasMoved()) {
             $newName = $file->getRandomName();
-            $file->move(WRITEPATH . 'uploads/financial', $newName);
-            $attachmentPath = 'financial/' . $newName;
+            if (empty($demoCondo['id'])) throw new \RuntimeException('Tenant ID is missing. Cannot upload file.');
+            $uploadPath = WRITEPATH . 'uploads/financial/' . $demoCondo['id'] . '/';
+            if (!is_dir($uploadPath)) mkdir($uploadPath, 0777, true);
+            $file->move($uploadPath, $newName);
+            $attachmentPath = 'financial/' . $demoCondo['id'] . '/' . $newName;
         }
 
         // Obtener categoría del cargo
@@ -1934,8 +1944,11 @@ class FinanceController extends BaseController
         $file = $this->request->getFile('attachment');
         if ($file && $file->isValid() && !$file->hasMoved()) {
             $newName = $file->getRandomName();
-            $file->move(WRITEPATH . 'uploads/financial', $newName);
-            $updateData['attachment'] = $newName;
+            if (empty($demoCondo['id'])) throw new \RuntimeException('Tenant ID is missing. Cannot upload file.');
+            $uploadPath = WRITEPATH . 'uploads/financial/' . $demoCondo['id'] . '/';
+            if (!is_dir($uploadPath)) mkdir($uploadPath, 0777, true);
+            $file->move($uploadPath, $newName);
+            $updateData['attachment'] = 'financial/' . $demoCondo['id'] . '/' . $newName;
         }
 
         // Si es un cargo, recalculamos status basado en amount_paid
@@ -2017,9 +2030,13 @@ class FinanceController extends BaseController
                 ->update(['deleted_at' => date('Y-m-d H:i:s')]);
 
             // Eliminar archivo físico
-            $filePath = WRITEPATH . 'uploads/payments/' . $proofUrl;
-            if (file_exists($filePath)) {
+            $filePath = WRITEPATH . 'uploads/' . ltrim($proofUrl, '/');
+            if (file_exists($filePath) && !is_dir($filePath)) {
                 @unlink($filePath);
+            } else {
+                // Fallback para datos antiguos
+                if (file_exists(WRITEPATH . 'uploads/payments/' . ltrim($proofUrl, '/'))) @unlink(WRITEPATH . 'uploads/payments/' . ltrim($proofUrl, '/'));
+                if (file_exists(WRITEPATH . 'uploads/financial/' . ltrim($proofUrl, '/'))) @unlink(WRITEPATH . 'uploads/financial/' . ltrim($proofUrl, '/'));
             }
         }
 
@@ -2097,9 +2114,12 @@ class FinanceController extends BaseController
                     ->where('condominium_id', $demoCondo['id'])
                     ->update(['deleted_at' => date('Y-m-d H:i:s')]);
 
-                $filePath = WRITEPATH . 'uploads/payments/' . $proofUrl;
-                if (file_exists($filePath)) {
+                $filePath = WRITEPATH . 'uploads/' . ltrim($proofUrl, '/');
+                if (file_exists($filePath) && !is_dir($filePath)) {
                     @unlink($filePath);
+                } else {
+                    if (file_exists(WRITEPATH . 'uploads/payments/' . ltrim($proofUrl, '/'))) @unlink(WRITEPATH . 'uploads/payments/' . ltrim($proofUrl, '/'));
+                    if (file_exists(WRITEPATH . 'uploads/financial/' . ltrim($proofUrl, '/'))) @unlink(WRITEPATH . 'uploads/financial/' . ltrim($proofUrl, '/'));
                 }
             }
         }
