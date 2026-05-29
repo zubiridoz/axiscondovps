@@ -369,7 +369,10 @@
                 <div class="mr-profile-header">
                     <div class="mr-avatar" id="mr-avatar-initials">A</div>
                     <div class="mr-info">
-                        <h5 id="mr-name-display">Cargando...</h5>
+                        <div class="d-flex align-items-center">
+                            <h5 id="mr-name-display" class="mb-0">Cargando...</h5>
+                            <i class="bi bi-pencil-square ms-2" id="btn-edit-resident-name" style="color: #94a3b8; font-size: 0.9rem; cursor: pointer; display: none;" title="Editar nombre"></i>
+                        </div>
                         <p class="mb-1"><i class="bi bi-envelope"></i> <span id="mr-email-display">...</span></p>
                         <p><i class="bi bi-telephone"></i> <span id="mr-phone-header-display">Sin teléfono</span></p>
                     </div>

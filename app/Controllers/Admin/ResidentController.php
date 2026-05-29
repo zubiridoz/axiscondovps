@@ -528,6 +528,24 @@ class ResidentController extends BaseController
         return $this->response->setJSON(['success' => false, 'message' => 'Error al actualizar teléfono.'])->setStatusCode(500);
     }
 
+    public function updateNameJson()
+    {
+        $userId = $this->request->getPost('user_id');
+        $firstName = $this->request->getPost('first_name');
+        $lastName = $this->request->getPost('last_name');
+
+        if (!$userId || !$firstName || !$lastName) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Faltan datos.'])->setStatusCode(400);
+        }
+
+        $db = \Config\Database::connect();
+        $builder = $db->table('users');
+        if ($builder->where('id', $userId)->update(['first_name' => $firstName, 'last_name' => $lastName])) {
+            return $this->response->setJSON(['success' => true, 'message' => 'Nombre actualizado.']);
+        }
+        return $this->response->setJSON(['success' => false, 'message' => 'Error al actualizar nombre.'])->setStatusCode(500);
+    }
+
     /**
      * POST /admin/residentes/agregar-unidad
      * Agrega una NUEVA unidad a un residente existente (crea nuevo row en residents).

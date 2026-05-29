@@ -853,9 +853,13 @@
         font-weight: 600 !important;
         padding: 0.5rem 1.5rem !important;
         box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+        background-color: #334155 !important;
+        color: white !important;
+        border: none !important;
         transition: all 0.2s;
     }
     .premium-swal-btn:hover {
+        background-color: #1e293b !important;
         transform: translateY(-1px);
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
     }
@@ -1057,6 +1061,8 @@
 
         let profileUserId = null;
         let profileName = '';
+        let profileFirstName = '';
+        let profileLastName = '';
         let targetRemoveResidentId = null;
 
         // 1. Click row -> Open Manage Modal
@@ -1096,8 +1102,12 @@
             const user = data.user;
             const assignments = data.assignments;
             profileName = user.first_name + ' ' + user.last_name;
+            profileFirstName = user.first_name;
+            profileLastName = user.last_name;
 
             document.getElementById('mr-name-display').textContent = profileName;
+            const editBtn = document.getElementById('btn-edit-resident-name');
+            if (editBtn) editBtn.style.display = 'inline-block';
             document.getElementById('mr-email-display').textContent = user.email;
             
             const avatarEl = document.getElementById('mr-avatar-initials');
@@ -1272,6 +1282,88 @@
                         Swal.fire({ icon: 'error', title: 'Error', text: data.message || 'Error al guardar.' });
                     }
                 }).catch(e => console.error(e));
+        });
+
+        // 5. Update Name Logic
+        document.getElementById('btn-edit-resident-name').addEventListener('click', function () {
+            if (!profileUserId) return;
+            Swal.fire({
+                title: 'Editar Nombre',
+                html: `
+                    <div class="mb-3 text-start mt-3">
+                        <label class="form-label small text-muted mb-1 fw-500">Nombre(s)</label>
+                        <input id="swal-input-first-name" class="form-control border-0 shadow-none py-2" style="background:#f8fafc; font-size:0.95rem; border-radius:0.5rem;" value="${profileFirstName}">
+                    </div>
+                    <div class="mb-2 text-start">
+                        <label class="form-label small text-muted mb-1 fw-500">Apellidos</label>
+                        <input id="swal-input-last-name" class="form-control border-0 shadow-none py-2" style="background:#f8fafc; font-size:0.95rem; border-radius:0.5rem;" value="${profileLastName}">
+                    </div>
+                `,
+                focusConfirm: false,
+                target: document.getElementById('manageResidentModal'),
+                showCancelButton: true,
+                confirmButtonText: 'Guardar cambios',
+                cancelButtonText: 'Cancelar',
+                customClass: {
+                    popup: 'premium-swal-popup',
+                    confirmButton: 'premium-swal-btn',
+                    cancelButton: 'premium-swal-btn-cancel ms-2'
+                },
+                buttonsStyling: false,
+                preConfirm: () => {
+                    return [
+                        document.getElementById('swal-input-first-name').value.trim(),
+                        document.getElementById('swal-input-last-name').value.trim()
+                    ]
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const [fName, lName] = result.value;
+                    if (!fName || !lName) {
+                        Swal.fire({ icon: 'warning', title: 'Campos requeridos', text: 'El nombre y apellido no pueden estar vacíos.' });
+                        return;
+                    }
+
+                    let fd = new FormData();
+                    fd.append('user_id', profileUserId);
+                    fd.append('first_name', fName);
+                    fd.append('last_name', lName);
+                    fd.append('<?= csrf_token() ?>', '<?= csrf_hash() ?>');
+
+                    fetch('<?= base_url("admin/residentes/actualizar-nombre") ?>', { method: 'POST', body: fd })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Nombre actualizado', showConfirmButton: false, timer: 2500 });
+                                profileFirstName = fName;
+                                profileLastName = lName;
+                                profileName = fName + ' ' + lName;
+                                document.getElementById('mr-name-display').textContent = profileName;
+
+                                // Update row in table
+                                const row = document.querySelector(`.res-row[data-user-id="${profileUserId}"]`);
+                                if (row) {
+                                    const nameDiv = row.querySelector('.fw-bold');
+                                    if (nameDiv) nameDiv.textContent = profileName;
+                                    
+                                    // Update avatar initial if no photo (and if it's text)
+                                    const avatarDiv = row.querySelector('.resident-avatar');
+                                    if (avatarDiv && !avatarDiv.querySelector('img')) {
+                                         avatarDiv.innerHTML = profileFirstName.charAt(0).toUpperCase();
+                                    }
+                                }
+                                
+                                // Update modal avatar initial if no photo
+                                const avatarEl = document.getElementById('mr-avatar-initials');
+                                if (avatarEl && !avatarEl.querySelector('img')) {
+                                    avatarEl.innerHTML = profileFirstName.charAt(0).toUpperCase();
+                                }
+                            } else {
+                                Swal.fire({ icon: 'error', title: 'Error', text: data.message || 'Error al actualizar nombre.', customClass: { popup: 'premium-swal-popup' } });
+                            }
+                        }).catch(e => console.error(e));
+                }
+            });
         });
 
         // Handle Manage Res Modal re-show if secondary modals are cancelled

@@ -105,6 +105,7 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin', 'filter' => ['a
     $routes->post('residentes/remover-unidad', 'ResidentController::removeUnitJson');
     $routes->post('residentes/remover-comunidad', 'ResidentController::removeCommunityJson');
     $routes->post('residentes/actualizar-telefono', 'ResidentController::updatePhoneJson');
+    $routes->post('residentes/actualizar-nombre', 'ResidentController::updateNameJson');
     $routes->post('residentes/agregar-unidad', 'ResidentController::addUnitJson');
     $routes->post('residentes/generar-password', 'ResidentController::generatePasswordJson');
     $routes->post('residentes/forzar-logout', 'ResidentController::forceLogoutJson');
