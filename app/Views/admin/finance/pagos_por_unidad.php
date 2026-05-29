@@ -969,7 +969,7 @@
                                 </td>
                                 <td class="text-center" onclick="event.stopPropagation()">
                                     <?php if (($rec['pending_vouchers'] ?? 0) > 0): ?>
-                                        <span class="badge rounded-pill shadow-sm" style="font-size:0.8rem; padding: 0.35em 0.65em; font-weight:700; vertical-align:middle; background-color: #f59e0b; color: white;" title="<?= $rec['pending_vouchers'] ?> comprobante(s) pendiente(s)"><?= $rec['pending_vouchers'] ?></span>
+                                        <a href="<?= base_url('admin/finanzas/pagos-por-unidad/' . $rec['hash_id']) ?>#comprobantes" class="badge rounded-pill shadow-sm" style="font-size:0.8rem; padding: 0.35em 0.65em; font-weight:700; vertical-align:middle; background-color: #f59e0b; color: white; text-decoration: none;" title="<?= $rec['pending_vouchers'] ?> comprobante(s) pendiente(s)"><?= $rec['pending_vouchers'] ?></a>
                                     <?php else: ?>
                                         <span style="color:#cbd5e1;">—</span>
                                     <?php endif; ?>

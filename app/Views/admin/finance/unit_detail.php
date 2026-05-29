@@ -1890,6 +1890,15 @@ $formatDateEs = function($dateStr) {
         });
     });
 
+    // Leer el hash al cargar la página para abrir una pestaña específica
+    if (window.location.hash) {
+        const tabName = window.location.hash.substring(1);
+        const targetTab = document.querySelector('.ud-tab[data-tab="' + tabName + '"]');
+        if (targetTab) {
+            targetTab.click();
+        }
+    }
+
     // ── Estado de cuenta: select all ──
     const selEs = document.getElementById('selectAllEs');
     if (selEs) selEs.addEventListener('change', e => {
