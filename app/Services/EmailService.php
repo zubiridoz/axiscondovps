@@ -12,6 +12,7 @@ class EmailService
     public function sendResidentInvitation(string $toEmail, string $name, string $condoName, string $token): bool
     {
         $email = \Config\Services::email();
+        $email->SMTPKeepAlive = true; // Mantener la conexión abierta para envíos masivos
 
         $inviteUrl = base_url("invite/{$token}");
         

@@ -118,6 +118,8 @@ class ResidentInvitationsController extends BaseController
             return $this->response->setJSON(['success' => false, 'message' => 'La sesión de importación ha expirado o es inválida. Intenta subir el archivo de nuevo.']);
         }
 
+        set_time_limit(300); // Prevenir timeout en importaciones masivas
+
         $demoCondo = (new \App\Models\Tenant\CondominiumModel())->first();
         $condoId = $demoCondo ? (int)$demoCondo['id'] : 0;
         $invitedBy = 1;
