@@ -2313,9 +2313,12 @@ $formatDateEs = function($dateStr) {
 
             // Preview del comprobante
             const previewArea = document.getElementById('rvPreview');
-            const _proofPath = (d.proof || '').startsWith('payments/') ? d.proof : 'payments/' + d.proof;
+            let _proofPath = d.proof || '';
+            if (_proofPath && !_proofPath.startsWith('payments/') && !_proofPath.startsWith('financial/')) {
+                _proofPath = 'payments/' + _proofPath;
+            }
             const proofUrl = '<?= base_url("media/image/") ?>' + _proofPath;
-            const isPdf = (d.proof || '').toLowerCase().endsWith('.pdf');
+            const isPdf = (_proofPath || '').toLowerCase().endsWith('.pdf');
 
             if (isPdf) {
                 previewArea.innerHTML = `<div style="text-align:center; padding:2rem;">
