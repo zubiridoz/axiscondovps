@@ -253,13 +253,27 @@ class BookingController extends BaseController
             'start_time'     => $startTime,
             'end_time'       => $endTime,
             'status'         => 'approved',
+            'booking_price'  => $amenity['price'] ?? 0,
         ];
 
         $bookingModel = new BookingModel();
+        
+        $db = \Config\Database::connect();
+        $db->transStart();
+        
         $bookingId = $bookingModel->insert($data);
 
         if (!$bookingId) {
+            $db->transRollback();
             return $this->response->setJSON(['status' => 500, 'error' => 'Error al crear la reserva']);
+        }
+        
+        \App\Models\Tenant\FinancialTransactionModel::generateBookingCharge((int)$bookingId);
+        
+        $db->transComplete();
+        
+        if ($db->transStatus() === false) {
+            return $this->response->setJSON(['status' => 500, 'error' => 'Error al procesar el cargo de la reserva']);
         }
 
         return $this->response->setJSON(['status' => 201, 'message' => 'Reserva creada exitosamente', 'id' => $bookingId]);
@@ -279,7 +293,17 @@ class BookingController extends BaseController
             return $this->response->setJSON(['status' => 404, 'error' => 'Reserva no encontrada']);
         }
 
+        $db = \Config\Database::connect();
+        $db->transStart();
+        
         $bookingModel->update($id, ['status' => 'approved']);
+        \App\Models\Tenant\FinancialTransactionModel::generateBookingCharge((int)$id);
+        
+        $db->transComplete();
+        
+        if ($db->transStatus() === false) {
+            return $this->response->setJSON(['status' => 500, 'error' => 'Error al procesar el cargo de la reserva']);
+        }
 
         try {
             $booking = $bookingModel->find($id);
@@ -321,7 +345,17 @@ class BookingController extends BaseController
             return $this->response->setJSON(['status' => 404, 'error' => 'Reserva no encontrada']);
         }
 
+        $db = \Config\Database::connect();
+        $db->transStart();
+        
         $bookingModel->update($id, ['status' => 'rejected']);
+        \App\Models\Tenant\FinancialTransactionModel::removeBookingCharge((int)$id);
+        
+        $db->transComplete();
+        
+        if ($db->transStatus() === false) {
+             return $this->response->setJSON(['status' => 500, 'error' => 'Error al rechazar la reserva']);
+        }
 
         try {
             $booking = $bookingModel->find($id);
@@ -363,11 +397,21 @@ class BookingController extends BaseController
             return $this->response->setJSON(['status' => 404, 'error' => 'Reserva no encontrada']);
         }
 
-        if ($bookingModel->delete($id)) {
-            return $this->response->setJSON(['status' => 200, 'message' => 'Reserva eliminada exitosamente']);
+        $db = \Config\Database::connect();
+        $db->transStart();
+
+        $deleted = $bookingModel->delete($id);
+        if ($deleted) {
+            \App\Models\Tenant\FinancialTransactionModel::removeBookingCharge((int)$id);
         }
 
-        return $this->response->setJSON(['status' => 500, 'error' => 'No se pudo eliminar la reserva']);
+        $db->transComplete();
+        
+        if ($db->transStatus() === false || !$deleted) {
+            return $this->response->setJSON(['status' => 500, 'error' => 'No se pudo eliminar la reserva']);
+        }
+
+        return $this->response->setJSON(['status' => 200, 'message' => 'Reserva eliminada exitosamente']);
     }
 
     /**
@@ -384,7 +428,18 @@ class BookingController extends BaseController
             return $this->response->setJSON(['status' => 404, 'error' => 'Reserva no encontrada']);
         }
 
+        $db = \Config\Database::connect();
+        $db->transStart();
+        
         $bookingModel->update($id, ['status' => 'cancelled']);
+        \App\Models\Tenant\FinancialTransactionModel::removeBookingCharge((int)$id);
+        
+        $db->transComplete();
+        
+        if ($db->transStatus() === false) {
+            return $this->response->setJSON(['status' => 500, 'error' => 'Error al cancelar la reserva']);
+        }
+        
         return $this->response->setJSON(['status' => 200, 'message' => 'Reserva cancelada']);
     }
 

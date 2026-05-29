@@ -1028,7 +1028,7 @@ $formatTimeRange = function ($start, $end) {
                               'section_name' => $b['section_name'] ?? '',
                               'start_time' => $b['start_time'],
                               'end_time' => $b['end_time'],
-                              'price' => $b['price'] ?? null,
+                              'price' => $b['booking_price'] ?? null,
                               'created_at' => $b['created_at'] ?? '',
                               'time_range' => $formatTimeRange($b['start_time'], $b['end_time']),
                               'date_label' => $formatDate($b['start_time']),
@@ -1489,12 +1489,14 @@ $formatTimeRange = function ($start, $end) {
             const imgSrc = a.image ? BASE + 'admin/amenidades/imagen/' + a.image : '';
             const intervalLabel = a.reservation_interval === 'full_day' ? 'Día completo' : a.reservation_interval + ' hora(s)';
             const maxLabel = a.max_active_reservations === 'unlimited' ? 'Ilimitado' : a.max_active_reservations;
+            const priceHtml = (a.has_cost == 1 && a.price > 0) ? `<div class="meta">Costo de Reserva: <strong style="color:#10b981">$${parseFloat(a.price).toFixed(2)} MXN</strong></div>` : '';
             document.getElementById('amenityInfoCard').innerHTML = `
             ${imgSrc ? `<img src="${imgSrc}" alt="">` : '<div style="width:64px;height:64px;border-radius:.5rem;background:#334155;display:flex;align-items:center;justify-content:center"><i class="bi bi-building text-white fs-4"></i></div>'}
             <div class="amenity-details">
                 <h6>${a.name}</h6>
                 <div class="meta">Intervalo de Reservación: <strong>${intervalLabel}</strong></div>
                 <div class="meta">Máximo de Reservas Activas: <strong>${maxLabel}</strong></div>
+                ${priceHtml}
             </div>`;
         }
 

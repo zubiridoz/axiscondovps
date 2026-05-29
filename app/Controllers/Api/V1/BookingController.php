@@ -192,15 +192,29 @@ class BookingController extends ResourceController
         $requiresApproval = (int) ($amenity['requires_approval'] ?? 1);
         $status = ($isAdmin || $requiresApproval === 0) ? 'approved' : 'pending';
 
+        $db = \Config\Database::connect();
+        $db->transStart();
+
         $bookingModel = new BookingModel();
         $bookingId = $bookingModel->insert([
-            'amenity_id' => $amenityId,
-            'unit_id'    => $bookingUnitId,
-            'user_id'    => $bookingUserId,
-            'start_time' => $startTime,
-            'end_time'   => $endTime,
-            'status'     => $status
+            'amenity_id'    => $amenityId,
+            'unit_id'       => $bookingUnitId,
+            'user_id'       => $bookingUserId,
+            'start_time'    => $startTime,
+            'end_time'      => $endTime,
+            'status'        => $status,
+            'booking_price' => $amenity['price'] ?? 0,
         ]);
+
+        if ($status === 'approved') {
+            \App\Models\Tenant\FinancialTransactionModel::generateBookingCharge((int)$bookingId);
+        }
+
+        $db->transComplete();
+
+        if ($db->transStatus() === false) {
+            return $this->respondError('Error al procesar la reserva', 500);
+        }
 
         $message = ($status === 'pending') ? 'Reserva solicitada. Pendiente de aprobación.' : 'Reserva confirmada exitosamente.';
 
@@ -288,7 +302,17 @@ class BookingController extends ResourceController
             return $this->respondError('No puedes cancelar una reserva que ya comenzó o caducó', 400);
         }
 
+        $db = \Config\Database::connect();
+        $db->transStart();
+
         $bookingModel->update($id, ['status' => 'cancelled']);
+        \App\Models\Tenant\FinancialTransactionModel::removeBookingCharge((int)$id);
+        
+        $db->transComplete();
+        
+        if ($db->transStatus() === false) {
+            return $this->respondError('Error al cancelar la reserva', 500);
+        }
         
         return $this->respondSuccess(['message' => 'Reserva cancelada correctamente.']);
     }
@@ -305,7 +329,17 @@ class BookingController extends ResourceController
         $booking = $bookingModel->find($id);
         if (!$booking) return $this->respondError('Reserva no encontrada', 404);
 
+        $db = \Config\Database::connect();
+        $db->transStart();
+
         $bookingModel->update($id, ['status' => 'approved']);
+        \App\Models\Tenant\FinancialTransactionModel::generateBookingCharge((int)$id);
+        
+        $db->transComplete();
+        
+        if ($db->transStatus() === false) {
+            return $this->respondError('Error al aprobar la reserva', 500);
+        }
 
         // Notificar usuario
         $condoId = TenantService::getInstance()->getTenantId();
@@ -333,7 +367,17 @@ class BookingController extends ResourceController
         $booking = $bookingModel->find($id);
         if (!$booking) return $this->respondError('Reserva no encontrada', 404);
 
+        $db = \Config\Database::connect();
+        $db->transStart();
+
         $bookingModel->update($id, ['status' => 'rejected']);
+        \App\Models\Tenant\FinancialTransactionModel::removeBookingCharge((int)$id);
+        
+        $db->transComplete();
+        
+        if ($db->transStatus() === false) {
+            return $this->respondError('Error al rechazar la reserva', 500);
+        }
 
         // Notificar usuario
         $condoId = TenantService::getInstance()->getTenantId();

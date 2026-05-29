@@ -18,7 +18,8 @@ class BookingModel extends BaseTenantModel
         'user_id',
         'start_time',
         'end_time',
-        'status'
+        'status',
+        'booking_price'
     ];
 
     // Dates

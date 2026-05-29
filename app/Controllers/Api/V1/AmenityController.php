@@ -25,6 +25,18 @@ class AmenityController extends ResourceController
     }
 
     /**
+     * Helper para inyectar el costo en la descripción para que la app lo muestre sin tener que modificar Flutter.
+     */
+    private function _injectPriceToDescription(&$amenity)
+    {
+        if (!empty($amenity['has_cost']) && isset($amenity['price']) && (float)$amenity['price'] > 0) {
+            $priceFmt = '$' . number_format((float)$amenity['price'], 2) . ' MXN';
+            $originalDesc = $amenity['description'] ?? '';
+            $amenity['description'] = "Costo de Reserva: {$priceFmt}\n\n" . $originalDesc;
+        }
+    }
+
+    /**
      * GET /api/v1/amenities
      * Listado principal del catálogo de amenidades.
      */
@@ -33,6 +45,10 @@ class AmenityController extends ResourceController
         $amenityModel = new AmenityModel();
         // Devolvemos activas (incluyendo las no reservables)
         $amenities = $amenityModel->where('is_active', 1)->findAll();
+
+        foreach ($amenities as &$am) {
+            $this->_injectPriceToDescription($am);
+        }
 
         return $this->respondSuccess(['amenities' => $amenities]);
     }
@@ -49,6 +65,8 @@ class AmenityController extends ResourceController
         $amenity = $amenityModel->where('is_active', 1)->find($id);
 
         if (!$amenity) return $this->respondError('Amenidad no encontrada', 404);
+
+        $this->_injectPriceToDescription($amenity);
 
         $scheduleModel = new \App\Models\Tenant\AmenityScheduleModel();
         $schedules = $scheduleModel->where('amenity_id', $id)->findAll();
