@@ -130,6 +130,7 @@ class ResidentInvitationsController extends BaseController
         
         $successCount = 0;
         $errors = [];
+        $insertedIds = [];
 
         foreach ($rows as $index => $row) {
             $unitId = null;
@@ -138,10 +139,8 @@ class ResidentInvitationsController extends BaseController
                 if ($u) {
                     $unitId = $u['id'];
                 }
-                // If unit not found, still proceed but without unit assignment
             }
 
-            // Map role display name back to DB value if needed
             $role = $row['role'] ?? 'owner';
             $roleLower = strtolower($role);
             if (strpos($roleLower, 'propie') !== false) $role = 'owner';
@@ -156,16 +155,27 @@ class ResidentInvitationsController extends BaseController
                 'unit_id' => $unitId
             ];
 
-            $error = $invitationService->createInvitation($condoId, $data, $invitedBy, $notify);
+            // SIEMPRE pasamos false a $sendEmail para evitar timeouts en PHP. 
+            // El JS en el frontend se encargará de enviarlos uno a uno si $notify es true.
+            $error = $invitationService->createInvitation($condoId, $data, $invitedBy, false);
             
             if ($error) {
                 $errors[] = "({$row['email']}): " . $error;
             } else {
                 $successCount++;
+                // Obtener el ID recién insertado (o el que se actualizó a pending)
+                $invitationModel = new \App\Models\Tenant\ResidentInvitationModel();
+                $newInv = $invitationModel->where('email', $data['email'])
+                                          ->where('condominium_id', $condoId)
+                                          ->where('invitation_status', 'pending')
+                                          ->orderBy('id', 'DESC')
+                                          ->first();
+                if ($newInv) {
+                    $insertedIds[] = $newInv['id'];
+                }
             }
         }
 
-        // Clean cache if used
         if ($cacheKey) {
             cache()->delete($cacheKey);
         }
@@ -175,7 +185,9 @@ class ResidentInvitationsController extends BaseController
             'message' => "Proceso terminado.",
             'data' => [
                 'invited' => $successCount,
-                'errors' => $errors
+                'errors' => $errors,
+                'inserted_ids' => $insertedIds,
+                'notify' => $notify
             ]
         ]);
     }

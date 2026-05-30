@@ -713,13 +713,47 @@
 
                     const result = await response.json();
                     if (response.ok && result.success) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Importación Exitosa',
-                            text: 'Se importaron ' + (result.data.invited || importData.length) + ' residentes correctamente.',
-                            showConfirmButton: false,
-                            timer: 1500
-                        }).then(() => window.location.reload());
+                        if (result.data.notify && result.data.inserted_ids && result.data.inserted_ids.length > 0) {
+                            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Guardado. Enviando correos...';
+                            
+                            let successCount = 0;
+                            let errorCount = 0;
+                            const pendingIds = result.data.inserted_ids;
+
+                            for (let i = 0; i < pendingIds.length; i++) {
+                                btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span> Enviando ${i + 1} de ${pendingIds.length}...`;
+                                
+                                let fd = new FormData();
+                                fd.append('id', pendingIds[i]);
+                                fd.append('<?= csrf_token() ?>', '<?= csrf_hash() ?>');
+
+                                try {
+                                    let r = await fetch('<?= base_url("admin/residentes/invitaciones/reenviar") ?>', { method: 'POST', body: fd });
+                                    let res = await r.json();
+                                    if (res.success) successCount++;
+                                    else errorCount++;
+                                } catch (e) {
+                                    errorCount++;
+                                }
+                            }
+
+                            Swal.fire({
+                                icon: errorCount === 0 ? 'success' : 'warning',
+                                title: 'Proceso terminado',
+                                text: `Se importaron y enviaron ${successCount} invitaciones correctamente.${errorCount > 0 ? ' Hubo ' + errorCount + ' errores de correo.' : ''}`,
+                                confirmButtonColor: '#1e293b'
+                            }).then(() => window.location.reload());
+
+                        } else {
+                            // Sin notificar o sin IDs nuevos
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Importación Exitosa',
+                                text: 'Se importaron ' + (result.data.invited || importData.length) + ' residentes correctamente sin enviar notificaciones.',
+                                showConfirmButton: false,
+                                timer: 2000
+                            }).then(() => window.location.reload());
+                        }
                     } else {
                         Swal.fire({ icon: 'error', title: 'Error', text: result.message || 'Error al importar.', confirmButtonColor: '#6366f1' });
                     }
