@@ -1413,6 +1413,7 @@
                     }).catch(() => {
                         btn.innerHTML = `<i class="bi bi-send me-1"></i> Reenviar Invitación`;
                         btn.disabled = false;
+                    });
             };
         }
 
