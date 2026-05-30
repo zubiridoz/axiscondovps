@@ -1210,12 +1210,21 @@
         const countSpan = document.getElementById('inv-count');
 
         searchInput.addEventListener('input', function () {
-            const term = this.value.toLowerCase();
+            const searchStr = this.value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+            const terms = searchStr ? searchStr.split(/\s+/) : [];
             let visibleCount = 0;
 
             rows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                if (text.includes(term)) {
+                const name = (row.getAttribute('data-name') || '').toLowerCase();
+                const email = (row.getAttribute('data-email') || '').toLowerCase();
+                const unit = (row.getAttribute('data-unit') || '').toLowerCase();
+                const phone = (row.getAttribute('data-phone') || '').toLowerCase();
+                
+                const text = `${name} ${email} ${unit} ${phone}`.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                
+                const matches = terms.length === 0 || terms.every(t => text.includes(t));
+
+                if (matches) {
                     row.style.display = 'table-row';
                     visibleCount++;
                 } else {
