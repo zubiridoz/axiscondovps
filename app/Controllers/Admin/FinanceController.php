@@ -1695,9 +1695,9 @@ class FinanceController extends BaseController
         $today = date('Y-m-d');
         $units = $db->table('units u')
             ->select('u.id, u.hash_id, u.unit_number, u.maintenance_fee, u.initial_balance,
-                      IFNULL(SUM(CASE WHEN ft.type = "charge" AND ft.status != "cancelled" THEN ft.amount ELSE 0 END), 0) AS total_charges,
-                      IFNULL(SUM(CASE WHEN ft.type = "charge" AND ft.status != "cancelled" AND ft.due_date < "' . $today . '" THEN ft.amount ELSE 0 END), 0) AS total_overdue_charges,
-                      IFNULL(SUM(CASE WHEN ft.type = "credit" AND ft.status = "paid" THEN ft.amount ELSE 0 END), 0) AS total_paid')
+                      IFNULL(SUM(CASE WHEN ft.type = "charge" AND ft.status != "cancelled" AND ft.deleted_at IS NULL THEN ft.amount ELSE 0 END), 0) AS total_charges,
+                      IFNULL(SUM(CASE WHEN ft.type = "charge" AND ft.status != "cancelled" AND ft.due_date < "' . $today . '" AND ft.deleted_at IS NULL THEN ft.amount ELSE 0 END), 0) AS total_overdue_charges,
+                      IFNULL(SUM(CASE WHEN ft.type = "credit" AND ft.status = "paid" AND ft.deleted_at IS NULL THEN ft.amount ELSE 0 END), 0) AS total_paid')
             ->join('financial_transactions ft', 'ft.unit_id = u.id AND ft.condominium_id = u.condominium_id', 'left')
             ->where('u.condominium_id', $demoCondo['id'])
             ->groupBy('u.id')
@@ -1799,6 +1799,7 @@ class FinanceController extends BaseController
             ->where('ft.unit_id', $unitId)
             ->where('ft.condominium_id', $demoCondo['id'])
             ->where('ft.status !=', 'cancelled')
+            ->where('ft.deleted_at IS NULL')
             ->orderBy('ft.due_date', 'ASC')
             ->orderBy('ft.created_at', 'ASC')
             ->get()->getResultArray();
@@ -2391,9 +2392,9 @@ class FinanceController extends BaseController
         $today = date('Y-m-d');
         $units = $db->table('units u')
             ->select('u.id, u.unit_number, u.maintenance_fee, u.initial_balance,
-                      IFNULL(SUM(CASE WHEN ft.type = "charge" AND ft.status != "cancelled" THEN ft.amount ELSE 0 END), 0) AS total_charges,
-                      IFNULL(SUM(CASE WHEN ft.type = "charge" AND ft.status != "cancelled" AND ft.due_date < "' . $today . '" THEN ft.amount ELSE 0 END), 0) AS total_overdue_charges,
-                      IFNULL(SUM(CASE WHEN ft.type = "credit" AND ft.status = "paid" THEN ft.amount ELSE 0 END), 0) AS total_paid')
+                      IFNULL(SUM(CASE WHEN ft.type = "charge" AND ft.status != "cancelled" AND ft.deleted_at IS NULL THEN ft.amount ELSE 0 END), 0) AS total_charges,
+                      IFNULL(SUM(CASE WHEN ft.type = "charge" AND ft.status != "cancelled" AND ft.due_date < "' . $today . '" AND ft.deleted_at IS NULL THEN ft.amount ELSE 0 END), 0) AS total_overdue_charges,
+                      IFNULL(SUM(CASE WHEN ft.type = "credit" AND ft.status = "paid" AND ft.deleted_at IS NULL THEN ft.amount ELSE 0 END), 0) AS total_paid')
             ->join('financial_transactions ft', 'ft.unit_id = u.id AND ft.condominium_id = u.condominium_id', 'left')
             ->where('u.condominium_id', $demoCondo['id'])
             ->groupBy('u.id')
@@ -2419,6 +2420,8 @@ class FinanceController extends BaseController
             ->join('financial_categories cats', 'cats.id = ft.category_id', 'left')
             ->where('ft.unit_id', $unitId)
             ->where('ft.condominium_id', $demoCondo['id'])
+            ->where('ft.status !=', 'cancelled')
+            ->where('ft.deleted_at IS NULL')
             ->orderBy('ft.created_at', 'ASC')
             ->get()->getResultArray();
 

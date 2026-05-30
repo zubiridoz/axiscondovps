@@ -47,6 +47,7 @@ class InvitationService
             'unit_id'           => !empty($data['unit_id']) ? $data['unit_id'] : null,
             'email'             => $data['email'],
             'name'              => $data['name'],
+            'phone'             => $data['phone'] ?? null,
             'role'              => $data['role'], // 'owner', 'tenant', 'admin'
             'token'             => $token,
             'invitation_status' => 'pending',

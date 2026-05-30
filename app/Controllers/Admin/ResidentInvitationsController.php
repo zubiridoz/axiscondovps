@@ -18,6 +18,7 @@ class ResidentInvitationsController extends BaseController
         $data = [
             'name'  => $this->request->getPost('name') ?? $this->request->getJSON(true)['name'] ?? '',
             'email' => $this->request->getPost('email') ?? $this->request->getJSON(true)['email'] ?? '',
+            'phone' => $this->request->getPost('phone') ?? $this->request->getJSON(true)['phone'] ?? null,
             'unit_id' => $this->request->getPost('unit_id') ?? $this->request->getJSON(true)['unit_id'] ?? null,
             'role'  => $this->request->getPost('role') ?? $this->request->getJSON(true)['role'] ?? 'owner'
         ];
