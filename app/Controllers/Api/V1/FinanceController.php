@@ -536,7 +536,7 @@ class FinanceController extends ResourceController
             SELECT u.id, u.unit_number, SUM(t.amount) as debt
             FROM units u
             JOIN financial_transactions t ON t.unit_id = u.id
-            WHERE t.type = 'charge' AND t.status IN ('pending', 'partial') AND t.deleted_at IS NULL AND u.deleted_at IS NULL
+            WHERE t.type = 'charge' AND t.status IN ('pending', 'partial') AND t.due_date < CURDATE() AND t.deleted_at IS NULL AND u.deleted_at IS NULL
             GROUP BY u.id
             HAVING debt > 0
             ORDER BY u.unit_number ASC

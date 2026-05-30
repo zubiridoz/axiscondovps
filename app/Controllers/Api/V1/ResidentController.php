@@ -213,6 +213,17 @@ class ResidentController extends ResourceController
             ->where('deleted_at IS NULL')
             ->get()->getRowArray();
         $totalCharges = (float) ($chargesRow['amount'] ?? 0);
+        
+        $todayStr = date('Y-m-d');
+        $overdueChargesRow = $db->table('financial_transactions')
+            ->selectSum('amount')
+            ->where('unit_id', $unitId)
+            ->where('type', 'charge')
+            ->where('status !=', 'cancelled')
+            ->where('due_date <', $todayStr)
+            ->where('deleted_at IS NULL')
+            ->get()->getRowArray();
+        $totalOverdueCharges = (float) ($overdueChargesRow['amount'] ?? 0);
 
         $creditsRow = $db->table('financial_transactions')
             ->selectSum('amount')
@@ -225,9 +236,12 @@ class ResidentController extends ResourceController
 
         $rawBalance = $initialBalance + $totalCharges - $totalCredits;
         $totalDebt = $rawBalance > 0 ? $rawBalance : 0;
+        
+        $overdueBalance = $initialBalance + $totalOverdueCharges - $totalCredits;
+        $isDelinquent = $overdueBalance > 0.01;
 
         $delinquency = [
-            'is_delinquent'   => $totalDebt > 0,
+            'is_delinquent'   => $isDelinquent,
             'pending_balance' => $totalDebt,
             'restrictions'    => [
                 'qr'        => $restrictQr,
