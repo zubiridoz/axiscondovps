@@ -3467,23 +3467,31 @@ class FinanceController extends BaseController
         $d = $saldoPendiente;
         $dv = $debt_vencida;
 
+        $statusMsgHtml = '';
         if ($dv > 0.01) {
             $pdf->SetTextColor(185, 28, 28);
             $pdf->SetFont('helvetica', 'B', 9);
             $pdf->Cell(120.6, 6, 'MOROSO', 0, 1, 'L');
+            $statusMsgHtml = '<table cellpadding="8" cellspacing="0" style="width: 100%; background-color: #fef2f2; border: 1px solid #fecaca; border-left: 3px solid #ef4444;"><tr><td style="color: #991b1b; font-size: 8.5pt;"><b>Estado: Moroso</b><br/>Tienes cargos con fecha límite de pago vencida. Regulariza tu cuenta para evitar cargos adicionales.</td></tr></table>';
         } elseif ($d > 0.01) {
             $pdf->SetTextColor(29, 78, 216);
             $pdf->SetFont('helvetica', 'B', 9);
             $pdf->Cell(120.6, 6, 'AL CORRIENTE', 0, 1, 'L');
+            $statusMsgHtml = '<table cellpadding="8" cellspacing="0" style="width: 100%; background-color: #fffbeb; border: 1px solid #fef3c7; border-left: 3px solid #f59e0b;"><tr><td style="color: #92400e; font-size: 8.5pt;"><b>Estado: Al Corriente</b><br/>No tienes cuotas vencidas. Cuentas con cargos pendientes que aún pueden pagarse dentro de su fecha límite.</td></tr></table>';
         } elseif ($d < -0.01) {
             $pdf->SetTextColor(21, 128, 61);
             $pdf->SetFont('helvetica', 'B', 9);
             $pdf->Cell(120.6, 6, 'A FAVOR', 0, 1, 'L');
+            $statusMsgHtml = '<table cellpadding="8" cellspacing="0" style="width: 100%; background-color: #f0f9ff; border: 1px solid #e0f2fe; border-left: 3px solid #0ea5e9;"><tr><td style="color: #075985; font-size: 8.5pt;"><b>Estado: A Favor</b><br/>Tienes un saldo a favor que se aplicará automáticamente a tus próximos cargos.</td></tr></table>';
         } else {
             $pdf->SetTextColor(21, 128, 61);
             $pdf->SetFont('helvetica', 'B', 9);
             $pdf->Cell(120.6, 6, 'SIN ADEUDOS', 0, 1, 'L');
+            $statusMsgHtml = '<table cellpadding="8" cellspacing="0" style="width: 100%; background-color: #f0fdf4; border: 1px solid #dcfce3; border-left: 3px solid #10b981;"><tr><td style="color: #166534; font-size: 8.5pt;"><b>Estado: Sin Adeudos</b><br/>¡Gracias! No tienes cargos pendientes y tu cuenta se encuentra al día.</td></tr></table>';
         }
+
+        $pdf->Ln(2);
+        $pdf->writeHTMLCell(175.6, 0, 20, $pdf->GetY(), $statusMsgHtml, 0, 1, false, true, 'L', true);
 
         $pdf->Ln(6);
 
