@@ -1413,9 +1413,53 @@
                     }).catch(() => {
                         btn.innerHTML = `<i class="bi bi-send me-1"></i> Reenviar Invitación`;
                         btn.disabled = false;
-                    });
             };
         }
+
+        // ========================
+        // BULK RESEND (SECUENCIAL)
+        // ========================
+        window.confirmResendInvitations = async function (btn) {
+            const rows = document.querySelectorAll('.inv-row[data-status-raw="pending"]');
+            const pendingIds = Array.from(rows).map(r => r.getAttribute('data-id'));
+
+            if (pendingIds.length === 0) {
+                Swal.fire({ icon: 'info', title: 'Nada que reenviar', text: 'No hay invitaciones pendientes.', confirmButtonColor: '#1e293b' });
+                return;
+            }
+
+            btn.disabled = true;
+            let successCount = 0;
+            let errorCount = 0;
+
+            for (let i = 0; i < pendingIds.length; i++) {
+                btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span> Enviando ${i + 1} de ${pendingIds.length}...`;
+                
+                let fd = new FormData();
+                fd.append('id', pendingIds[i]);
+                fd.append('<?= csrf_token() ?>', '<?= csrf_hash() ?>');
+
+                try {
+                    let r = await fetch('<?= base_url("admin/residentes/invitaciones/reenviar") ?>', { method: 'POST', body: fd });
+                    let res = await r.json();
+                    if (res.success) successCount++;
+                    else errorCount++;
+                } catch (e) {
+                    errorCount++;
+                }
+            }
+
+            btn.innerHTML = `<i class="bi bi-check-circle me-2"></i> Completado`;
+            Swal.fire({
+                icon: errorCount === 0 ? 'success' : 'warning',
+                title: 'Proceso terminado',
+                text: `Se enviaron ${successCount} invitaciones correctamente.${errorCount > 0 ? ' Hubo ' + errorCount + ' errores.' : ''}`,
+                confirmButtonColor: '#1e293b'
+            }).then(() => {
+                location.reload();
+            });
+        };
+
     });
 </script>
 
