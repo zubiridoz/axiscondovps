@@ -120,6 +120,14 @@ class ApplyLateFees extends BaseCommand
             }
             $builder->where('ft.source !=', 'auto');
             
+            // Filtro de cuotas extraordinarias
+            if (empty($condo['late_fee_on_extraordinary'])) {
+                $builder->groupStart()
+                        ->where('ft.extraordinary_fee_id IS NULL')
+                        ->orWhere('ft.extraordinary_fee_id', 0)
+                        ->groupEnd();
+            }
+
             // Filtro de categorías
             if (!empty($allowedCategories)) {
                 $builder->whereIn('ft.category_id', $allowedCategories);

@@ -1276,6 +1276,8 @@ class SettingsController extends BaseController
             }
         }
 
+        $applyOnExtraordinary = $this->request->getPost('late_fee_on_extraordinary') === 'true' || $this->request->getPost('late_fee_on_extraordinary') === '1';
+
         // Validations
         if (!in_array($type, ['fixed', 'percentage'])) {
             $type = 'fixed';
@@ -1301,7 +1303,8 @@ class SettingsController extends BaseController
             'late_fee_max_amount'    => $maxAmount,
             'late_fee_grace_enabled' => $graceEnabled ? 1 : 0,
             'late_fee_grace_days'    => $graceDays,
-            'late_fee_categories'    => json_encode($categories)
+            'late_fee_categories'    => json_encode($categories),
+            'late_fee_on_extraordinary' => $applyOnExtraordinary ? 1 : 0
         ]);
 
         return $this->response->setJSON([

@@ -4519,6 +4519,7 @@ $community = array_merge([
         payload.append('late_fee_grace_enabled', document.getElementById('lateFeeGraceEnabled').checked ? '1' : '0');
         payload.append('late_fee_grace_days', document.getElementById('lateFeeGraceDays').value);
         payload.append('late_fee_categories', JSON.stringify(categories));
+        payload.append('late_fee_on_extraordinary', document.getElementById('lateFeeOnExtraordinary').checked ? '1' : '0');
 
         fetch('<?= site_url('admin/configuracion/late-fee-config') ?>', {
             method: 'POST',
@@ -4674,6 +4675,17 @@ $community = array_merge([
                             <?php if (empty($financial_categories['income'])): ?>
                                 <div class="text-muted small p-2">No hay categorías configuradas.</div>
                             <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <!-- Extraordinary Fees Toggle -->
+                    <div class="mb-4 d-flex align-items-center justify-content-between" style="padding: 1rem; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff;">
+                        <div>
+                            <label class="form-label fw-bold mb-0" style="color: #0f172a;">Aplicar Mora a Cuotas Extraordinarias</label>
+                            <div class="small text-muted mt-1">Permite generar recargos automáticos sobre cuotas extraordinarias vencidas, independientemente de su categoría.</div>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" id="lateFeeOnExtraordinary" style="width: 2.5em; height: 1.25em; cursor: pointer;" <?= !empty($community['late_fee_on_extraordinary']) ? 'checked' : '' ?>>
                         </div>
                     </div>
 
