@@ -2117,7 +2117,7 @@ $formatDateEs = function($dateStr) {
                         `;
                         thumb.addEventListener('click', () => window.open(imgUrl, '_blank'));
                     } else {
-                        thumb.innerHTML = `<img src="${imgUrl}" alt="Comprobante" /><span class="pd-filename">${cleanAtt}</span>`;
+                        thumb.innerHTML = `<img src="${imgUrl}" alt="Comprobante" /><span class="pd-filename">${filename}</span>`;
                         thumb.addEventListener('click', () => openLightbox(imgUrl));
                     }
 

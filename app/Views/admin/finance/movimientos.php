@@ -1809,8 +1809,13 @@
                     attachments.forEach(att => {
                         const fileExt = att.split('.').pop().toLowerCase();
                         const isPdf = fileExt === 'pdf';
-                        const cleanAtt = att.replace('financial/', '');
-                        const attUrl = '<?= base_url('media/image/financial/') ?>' + cleanAtt;
+                        const filename = att.split('/').pop() || att;
+                        let attUrl;
+                        if (att.startsWith('payments/') || att.startsWith('financial/')) {
+                            attUrl = '<?= base_url('media/image/') ?>' + att;
+                        } else {
+                            attUrl = '<?= base_url('media/image/financial/') ?>' + att;
+                        }
 
                         const thumb = document.createElement('div');
                         thumb.className = 'pd-thumb';
@@ -1822,11 +1827,11 @@
                                 <div style="height:80px; display:flex; align-items:center; justify-content:center; background:#f8fafc;">
                                     <i class="bi bi-file-earmark-pdf" style="font-size:2.5rem; color:#ef4444;"></i>
                                 </div>
-                                <span class="pd-filename">${cleanAtt}</span>
+                                <span class="pd-filename">${filename}</span>
                             `;
                             thumb.addEventListener('click', () => window.open(attUrl, '_blank'));
                         } else {
-                            thumb.innerHTML = `<img src="${attUrl}" alt="Comprobante" /><span class="pd-filename">${cleanAtt}</span>`;
+                            thumb.innerHTML = `<img src="${attUrl}" alt="Comprobante" /><span class="pd-filename">${filename}</span>`;
                             thumb.addEventListener('click', () => openLightboxImg(attUrl));
                         }
                         adjuntosContainer.appendChild(thumb);
