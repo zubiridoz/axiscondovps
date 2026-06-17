@@ -118,7 +118,6 @@ class ApplyLateFees extends BaseCommand
             if ($moraCatId > 0) {
                 $builder->where('ft.category_id !=', $moraCatId);
             }
-            $builder->where('ft.source !=', 'auto');
             
             // Filtro de cuotas extraordinarias
             if (empty($condo['late_fee_on_extraordinary'])) {
