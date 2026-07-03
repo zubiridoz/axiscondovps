@@ -687,21 +687,24 @@ class UnitController extends BaseController
                         // 1. Determinar section_id
                         $sectionId = null;
                         if (isset($data[3]) && !empty(trim((string)$data[3]))) {
-                            $sName = strtolower(trim((string)$data[3]));
+                            $sNameRaw = trim((string)$data[3]);
+                            $sName = strtolower($sNameRaw);
                             if (isset($sectionMap[$sName])) {
                                 $sectionId = $sectionMap[$sName];
+                            } else {
+                                // Crear sección si no existe
+                                $newSectionId = $sectionModel->insert([
+                                    'condominium_id' => $condoId,
+                                    'name' => $sNameRaw
+                                ]);
+                                $sectionMap[$sName] = $newSectionId;
+                                $sectionId = $newSectionId;
                             }
                         }
 
-                        // 2. Comprobar si existe localmente (Búsqueda limpia)
+                        // 2. Comprobar si existe localmente (Búsqueda limpia por unit_number para permitir actualización)
                         $unitModel->builder()->resetQuery();
                         $unitModel->where('unit_number', $unitNumber);
-                        
-                        if ($sectionId === null) {
-                            $unitModel->where('section_id IS NULL', null, false);
-                        } else {
-                            $unitModel->where('section_id', $sectionId);
-                        }
                         
                         // El condominium_id se aplica solo vía BaseTenantModel (applyTenantScope)
                         $existing = $unitModel->first();
