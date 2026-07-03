@@ -544,10 +544,13 @@ class UnitController extends BaseController
                                        ->join('sections', 'sections.id = units.section_id', 'left')
                                        ->where('units.condominium_id', $condoId)
                                        ->findAll();
-        $existingUnitNumbers = array_column($existingUnitsArray, 'unit_number');
+        // Use composite key (unit_number + section) to handle duplicate names across sections
+        $existingUnitsKeys = [];
         $existingUnitsMap = [];
         foreach ($existingUnitsArray as $eu) {
-            $existingUnitsMap[$eu['unit_number']] = $eu;
+            $compositeKey = strtoupper(trim($eu['unit_number'])) . '|' . strtolower(trim($eu['section_name'] ?? ''));
+            $existingUnitsMap[$compositeKey] = $eu;
+            $existingUnitsKeys[] = $compositeKey;
         }
 
         // Section map for name resolution
@@ -557,7 +560,7 @@ class UnitController extends BaseController
             $sectionMap[strtolower(trim($s['name']))] = $s;
         }
 
-        $csvUnitNumbers = [];
+        $csvUnitKeys = [];
         $stats = [
             'new' => 0,
             'updated' => 0,
@@ -573,13 +576,14 @@ class UnitController extends BaseController
             while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
                 if(!empty(trim($data[0] ?? ''))){
                     $unitNumber = trim($data[0]);
-                    $csvUnitNumbers[] = $unitNumber;
+                    $csvSection = (string)($data[3] ?? '');
+                    $compositeKey = strtoupper($unitNumber) . '|' . strtolower(trim($csvSection));
+                    $csvUnitKeys[] = $compositeKey;
                     
                     $csvFee = (string)($data[1] ?? '0');
                     $csvIndiviso = (string)($data[2] ?? '');
-                    $csvSection = (string)($data[3] ?? '');
                     
-                    $isNew = !isset($existingUnitsMap[$unitNumber]);
+                    $isNew = !isset($existingUnitsMap[$compositeKey]);
                     $changes = [];
                     
                     if ($isNew) {
@@ -587,7 +591,7 @@ class UnitController extends BaseController
                         $status = 'new';
                     } else {
                         // Compare fields to detect changes
-                        $existing = $existingUnitsMap[$unitNumber];
+                        $existing = $existingUnitsMap[$compositeKey];
                         
                         $oldFee = (float)$existing['maintenance_fee'];
                         $newFee = (float)str_replace(['$', ','], '', $csvFee);
@@ -631,13 +635,13 @@ class UnitController extends BaseController
 
         // Units to remove
         $removedUnitsCount = 0;
-        foreach ($existingUnitNumbers as $eu) {
-            if (!in_array($eu, $csvUnitNumbers)) {
+        foreach ($existingUnitsKeys as $ek) {
+            if (!in_array($ek, $csvUnitKeys)) {
                 $removedUnitsCount++;
             }
         }
         $stats['removed'] = $removedUnitsCount;
-        $stats['total_after'] = count($csvUnitNumbers);
+        $stats['total_after'] = count($csvUnitKeys);
 
         return $this->response->setJSON([
             'status' => 200, 
@@ -702,9 +706,14 @@ class UnitController extends BaseController
                             }
                         }
 
-                        // 2. Comprobar si existe localmente (Búsqueda limpia por unit_number para permitir actualización)
+                        // 2. Comprobar si existe localmente (Búsqueda por unit_number + section_id para manejar nombres duplicados en diferentes secciones)
                         $unitModel->builder()->resetQuery();
                         $unitModel->where('unit_number', $unitNumber);
+                        if ($sectionId !== null) {
+                            $unitModel->where('section_id', $sectionId);
+                        } else {
+                            $unitModel->where('section_id IS NULL', null, false);
+                        }
                         
                         // El condominium_id se aplica solo vía BaseTenantModel (applyTenantScope)
                         $existing = $unitModel->first();
