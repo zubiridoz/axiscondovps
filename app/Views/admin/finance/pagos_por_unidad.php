@@ -932,13 +932,13 @@
                     <?php if (!empty($records)): ?>
                         <?php foreach ($records as $rec): ?>
                             <tr onclick="window.location.href='<?= base_url('admin/finanzas/pagos-por-unidad/' . $rec['hash_id']) ?>'"
-                                data-search="<?= esc(strtolower($rec['unidad'])) ?>" data-estado="<?= esc($rec['estado']) ?>">
+                                data-search="<?= esc(strtolower($rec['unidad_label'])) ?>" data-estado="<?= esc($rec['estado']) ?>">
                                 <td onclick="event.stopPropagation()"><input type="checkbox"></td>
                                 <td>
                                     <a class="unit-link"
                                         href="<?= base_url('admin/finanzas/pagos-por-unidad/' . $rec['hash_id']) ?>"
                                         onclick="event.stopPropagation()">
-                                        <?= esc($rec['unidad']) ?>
+                                        <?= esc($rec['unidad_label']) ?>
                                     </a>
                                 </td>
                                 <td>MX$<?= number_format($rec['cuota'], 2) ?></td>
@@ -981,7 +981,7 @@
                                         <i class="bi bi-currency-dollar"></i>
                                     </span>
                                     <span class="act-btn act-mora" data-tooltip="Aplicar Cargo por Mora"
-                                        onclick="openMoraModal('<?= $rec['hash_id'] ?>', '<?= esc($rec['unidad']) ?>')">
+                                        onclick="openMoraModal('<?= $rec['hash_id'] ?>', '<?= esc($rec['unidad_label']) ?>')">
                                         <i class="bi bi-exclamation-circle"></i>
                                     </span>
                                     <span class="act-btn act-download" data-tooltip="Descargar Estado de Cuenta"

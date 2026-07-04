@@ -732,15 +732,33 @@ class FinanceController extends BaseController
                 $existingExpenses[] = $c['name'];
         }
 
+        $iconMap = [
+            'Cuota de Mantenimiento' => 'bi-cash-coin',
+            'Cargo por Mora' => 'bi-exclamation-triangle',
+            'Cargo de Reserva de Amenidad' => 'bi-calendar-check',
+            'Multa de Amenidad' => 'bi-shield-exclamation',
+            'Multa de Estacionamiento' => 'bi-car-front',
+            'Multa de Mascota' => 'bi-bug',
+            'Multa por Infracción' => 'bi-exclamation-octagon',
+            'Otro Ingreso' => 'bi-plus-circle',
+            'Salario del Personal' => 'bi-person-badge',
+            'Mantenimiento y Reparaciones' => 'bi-tools',
+            'Servicios Públicos' => 'bi-lightning',
+            'Suministros' => 'bi-box-seam',
+            'Servicios Profesionales' => 'bi-briefcase',
+            'Seguro' => 'bi-shield-check',
+            'Otro Gasto' => 'bi-dash-circle'
+        ];
+
         $newCategories = [];
         foreach ($mandatoryIncomes as $name) {
             if (!in_array($name, $existingIncomes)) {
-                $newCategories[] = ['name' => $name, 'type' => 'income', 'condominium_id' => $demoCondo['id'], 'is_system' => 1];
+                $newCategories[] = ['name' => $name, 'type' => 'income', 'condominium_id' => $demoCondo['id'], 'is_system' => 1, 'icon' => $iconMap[$name] ?? 'bi-tag'];
             }
         }
         foreach ($mandatoryExpenses as $name) {
             if (!in_array($name, $existingExpenses)) {
-                $newCategories[] = ['name' => $name, 'type' => 'expense', 'condominium_id' => $demoCondo['id'], 'is_system' => 1];
+                $newCategories[] = ['name' => $name, 'type' => 'expense', 'condominium_id' => $demoCondo['id'], 'is_system' => 1, 'icon' => $iconMap[$name] ?? 'bi-tag'];
             }
         }
 
@@ -1694,18 +1712,24 @@ class FinanceController extends BaseController
 
         $today = date('Y-m-d');
         $units = $db->table('units u')
-            ->select('u.id, u.hash_id, u.unit_number, u.maintenance_fee, u.initial_balance,
+            ->select('u.id, u.hash_id, u.unit_number, u.maintenance_fee, u.initial_balance, sections.name as section_name,
                       IFNULL(SUM(CASE WHEN ft.type = "charge" AND ft.status != "cancelled" AND ft.deleted_at IS NULL THEN ft.amount ELSE 0 END), 0) AS total_charges,
                       IFNULL(SUM(CASE WHEN ft.type = "charge" AND ft.status != "cancelled" AND ft.due_date < "' . $today . '" AND ft.deleted_at IS NULL THEN ft.amount ELSE 0 END), 0) AS total_overdue_charges,
                       IFNULL(SUM(CASE WHEN ft.type = "credit" AND ft.status = "paid" AND ft.deleted_at IS NULL THEN ft.amount ELSE 0 END), 0) AS total_paid')
+            ->join('sections', 'sections.id = u.section_id', 'left')
             ->join('financial_transactions ft', 'ft.unit_id = u.id AND ft.condominium_id = u.condominium_id', 'left')
             ->where('u.condominium_id', $demoCondo['id'])
             ->groupBy('u.id')
             ->orderBy('u.id', 'ASC')
             ->get()->getResultArray();
 
+        $unitNumCounts = array_count_values(array_column($units, 'unit_number'));
+
         $records = [];
         foreach ($units as $u) {
+            $showSection = ($unitNumCounts[$u['unit_number']] ?? 0) > 1 && !empty($u['section_name']);
+            $displayLabel = $u['unit_number'] . ($showSection ? ' — ' . $u['section_name'] : '');
+            
             $saldo = ((float) $u['initial_balance'] + (float) $u['total_charges']) - (float) $u['total_paid'];
             $saldoVencido = ((float) $u['initial_balance'] + (float) $u['total_overdue_charges']) - (float) $u['total_paid'];
             if ($saldo < -0.01) {
@@ -1723,6 +1747,7 @@ class FinanceController extends BaseController
                 'id' => $u['id'],
                 'hash_id' => $u['hash_id'] ?? $u['id'],
                 'unidad' => $u['unit_number'],
+                'unidad_label' => $displayLabel,
                 'cuota' => (float) $u['maintenance_fee'],
                 'vencimiento' => date('j M', strtotime($dueDateStr)),
                 'estado' => $estado,
@@ -4966,4 +4991,3 @@ class FinanceController extends BaseController
         ]);
     }
 }
-

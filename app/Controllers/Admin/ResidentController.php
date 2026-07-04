@@ -40,9 +40,10 @@ class ResidentController extends BaseController
         $threshold = date('Y-m-d H:i:s', strtotime('-15 minutes'));
         
         // Para considerar "Activo" solo si entraron a la app recientemente (últimos 15 minutos), filtramos por last_used_at
-        $builder->select('users.id as user_id, users.first_name, users.last_name, users.phone, users.email, users.avatar, residents.id as p_resident_id, residents.type as res_type, units.unit_number as unit_name, (SELECT COUNT(id) FROM personal_access_tokens WHERE user_id = users.id AND last_used_at >= ' . $db->escape($threshold) . ') as token_count');
+        $builder->select('users.id as user_id, users.first_name, users.last_name, users.phone, users.email, users.avatar, residents.id as p_resident_id, residents.type as res_type, units.unit_number as unit_name, sections.name as section_name, (SELECT COUNT(id) FROM personal_access_tokens WHERE user_id = users.id AND last_used_at >= ' . $db->escape($threshold) . ') as token_count');
         $builder->join('users', 'users.id = residents.user_id');
         $builder->join('units', 'units.id = residents.unit_id');
+        $builder->join('sections', 'sections.id = units.section_id', 'left');
         // Residents table directly validates they exist and are assigned to a unit. We assume these are 'accepted'.
         $builder->where('residents.condominium_id', (int)$demoCondo['id']);
         $builder->where('users.status', 'active');
@@ -55,6 +56,17 @@ class ResidentController extends BaseController
             'owner' => 0,
             'tenant' => 0
         ];
+
+        // Fetch all units to determine duplicate unit numbers
+        $unitModel = new \App\Models\Tenant\UnitModel();
+        $units = $unitModel->select('units.*, sections.name as section_name')
+                           ->join('sections', 'sections.id = units.section_id', 'left')
+                           ->where('units.condominium_id', (int)$demoCondo['id'])
+                           ->orderBy('sections.name', 'ASC')
+                           ->orderBy('units.unit_number', 'ASC')
+                           ->findAll();
+        
+        $unitNumCounts = array_count_values(array_column($units, 'unit_number'));
 
         $groupedResidents = [];
         foreach($residents as $r) {
@@ -81,9 +93,13 @@ class ResidentController extends BaseController
                 $groupedResidents[$userId]['type'] = 'owner';
             }
             
-            $unitName = $r['unit_name'] ?? 'No asignada';
-            if ($unitName !== 'No asignada' && $unitName !== null && !in_array($unitName, $groupedResidents[$userId]['unit_names'])) {
-                $groupedResidents[$userId]['unit_names'][] = $unitName;
+            $baseUnitName = $r['unit_name'] ?? 'No asignada';
+            if ($baseUnitName !== 'No asignada' && $baseUnitName !== null) {
+                $showSection = ($unitNumCounts[$baseUnitName] ?? 0) > 1 && !empty($r['section_name']);
+                $unitDisplay = $baseUnitName . ($showSection ? ' — ' . $r['section_name'] : '');
+                if (!in_array($unitDisplay, $groupedResidents[$userId]['unit_names'])) {
+                    $groupedResidents[$userId]['unit_names'][] = $unitDisplay;
+                }
             }
         }
 
@@ -107,13 +123,7 @@ class ResidentController extends BaseController
             }
         }
 
-        $unitModel = new \App\Models\Tenant\UnitModel();
-        $units = $unitModel->select('units.*, sections.name as section_name')
-                           ->join('sections', 'sections.id = units.section_id', 'left')
-                           ->where('units.condominium_id', (int)$demoCondo['id'])
-                           ->orderBy('sections.name', 'ASC')
-                           ->orderBy('units.unit_number', 'ASC')
-                           ->findAll();
+        // Unidades ya cargadas arriba
 
         return view('admin/residents', [
             'residents' => $mappedResidents,
@@ -252,17 +262,29 @@ class ResidentController extends BaseController
                                          
         // Mapeamos a la vista
         $invitations = [];
+        $units = [];
         $unitModel = new \App\Models\Tenant\UnitModel();
+        
+        if ($condoId > 0) {
+            $units = $unitModel->select('units.*, sections.name as section_name')
+                               ->join('sections', 'sections.id = units.section_id', 'left')
+                               ->where('units.condominium_id', $condoId)
+                               ->orderBy('sections.name', 'ASC')
+                               ->orderBy('units.unit_number', 'ASC')
+                               ->findAll();
+        }
+        
+        $unitNumCounts = array_count_values(array_column($units, 'unit_number'));
         $unitsCache = [];
+        foreach ($units as $u) {
+            $showSection = ($unitNumCounts[$u['unit_number']] ?? 0) > 1 && !empty($u['section_name']);
+            $unitsCache[$u['id']] = $u['unit_number'] . ($showSection ? ' — ' . $u['section_name'] : '');
+        }
         
         foreach ($dbInvitations as $inv) {
             $unitName = '-';
             if (!empty($inv['unit_id'])) {
-                if (!isset($unitsCache[$inv['unit_id']])) {
-                    $u = $unitModel->find($inv['unit_id']);
-                    $unitsCache[$inv['unit_id']] = $u ? $u['unit_number'] : '-';
-                }
-                $unitName = $unitsCache[$inv['unit_id']];
+                $unitName = $unitsCache[$inv['unit_id']] ?? '-';
             }
             
             // Traducir status visualmente
@@ -293,16 +315,7 @@ class ResidentController extends BaseController
         }
 
         // Misma lógica para el modal de invitación (Unidades)
-        $units = [];
-        if ($condoId > 0) {
-            $unitModel = new \App\Models\Tenant\UnitModel();
-            $units = $unitModel->select('units.*, sections.name as section_name')
-                               ->join('sections', 'sections.id = units.section_id', 'left')
-                               ->where('units.condominium_id', $condoId)
-                               ->orderBy('sections.name', 'ASC')
-                               ->orderBy('units.unit_number', 'ASC')
-                               ->findAll();
-        }
+        // Ya se cargaron las unidades en $units arriba
 
         return view('admin/invitations', [
             'invitations' => $invitations,
