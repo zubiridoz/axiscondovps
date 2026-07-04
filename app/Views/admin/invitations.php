@@ -1240,6 +1240,15 @@
         // -------------------------
         let currentInvId = null;
         const availableUnits = <?= json_encode($units) ?>;
+        
+        // Pre-compute which unit_numbers are duplicated to show section
+        const unitNumCounts = {};
+        availableUnits.forEach(u => { unitNumCounts[u.unit_number] = (unitNumCounts[u.unit_number] || 0) + 1; });
+        availableUnits.forEach(u => {
+            const showSection = (unitNumCounts[u.unit_number] > 1) && u.section_name;
+            u._label = u.unit_number + (showSection ? ' — ' + u.section_name : '');
+        });
+        
         const invEditUnitsList = document.getElementById('inv-edit-units-list');
         const invEditUnitStr = document.getElementById('inv-edit-unit-str');
         const invEditUnitPickerPanel = document.querySelector('#inv-edit-unit-picker .unit-picker-panel');
@@ -1258,12 +1267,12 @@
                 invEditUnitsList.appendChild(optNone);
             }
 
-            const filtered = availableUnits.filter(u => u.unit_number.toLowerCase().includes(search.toLowerCase()));
+            const filtered = availableUnits.filter(u => u._label.toLowerCase().includes(search.toLowerCase()));
             filtered.forEach(u => {
                 let opt = document.createElement('div');
                 opt.className = 'unit-picker-opt';
-                opt.innerHTML = u.unit_number;
-                opt.onclick = () => { selectUnitEdit(u.id, u.unit_number); };
+                opt.innerHTML = u._label;
+                opt.onclick = () => { selectUnitEdit(u.id, u._label); };
                 invEditUnitsList.appendChild(opt);
             });
         }

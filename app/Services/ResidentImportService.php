@@ -13,24 +13,49 @@ class ResidentImportService
         if (($handle = fopen($filePath, "r")) !== FALSE) {
             $headerFound = false;
             
+            // Default mapping assuming old template without section
+            $map = [
+                'name' => 0,
+                'email' => 1,
+                'phone' => 2,
+                'unit' => 3,
+                'section' => -1,
+                'role' => 4
+            ];
+            
             while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
                 // Skip empty lines and comment lines starting with #
                 if (empty($data) || (isset($data[0]) && strpos(trim($data[0]), '#') === 0)) {
                     continue;
                 }
-                // Skip header row (nombre, correo, ...)
+                
+                // Detect header row
                 if (!$headerFound && isset($data[0]) && strtolower(trim($data[0])) === 'nombre') {
                     $headerFound = true;
+                    // Detect column indexes dynamically
+                    foreach ($data as $index => $colName) {
+                        $col = strtolower(trim($colName));
+                        $col = str_replace(['ó','ó'], 'o', $col); // remove basic accents
+                        
+                        if ($col === 'nombre') $map['name'] = $index;
+                        if ($col === 'correo') $map['email'] = $index;
+                        if ($col === 'telefono' || $col === 'teléfono') $map['phone'] = $index;
+                        if ($col === 'unidad') $map['unit'] = $index;
+                        if ($col === 'seccion' || $col === 'sección') $map['section'] = $index;
+                        if ($col === 'rol') $map['role'] = $index;
+                    }
                     continue;
                 }
-                // Data rows: nombre, correo, telefono, unidad, rol
+                
+                // Data rows
                 if (count($data) >= 2) {
                     $rows[] = [
-                        'name' => trim($data[0]),
-                        'email' => strtolower(trim($data[1])),
-                        'phone' => isset($data[2]) ? trim($data[2]) : '',
-                        'unit' => isset($data[3]) ? trim($data[3]) : '',
-                        'role' => isset($data[4]) ? $this->mapRole(trim($data[4])) : 'owner'
+                        'name'    => isset($data[$map['name']]) ? trim($data[$map['name']]) : '',
+                        'email'   => isset($data[$map['email']]) ? strtolower(trim($data[$map['email']])) : '',
+                        'phone'   => isset($data[$map['phone']]) ? trim($data[$map['phone']]) : '',
+                        'unit'    => isset($data[$map['unit']]) ? trim($data[$map['unit']]) : '',
+                        'section' => ($map['section'] >= 0 && isset($data[$map['section']])) ? trim($data[$map['section']]) : '',
+                        'role'    => isset($data[$map['role']]) ? $this->mapRole(trim($data[$map['role']])) : 'owner'
                     ];
                 }
             }

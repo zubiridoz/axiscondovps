@@ -50,9 +50,16 @@
                                                 <input type="text" class="form-control form-control-sm unit-search-field ps-4 bg-light border-0" placeholder="Buscar" autocomplete="off">
                                             </div>
                                             <div class="unit-picker-options">
-                                                <?php foreach ($units as $u): ?>
-                                                    <div class="unit-picker-opt" data-value="<?= $u['id'] ?>" data-text="<?= esc($u['unit_number']) ?>" data-idx="manual">
-                                                        <i class="bi bi-check me-2 invisible"></i> <?= esc($u['unit_number']) ?>
+                                                <?php
+                                                // Detect duplicate unit_numbers to show section
+                                                $unitNumCounts = array_count_values(array_column($units, 'unit_number'));
+                                                ?>
+                                                <?php foreach ($units as $u):
+                                                    $showSection = ($unitNumCounts[$u['unit_number']] ?? 0) > 1 && !empty($u['section_name']);
+                                                    $displayLabel = esc($u['unit_number']) . ($showSection ? ' — ' . esc($u['section_name']) : '');
+                                                ?>
+                                                    <div class="unit-picker-opt" data-value="<?= $u['id'] ?>" data-text="<?= $displayLabel ?>" data-idx="manual">
+                                                        <i class="bi bi-check me-2 invisible"></i> <?= $displayLabel ?>
                                                     </div>
                                                 <?php endforeach; ?>
                                             </div>
@@ -232,9 +239,16 @@
         let currentStep = 1;
 
         // Available units from the condominium (populated from PHP)
+        <?php
+        // Pre-compute which unit_numbers are duplicated
+        $unitNumCounts = array_count_values(array_column($units, 'unit_number'));
+        ?>
         const availableUnits = [
-            <?php foreach ($units as $u): ?>
-            { id: <?= $u['id'] ?>, number: '<?= esc($u['unit_number']) ?>' },
+            <?php foreach ($units as $u):
+                $showSection = ($unitNumCounts[$u['unit_number']] ?? 0) > 1 && !empty($u['section_name']);
+                $displayLabel = $u['unit_number'] . ($showSection ? ' — ' . $u['section_name'] : '');
+            ?>
+            { id: <?= $u['id'] ?>, number: '<?= esc($u['unit_number']) ?>', label: '<?= esc($displayLabel) ?>', section_name: '<?= esc($u['section_name'] ?? '') ?>' },
             <?php endforeach; ?>
         ];
 
@@ -302,7 +316,7 @@
         document.addEventListener('click', function(e) {
             if (e.target && (e.target.id === 'btn-download-csv-template' || e.target.closest('#btn-download-csv-template'))) {
                 e.preventDefault();
-                const csvContent = '# Completa los datos de cada residente,,,,# Roles: owner,tenant,admin\nnombre,correo,telefono,unidad,rol\n';
+                const csvContent = '# Completa los datos de cada residente,,,,,# Roles: owner,tenant,admin\nnombre,correo,telefono,unidad,seccion,rol\n';
                 const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -407,10 +421,21 @@
 
                 // Find matching unit
                 const csvUnit = (row.unit || '').trim().toLowerCase();
-                const matchedUnit = availableUnits.find(u => u.number.toLowerCase() === csvUnit);
-                const unitDisplay = matchedUnit ? matchedUnit.number : 'Sin asignar';
-                // Sync back if matched
-                if (matchedUnit) row.unit = matchedUnit.number;
+                const csvSection = (row.section || '').trim().toLowerCase();
+                
+                const matchedUnit = availableUnits.find(u => {
+                    if (csvSection && u.section_name) {
+                        return u.number.toLowerCase() === csvUnit && u.section_name.toLowerCase() === csvSection;
+                    }
+                    return u.number.toLowerCase() === csvUnit;
+                });
+                
+                const unitDisplay = matchedUnit ? matchedUnit.label : 'Sin asignar';
+                // Sync back if matched (use unit_id for precise assignment on server)
+                if (matchedUnit) {
+                    row.unit_id = matchedUnit.id;
+                    row.unit = matchedUnit.number; // keep for display purposes if needed
+                }
 
                 tr.innerHTML = `
                     <td><div class="custom-checkbox-wrapper"><input type="checkbox" class="row-checkbox" checked data-idx="${i}"></div></td>
@@ -451,9 +476,9 @@
                                         <i class="bi bi-check me-2 ${!matchedUnit ? '' : 'invisible'}"></i> Sin asignar
                                     </div>
                                     ${availableUnits.map(u => {
-                                        const sel = (matchedUnit && matchedUnit.number === u.number) ? 'selected fw-bold bg-light' : '';
-                                        const v = (matchedUnit && matchedUnit.number === u.number) ? '' : 'invisible';
-                                        return '<div class="unit-picker-opt ' + sel + '" data-value="' + escHtml(u.number) + '" data-idx="' + i + '"><i class="bi bi-check me-2 ' + v + '"></i>' + escHtml(u.number) + '</div>';
+                                        const sel = (matchedUnit && matchedUnit.id === u.id) ? 'selected fw-bold bg-light' : '';
+                                        const v = (matchedUnit && matchedUnit.id === u.id) ? '' : 'invisible';
+                                        return '<div class="unit-picker-opt ' + sel + '" data-value="' + escHtml(u.id) + '" data-text="' + escHtml(u.label) + '" data-idx="' + i + '"><i class="bi bi-check me-2 ' + v + '"></i>' + escHtml(u.label) + '</div>';
                                     }).join('')}
                                 </div>
                             </div>
@@ -621,7 +646,10 @@
                     const hiddenInput = document.getElementById('invite-unit-id');
                     if (hiddenInput) hiddenInput.value = value;
                 } else if (!isNaN(idx) && importData[idx]) {
-                    importData[idx].unit = value;
+                    importData[idx].unit_id = value;
+                    // Find the unit to keep row.unit sync just in case
+                    const pickedU = availableUnits.find(u => u.id == value);
+                    if (pickedU) importData[idx].unit = pickedU.number;
                 }
 
                 // Close panel

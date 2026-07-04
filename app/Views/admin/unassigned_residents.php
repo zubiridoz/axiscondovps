@@ -496,10 +496,17 @@
                                     autocomplete="off">
                             </div>
                             <div class="unit-picker-options" id="assign-options-list">
-                                <?php foreach ($units as $u): ?>
+                                <?php
+                                // Detect duplicate unit_numbers to show section
+                                $unitNumCounts = array_count_values(array_column($units, 'unit_number'));
+                                ?>
+                                <?php foreach ($units as $u):
+                                    $showSection = ($unitNumCounts[$u['unit_number']] ?? 0) > 1 && !empty($u['section_name']);
+                                    $displayLabel = esc($u['unit_number']) . ($showSection ? ' — ' . esc($u['section_name']) : '');
+                                ?>
                                     <div class="unit-picker-option" data-value="<?= $u['id'] ?>"
-                                        data-text="<?= esc($u['unit_number']) ?>">
-                                        <?= esc($u['unit_number']) ?>
+                                        data-text="<?= $displayLabel ?>">
+                                        <?= $displayLabel ?>
                                     </div>
                                 <?php endforeach; ?>
                             </div>

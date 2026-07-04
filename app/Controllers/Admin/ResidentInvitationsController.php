@@ -134,8 +134,21 @@ class ResidentInvitationsController extends BaseController
 
         foreach ($rows as $index => $row) {
             $unitId = null;
-            if (!empty($row['unit'])) {
-                $u = $unitModel->where('condominium_id', $condoId)->where('unit_number', $row['unit'])->first();
+            if (!empty($row['unit_id'])) {
+                $unitId = $row['unit_id'];
+            } elseif (!empty($row['unit'])) {
+                $unitModel->builder()->resetQuery();
+                $unitModel->where('condominium_id', $condoId)->where('unit_number', $row['unit']);
+                
+                if (!empty($row['section'])) {
+                    $sectionModel = new \App\Models\Tenant\SectionModel();
+                    $sec = $sectionModel->where('condominium_id', $condoId)->where('name', $row['section'])->first();
+                    if ($sec) {
+                        $unitModel->where('section_id', $sec['id']);
+                    }
+                }
+                
+                $u = $unitModel->first();
                 if ($u) {
                     $unitId = $u['id'];
                 }

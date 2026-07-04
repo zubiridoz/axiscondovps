@@ -1379,6 +1379,15 @@
         // MANAGE RESIDENT UNIT PICKER LOGIC
         // ==========================================
         const availableUnits = <?= json_encode(array_values($units ?? [])) ?>;
+        
+        // Pre-compute which unit_numbers are duplicated to show section
+        const unitNumCounts = {};
+        availableUnits.forEach(u => { unitNumCounts[u.unit_number] = (unitNumCounts[u.unit_number] || 0) + 1; });
+        availableUnits.forEach(u => {
+            const showSection = (unitNumCounts[u.unit_number] > 1) && u.section_name;
+            u._label = u.unit_number + (showSection ? ' — ' + u.section_name : '');
+        });
+        
         const pickerTrigger = document.querySelector('#mr-add-unit-picker .unit-picker-trigger');
         const pickerPanel = document.querySelector('#mr-add-unit-picker .unit-picker-panel');
         const pickerSearch = document.querySelector('#mr-add-unit-picker .unit-search-field');
@@ -1389,7 +1398,7 @@
         function renderPickerOptions(filter = '') {
             pickerOptions.innerHTML = '';
             const lowerFilter = filter.toLowerCase();
-            const filtered = availableUnits.filter(u => u.unit_number.toLowerCase().includes(lowerFilter));
+            const filtered = availableUnits.filter(u => u._label.toLowerCase().includes(lowerFilter));
 
             if (filtered.length === 0) {
                 pickerOptions.innerHTML = '<div class="text-muted p-2 small text-center">No units found</div>';
@@ -1399,7 +1408,7 @@
             filtered.forEach(u => {
                 const div = document.createElement('div');
                 div.className = 'unit-picker-opt';
-                div.textContent = u.unit_number;
+                div.textContent = u._label;
                 div.onclick = function (e) {
                     e.stopPropagation();
                     selectUnit(u.id);

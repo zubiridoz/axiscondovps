@@ -108,8 +108,11 @@ class ResidentController extends BaseController
         }
 
         $unitModel = new \App\Models\Tenant\UnitModel();
-        $units = $unitModel->where('condominium_id', (int)$demoCondo['id'])
-                           ->orderBy('unit_number', 'ASC')
+        $units = $unitModel->select('units.*, sections.name as section_name')
+                           ->join('sections', 'sections.id = units.section_id', 'left')
+                           ->where('units.condominium_id', (int)$demoCondo['id'])
+                           ->orderBy('sections.name', 'ASC')
+                           ->orderBy('units.unit_number', 'ASC')
                            ->findAll();
 
         return view('admin/residents', [
@@ -293,8 +296,11 @@ class ResidentController extends BaseController
         $units = [];
         if ($condoId > 0) {
             $unitModel = new \App\Models\Tenant\UnitModel();
-            $units = $unitModel->where('condominium_id', $condoId)
-                               ->orderBy('unit_number', 'ASC')
+            $units = $unitModel->select('units.*, sections.name as section_name')
+                               ->join('sections', 'sections.id = units.section_id', 'left')
+                               ->where('units.condominium_id', $condoId)
+                               ->orderBy('sections.name', 'ASC')
+                               ->orderBy('units.unit_number', 'ASC')
                                ->findAll();
         }
 
@@ -337,8 +343,11 @@ class ResidentController extends BaseController
         $unitModel = new \App\Models\Tenant\UnitModel();
         $units = [];
         if ($condoId > 0) {
-            $units = $unitModel->where('condominium_id', $condoId)
-                               ->orderBy('unit_number', 'ASC')
+            $units = $unitModel->select('units.*, sections.name as section_name')
+                               ->join('sections', 'sections.id = units.section_id', 'left')
+                               ->where('units.condominium_id', $condoId)
+                               ->orderBy('sections.name', 'ASC')
+                               ->orderBy('units.unit_number', 'ASC')
                                ->findAll();
         }
 
