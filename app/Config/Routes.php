@@ -23,6 +23,14 @@ $routes->get('auth/select-tenant', 'Auth\AuthController::selectTenant');
 $routes->get('auth/select-tenant/(:num)', 'Auth\AuthController::selectTenant/$1');
 
 // ==========================================
+// PASSWORD RESET (Solo Administradores)
+// ==========================================
+$routes->get('password/forgot', 'Auth\PasswordResetController::showForgotForm');
+$routes->post('password/forgot', 'Auth\PasswordResetController::sendResetLink', ['filter' => 'csrf']);
+$routes->get('password/reset/([a-f0-9]{64})', 'Auth\PasswordResetController::showResetForm/$1');
+$routes->post('password/reset', 'Auth\PasswordResetController::resetPassword', ['filter' => 'csrf']);
+
+// ==========================================
 // PANELES WEB (SaaS OWNER & TENANT ADMINS)
 // ==========================================
 $routes->group('superadmin', ['namespace' => 'App\Controllers\SuperAdmin', 'filter' => ['auth', 'superadmin']], static function ($routes) {

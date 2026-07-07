@@ -219,7 +219,7 @@
                     </div>
 
                     <div class="d-flex justify-content-end mb-4">
-                        <a href="#" class="forgot-link">¿Olvidaste tu Contraseña?</a>
+                        <a href="<?= base_url('password/forgot') ?>" class="forgot-link">¿Olvidaste tu Contraseña?</a>
                     </div>
 
                     <button type="submit" class="btn btn-primary">Iniciar Sesión</button>

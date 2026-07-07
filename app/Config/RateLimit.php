@@ -31,5 +31,6 @@ class RateLimit extends BaseConfig
         'uploads'  => [10, 60],   // 10 por minuto (basado en UserID)
         'password' => [5,  60],   // 5 por minuto (basado en UserID)
         'qr'       => [180, 60],  // 180 por minuto (basado en UserID del guardia)
+        'password_reset' => [3, 900], // 3 por 15 min (basado en IP, recuperación de contraseña)
     ];
 }

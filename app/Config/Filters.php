@@ -120,5 +120,6 @@ class Filters extends BaseFilters
             'api/v1/security/entries', 
             'api/v1/security/qr-entry'
         ]],
+        'ratelimit:password_reset' => ['before' => ['password/forgot']],
     ];
 }
