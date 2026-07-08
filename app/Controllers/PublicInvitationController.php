@@ -72,12 +72,6 @@ class PublicInvitationController extends BaseController
      */
     public function register($token)
     {
-        $password = $this->request->getPost('password');
-        
-        if (empty($password) || strlen($password) < 6) {
-            return redirect()->back()->with('error', 'La contraseña debe tener al menos 6 caracteres.');
-        }
-
         $db = \Config\Database::connect();
         $invitation = $db->table('resident_invitations')
                          ->where('token', $token)
@@ -95,20 +89,26 @@ class PublicInvitationController extends BaseController
             $invitationModel->update($invitation['id'], ['invitation_status' => 'expired']);
             return redirect()->to('/login')->with('error', 'Invitación inválida o expirada.');
         }
+
+        $userModel = new UserModel();
+        // Check if user already exists
+        $existingUser = $userModel->where('email', $invitation['email'])->first();
+
+        $password = $this->request->getPost('password');
+        
+        // Solo obligar contraseña si el usuario NO existe
+        if (!$existingUser) {
+            if (empty($password) || strlen($password) < 6) {
+                return redirect()->back()->with('error', 'La contraseña debe tener al menos 6 caracteres.');
+            }
+        }
         
         try {
             $db->transStart();
 
             // 1. Crear usuario en Core
-            $userModel = new UserModel();
-            
-            // Check if user already exists
-            $existingUser = $userModel->where('email', $invitation['email'])->first();
-            
             if ($existingUser) {
                 $userId = $existingUser['id'];
-                // Podríamos actualizar el password si así se desea, o simplemente asumir que ya sabe su clave.
-                // $userModel->update($userId, ['password_hash' => password_hash($password, PASSWORD_DEFAULT)]);
             } else {
                 // Get first/last name from string loosely
                 $nameParts = explode(' ', $invitation['name'], 2);
@@ -198,14 +198,6 @@ class PublicInvitationController extends BaseController
             return $this->response->setJSON(['success' => false, 'message' => 'El código de invitación es requerido.'])->setStatusCode(400);
         }
 
-        if (empty($password) || strlen($password) < 6) {
-            return $this->response->setJSON(['success' => false, 'message' => 'La contraseña debe tener al menos 6 caracteres.'])->setStatusCode(400);
-        }
-
-        if ($password !== $passwordConfirm) {
-            return $this->response->setJSON(['success' => false, 'message' => 'Las contraseñas no coinciden.'])->setStatusCode(400);
-        }
-
         $db = \Config\Database::connect();
         $invitation = $db->table('resident_invitations')
                          ->where('token', $token)
@@ -224,13 +216,25 @@ class PublicInvitationController extends BaseController
             return $this->response->setJSON(['success' => false, 'message' => 'La invitación ha expirado. Solicita una nueva a tu administrador.'])->setStatusCode(410);
         }
 
+        // Comprobar si el usuario ya existe
+        $userModel = new UserModel();
+        $existingUser = $userModel->where('email', $invitation['email'])->first();
+
+        // Solo obligar contraseña si el usuario NO existe
+        if (!$existingUser) {
+            if (empty($password) || strlen($password) < 6) {
+                return $this->response->setJSON(['success' => false, 'message' => 'La contraseña debe tener al menos 6 caracteres.'])->setStatusCode(400);
+            }
+
+            if ($password !== $passwordConfirm) {
+                return $this->response->setJSON(['success' => false, 'message' => 'Las contraseñas no coinciden.'])->setStatusCode(400);
+            }
+        }
+
         try {
             $db->transStart();
 
             // 1. Crear o encontrar usuario
-            $userModel = new UserModel();
-            $existingUser = $userModel->where('email', $invitation['email'])->first();
-
             if ($existingUser) {
                 $userId = $existingUser['id'];
             } else {
@@ -304,5 +308,42 @@ class PublicInvitationController extends BaseController
             log_message('error', $e->getMessage());
             return $this->response->setJSON(['success' => false, 'message' => 'Error inesperado: ' . $e->getMessage()])->setStatusCode(500);
         }
+    }
+
+    /**
+     * GET /api/v1/invitation/validate
+     * Valida el token de invitación y verifica si el correo ya está registrado en el sistema.
+     */
+    public function validateToken()
+    {
+        $token = $this->request->getGet('token');
+        if (empty($token)) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Token requerido.'])->setStatusCode(400);
+        }
+
+        $db = \Config\Database::connect();
+        $invitation = $db->table('resident_invitations')
+                         ->where('token', $token)
+                         ->where('invitation_status', 'pending')
+                         ->get()->getRowArray();
+
+        if (!$invitation) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Invitación no válida o expirada.'])->setStatusCode(404);
+        }
+
+        // Obtener nombre del condominio
+        $condo = $db->table('condominiums')->select('name')->where('id', $invitation['condominium_id'])->get()->getRowArray();
+        $condoName = $condo ? $condo['name'] : 'Mi Condominio';
+
+        // Verificar si el usuario ya tiene cuenta registrada
+        $userModel = new UserModel();
+        $existingUser = $userModel->where('email', $invitation['email'])->first();
+
+        return $this->response->setJSON([
+            'success'          => true,
+            'email'            => $invitation['email'],
+            'user_exists'      => $existingUser ? true : false,
+            'condominium_name' => $condoName
+        ]);
     }
 }

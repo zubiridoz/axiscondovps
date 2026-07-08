@@ -364,21 +364,117 @@
     });
 
     document.getElementById('residentRegisterForm').addEventListener('submit', function (e) {
-        const pass = document.getElementById('res_password').value;
-        const confirm = document.getElementById('res_confirm_password').value;
-        if (pass !== confirm) { e.preventDefault(); alert('Las contraseñas no coinciden.'); }
-        else if (pass.length < 6) { e.preventDefault(); alert('La contraseña debe tener al menos 6 caracteres.'); }
+        const passField = document.getElementById('res_password');
+        if (passField.required) {
+            const pass = passField.value;
+            const confirm = document.getElementById('res_confirm_password').value;
+            if (pass !== confirm) { e.preventDefault(); alert('Las contraseñas no coinciden.'); }
+            else if (pass.length < 6) { e.preventDefault(); alert('La contraseña debe tener al menos 6 caracteres.'); }
+        }
     });
+
+    async function checkInvitationStatus(token) {
+        if (!token) return;
+        try {
+            const response = await fetch('<?= base_url("api/v1/invitation/validate") ?>?token=' + encodeURIComponent(token));
+            if (!response.ok) {
+                resetResidentForm();
+                return;
+            }
+            const data = await response.json();
+            if (data.success && data.user_exists) {
+                // 1. Mostrar advertencia/mensaje de vinculación
+                let alertContainer = document.getElementById('resident-linking-alert');
+                if (!alertContainer) {
+                    alertContainer = document.createElement('div');
+                    alertContainer.id = 'resident-linking-alert';
+                    alertContainer.className = 'alert alert-info border-0 mb-3';
+                    alertContainer.style.fontSize = '0.85rem';
+                    alertContainer.style.borderRadius = '10px';
+                    
+                    const formTitle = document.querySelector('#form-resident-register-section .form-title');
+                    formTitle.parentNode.insertBefore(alertContainer, formTitle.nextSibling.nextSibling);
+                }
+                alertContainer.innerHTML = `
+                    <i class="bi bi-info-circle-fill me-2"></i>
+                    <strong>¡Hola!</strong> Detectamos que tu correo <strong>${data.email}</strong> ya tiene una cuenta registrada en AxisCondo.<br><br>
+                    Al continuar, también se te vinculará a <strong>${data.condominium_name}</strong> usando la <strong>misma contraseña que ya tienes configurada</strong>.
+                `;
+                alertContainer.style.display = 'block';
+
+                // 2. Ocultar contraseñas
+                const passField = document.getElementById('res_password');
+                const confirmField = document.getElementById('res_confirm_password');
+                
+                if (passField) {
+                    passField.closest('.mb-3').style.display = 'none';
+                    passField.required = false;
+                }
+                if (confirmField) {
+                    confirmField.closest('.mb-4').style.display = 'none';
+                    confirmField.required = false;
+                }
+
+                // 3. Cambiar texto del botón
+                const btn = document.querySelector('#residentRegisterForm .btn-resident-submit');
+                if (btn) {
+                    btn.innerHTML = '<i class="bi bi-link-45deg me-2"></i> Vincular Cuenta e Ingresar';
+                }
+            } else {
+                resetResidentForm();
+            }
+        } catch (err) {
+            console.error("Fallo al validar token:", err);
+        }
+    }
+
+    function resetResidentForm() {
+        const alertContainer = document.getElementById('resident-linking-alert');
+        if (alertContainer) {
+            alertContainer.style.display = 'none';
+        }
+        const passField = document.getElementById('res_password');
+        const confirmField = document.getElementById('res_confirm_password');
+        
+        if (passField) {
+            passField.closest('.mb-3').style.display = 'block';
+            passField.required = true;
+        }
+        if (confirmField) {
+            confirmField.closest('.mb-4').style.display = 'block';
+            confirmField.required = true;
+        }
+        const btn = document.querySelector('#residentRegisterForm .btn-resident-submit');
+        if (btn) {
+            btn.innerHTML = '<i class="bi bi-box-arrow-in-right me-2"></i> Activar Cuenta e Ingresar';
+        }
+    }
 
     // Abrir pestaña de residente automáticamente si viene desde el correo
     document.addEventListener("DOMContentLoaded", function() {
         const urlParams = new URLSearchParams(window.location.search);
         const token = urlParams.get('token');
+        
+        // Listeners para cambio de token manual
+        const tokenInput = document.querySelector('#residentRegisterForm input[name="token"]');
+        if (tokenInput) {
+            tokenInput.addEventListener('change', function() {
+                checkInvitationStatus(this.value.trim());
+            });
+            tokenInput.addEventListener('keyup', function() {
+                if (this.value.trim().length >= 8) {
+                    checkInvitationStatus(this.value.trim());
+                }
+            });
+        }
+
         if (token || window.location.hash === '#activar') {
             switchTab('resident-register');
             if (token) {
-                const tokenInput = document.querySelector('#residentRegisterForm input[name="token"]');
-                if (tokenInput) tokenInput.value = token;
+                if (tokenInput) {
+                    tokenInput.value = token;
+                    checkInvitationStatus(token.trim());
+                }
             }
         }
     });

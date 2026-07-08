@@ -406,17 +406,70 @@
 
         // Validación simple en el cliente
         document.querySelector('form').addEventListener('submit', function(e) {
-            const pass = document.getElementById('password').value;
-            const confirm = document.getElementById('confirm_password').value;
-            
-            if (pass !== confirm) {
-                e.preventDefault();
-                alert('Las contraseñas no coinciden.');
-            } else if (pass.length < 6) {
-                e.preventDefault();
-                alert('La contraseña debe tener al menos 6 caracteres.');
+            const passField = document.getElementById('password');
+            if (passField.required) {
+                const pass = passField.value;
+                const confirm = document.getElementById('confirm_password').value;
+                
+                if (pass !== confirm) {
+                    e.preventDefault();
+                    alert('Las contraseñas no coinciden.');
+                } else if (pass.length < 6) {
+                    e.preventDefault();
+                    alert('La contraseña debe tener al menos 6 caracteres.');
+                }
             }
         });
+
+        const inviteToken = "<?= esc($invitation['token']) ?>";
+        document.addEventListener("DOMContentLoaded", function() {
+            checkInvitationStatus(inviteToken);
+        });
+
+        async function checkInvitationStatus(token) {
+            if (!token) return;
+            try {
+                const response = await fetch('<?= base_url("api/v1/invitation/validate") ?>?token=' + encodeURIComponent(token));
+                if (!response.ok) return;
+                const data = await response.json();
+                if (data.success && data.user_exists) {
+                    // 1. Mostrar mensaje de vinculación
+                    let alertContainer = document.createElement('div');
+                    alertContainer.className = 'alert alert-info d-flex align-items-center mb-3';
+                    alertContainer.role = 'alert';
+                    alertContainer.style.fontSize = '0.85rem';
+                    alertContainer.innerHTML = `
+                        <div>
+                            <i class="bi bi-info-circle-fill me-2"></i>
+                            <strong>¡Hola!</strong> Detectamos que tu correo <strong>${data.email}</strong> ya tiene una cuenta registrada en AxisCondo.<br><br>
+                            Al continuar, también se te vinculará a <strong>${data.condominium_name}</strong> usando la <strong>misma contraseña que ya tienes configurada</strong>.
+                        </div>
+                    `;
+                    const formTitle = document.querySelector('.form-subtitle');
+                    formTitle.parentNode.insertBefore(alertContainer, formTitle.nextSibling);
+
+                    // 2. Ocultar contraseñas
+                    const passField = document.getElementById('password');
+                    const confirmField = document.getElementById('confirm_password');
+                    if (passField) {
+                        passField.closest('.mb-3').style.display = 'none';
+                        passField.required = false;
+                    }
+                    if (confirmField) {
+                        confirmField.closest('.mb-4').style.display = 'none';
+                        confirmField.required = false;
+                    }
+
+                    // 3. Cambiar botón
+                    const btn = document.getElementById('btnSubmit');
+                    if (btn) {
+                        btn.innerText = 'Vincular a Mi Cuenta';
+                    }
+                }
+            } catch (err) {
+                console.error("Error pre-validating token:", err);
+            }
+        }
     </script>
 </body>
 </html>
