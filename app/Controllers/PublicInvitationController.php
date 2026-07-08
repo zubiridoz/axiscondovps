@@ -169,6 +169,37 @@ class PublicInvitationController extends BaseController
                 'accepted_at' => Time::now()->format('Y-m-d H:i:s')
             ]);
 
+            // 3b. Notificar a los administradores del condominio
+            $unitNumber = 'Sin unidad';
+            if (!empty($invitation['unit_id'])) {
+                $unitRow = $db->table('units')->select('unit_number')->where('id', $invitation['unit_id'])->get()->getRowArray();
+                if ($unitRow) {
+                    $unitNumber = $unitRow['unit_number'];
+                }
+            }
+
+            $admins = $db->table('user_condominium_roles')
+                ->where('condominium_id', $invitation['condominium_id'])
+                ->where('role_id', 2) // ADMIN
+                ->get()
+                ->getResultArray();
+
+            foreach ($admins as $admin) {
+                try {
+                    \App\Models\Tenant\NotificationModel::notify(
+                        (int) $invitation['condominium_id'],
+                        (int) $admin['user_id'],
+                        'resident_joined',
+                        'Residente Registrado',
+                        "{$invitation['name']} se ha registrado en la unidad {$unitNumber}.",
+                        [],
+                        false
+                    );
+                } catch (\Throwable $e) {
+                    log_message('error', "Error al notificar admin {$admin['user_id']}: " . $e->getMessage());
+                }
+            }
+
             $db->transComplete();
 
             if ($db->transStatus() === false) {
@@ -290,6 +321,37 @@ class PublicInvitationController extends BaseController
                 'invitation_status' => 'accepted',
                 'accepted_at' => Time::now()->format('Y-m-d H:i:s')
             ]);
+
+            // 4b. Notificar a los administradores del condominio
+            $unitNumber = 'Sin unidad';
+            if (!empty($invitation['unit_id'])) {
+                $unitRow = $db->table('units')->select('unit_number')->where('id', $invitation['unit_id'])->get()->getRowArray();
+                if ($unitRow) {
+                    $unitNumber = $unitRow['unit_number'];
+                }
+            }
+
+            $admins = $db->table('user_condominium_roles')
+                ->where('condominium_id', $invitation['condominium_id'])
+                ->where('role_id', 2) // ADMIN
+                ->get()
+                ->getResultArray();
+
+            foreach ($admins as $admin) {
+                try {
+                    \App\Models\Tenant\NotificationModel::notify(
+                        (int) $invitation['condominium_id'],
+                        (int) $admin['user_id'],
+                        'resident_joined',
+                        'Residente Registrado',
+                        "{$invitation['name']} se ha registrado en la unidad {$unitNumber}.",
+                        [],
+                        false
+                    );
+                } catch (\Throwable $e) {
+                    log_message('error', "Error al notificar admin {$admin['user_id']}: " . $e->getMessage());
+                }
+            }
 
             $db->transComplete();
 

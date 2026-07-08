@@ -1126,6 +1126,43 @@
                 .then(res => res.json())
                 .then(data => {
                     if (data.status === 'success') {
+                        // Detectar si hay nuevas notificaciones no leídas para mostrarlas como toast
+                        if (data.notifications && data.notifications.length > 0) {
+                            const lastNotifiedId = parseInt(localStorage.getItem('last_notified_notification_id') || '0');
+                            let maxId = lastNotifiedId;
+                            let newNotifications = [];
+
+                            data.notifications.forEach(n => {
+                                const nId = parseInt(n.id);
+                                if (nId > lastNotifiedId && !n.read_at) {
+                                    newNotifications.push(n);
+                                }
+                                if (nId > maxId) {
+                                    maxId = nId;
+                                }
+                            });
+
+                            if (newNotifications.length > 0) {
+                                localStorage.setItem('last_notified_notification_id', maxId.toString());
+                                
+                                // Mostrar toasts en cascada para las nuevas notificaciones
+                                newNotifications.slice(0, 3).forEach((n, idx) => {
+                                    setTimeout(() => {
+                                        Swal.fire({
+                                            toast: true,
+                                            position: 'top-end',
+                                            icon: 'info',
+                                            title: n.title,
+                                            text: n.body,
+                                            showConfirmButton: false,
+                                            timer: 5000,
+                                            timerProgressBar: true
+                                        });
+                                    }, idx * 600); // Pequeño retraso para que no se superpongan todas juntas
+                                });
+                            }
+                        }
+
                         globalNotifications = data.notifications;
                         updateNotificationBadges(data.unread_count, data.total_count);
                         renderNotifications();
@@ -1150,11 +1187,8 @@
                 else inBadge.classList.add('d-none');
             }
             if (subTitle) {
-                subTitle.textContent = `${total} total, ${unread} no leídas`;
+                subTitle.textContent = `Tienes ${unread} notificaciones sin leer`;
             }
-
-            const selAll = document.querySelector('#notif-modal-filter option[value="all"]');
-            if (selAll) selAll.textContent = `Todas ${total}`;
         }
 
         function filterNotifications(query) {
@@ -1164,12 +1198,9 @@
 
         function renderNotifications() {
             const container = document.getElementById('notifications-list-container');
-            const filterType = document.getElementById('notif-modal-filter').value;
-
             if (!container) return;
 
             const filtered = globalNotifications.filter(n => {
-                if (filterType === 'unread' && n.read) return false;
                 if (globalNotificationsFilterSearch !== '') {
                     return (n.title.toLowerCase().includes(globalNotificationsFilterSearch) ||
                         n.body.toLowerCase().includes(globalNotificationsFilterSearch));
@@ -1178,64 +1209,58 @@
             });
 
             if (filtered.length === 0) {
-                container.innerHTML = `<div class="p-5 text-center text-muted" style="font-size: 0.85rem;"><i class="bi bi-box-seam fs-2 mb-2 d-block"></i>No se encontraron notificaciones.</div>`;
+                container.innerHTML = `
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-bell-slash" style="font-size: 2.5rem;"></i>
+                        <p class="mt-2 mb-0">No se encontraron notificaciones</p>
+                    </div>
+                `;
                 return;
             }
 
-            let html = '';
-            filtered.forEach(n => {
-                const isUnread = !n.read;
-                const bgClass = isUnread ? 'bg-primary' : '';
-                const bgLight = isUnread ? 'style="background-color: #f0f9ff;"' : 'style="background-color: #ffffff;"';
-                const dotHtml = isUnread ? `<div style="width: 6px; height: 6px; background-color: #ef4444; border-radius: 50%; margin-right: 6px;"></div>` : '';
+            container.innerHTML = filtered.map(n => {
+                let iconClass = 'bi-bell-fill';
+                let iconColor = 'text-primary bg-primary-subtle';
 
-                // Determinar ícono según el tipo
-                let iconHtml = '<i class="bi bi-bell text-primary fs-5"></i>';
-                if (n.type === 'payment_status' || n.title.includes('Comprobante')) {
-                    iconHtml = '<i class="bi bi-file-earmark-text text-success fs-5"></i>';
-                } else if (n.type === 'reservation' || n.type === 'amenidad' || n.title.includes('Reserva')) {
-                    iconHtml = '<i class="bi bi-calendar-check text-info fs-5"></i>';
-                } else if (n.type === 'poll_activity' || n.title.includes('voto') || n.title.includes('encuesta')) {
-                    iconHtml = '<i class="bi bi-bar-chart-line text-primary fs-5"></i>';
-                } else if (n.type === 'ticket' || n.title.includes('Reporte') || n.title.includes('Ticket')) {
-                    iconHtml = '<i class="bi bi-exclamation-circle text-danger fs-5"></i>';
-                } else if (n.type === 'calendar_event_new' || n.type === 'calendar_event' || n.title.includes('evento') || n.title.includes('calendario')) {
-                    iconHtml = '<i class="bi bi-calendar-event text-primary fs-5"></i>';
-                } else if (n.type === 'announcement_comment' || n.title.includes('comentario')) {
-                    iconHtml = '<i class="bi bi-chat-left-text text-primary fs-5"></i>';
+                if (n.type === 'amenidad' || n.type === 'booking') {
+                    iconClass = 'bi-calendar-event-fill';
+                    iconColor = 'text-success bg-success-subtle';
+                } else if (n.type === 'payment' || n.type === 'payment_status') {
+                    iconClass = 'bi-credit-card-fill';
+                    iconColor = 'text-warning bg-warning-subtle';
+                } else if (n.type === 'resident_joined') {
+                    iconClass = 'bi-person-fill-check';
+                    iconColor = 'text-info bg-info-subtle';
                 }
 
                 let wrapperStart = n.action_url ? `<a href="${n.action_url}" class="text-decoration-none notification-link" style="display: block; transition: background-color 0.2s;">` : `<div style="display: block;">`;
                 let wrapperEnd = n.action_url ? `</a>` : `</div>`;
 
-                // Efecto hover mejorado si es clickeable
                 let itemClasses = "notification-item d-flex p-3 border-bottom";
-                if (n.action_url) itemClasses += " hover-bg-light";
+                if (!n.read_at) {
+                    itemClasses += " bg-light-blue";
+                }
 
-                html += `
-                ${wrapperStart}
-                <div class="${itemClasses}" ${bgLight}>
-                    <div style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: white; border-radius: 8px; border: 1px solid #e2e8f0;">
-                         ${iconHtml}
-                    </div>
-                    <div class="ms-3 flex-grow-1">
-                        <div class="d-flex align-items-center mb-1">
-                            ${dotHtml}
-                            <h6 class="mb-0 fw-bold text-dark" style="font-size: 0.9rem;">${n.title}</h6>
-                            <span class="ms-2 text-muted" style="font-size: 0.75rem;">${n.time_ago}</span>
+                return `
+                    ${wrapperStart}
+                        <div class="${itemClasses}">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center p-2 me-3 ${iconColor}" style="width: 40px; height: 40px; flex-shrink: 0;">
+                                <i class="bi ${iconClass}"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1 text-dark" style="font-size: 0.9rem; font-weight: 600;">${n.title}</h6>
+                                <p class="mb-1 text-mutedSmall" style="font-size: 0.8rem; line-height: 1.4;">${n.body}</p>
+                                <small class="text-muted" style="font-size: 0.75rem;">${n.created_at}</small>
+                            </div>
                         </div>
-                        <p class="mb-0 text-secondary lh-sm" style="font-size: 0.85rem;">${n.body}</p>
-                    </div>
-                </div>
-                ${wrapperEnd}`;
-            });
-            container.innerHTML = html;
+                    ${wrapperEnd}
+                `;
+            }).join('');
         }
 
         function openNotificationsModal() {
             var myModal = new bootstrap.Modal(document.getElementById('globalNotificationsModal'));
             myModal.show();
-            // Cargar on open
             loadGlobalNotifications();
         }
 
@@ -1259,9 +1284,10 @@
                 });
         }
 
-        // Cargar en segundo plano inicialmente
+        // Cargar en segundo plano inicialmente y activar polling cada 30 segundos
         document.addEventListener('DOMContentLoaded', function () {
             loadGlobalNotifications();
+            setInterval(loadGlobalNotifications, 30000);
         });
 
         // ── Condo Selector Toggle ──
