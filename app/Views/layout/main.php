@@ -1151,12 +1151,21 @@
                                         Swal.fire({
                                             toast: true,
                                             position: 'top-end',
-                                            icon: 'info',
+                                            icon: n.type === 'payment_status' ? 'success' : 'info',
                                             title: n.title,
                                             text: n.body,
                                             showConfirmButton: false,
-                                            timer: 5000,
-                                            timerProgressBar: true
+                                            timer: 8000,
+                                            timerProgressBar: true,
+                                            didOpen: (toast) => {
+                                                if (n.action_url) {
+                                                    toast.style.cursor = 'pointer';
+                                                    toast.addEventListener('click', (e) => {
+                                                        if (e.target.closest('.swal2-close')) return;
+                                                        window.location.href = n.action_url;
+                                                    });
+                                                }
+                                            }
                                         });
                                     }, idx * 600); // Pequeño retraso para que no se superpongan todas juntas
                                 });
@@ -1288,6 +1297,27 @@
         document.addEventListener('DOMContentLoaded', function () {
             loadGlobalNotifications();
             setInterval(loadGlobalNotifications, 30000);
+
+            // Cerrar modal si el link pertenece a la misma página
+            document.addEventListener('click', function (e) {
+                const link = e.target.closest('.notification-link');
+                if (link) {
+                    const url = link.getAttribute('href');
+                    if (url) {
+                        const currentUrlNoHash = window.location.href.split('#')[0];
+                        const targetUrlNoHash = url.split('#')[0];
+                        if (currentUrlNoHash === targetUrlNoHash) {
+                            const modalEl = document.getElementById('globalNotificationsModal');
+                            if (modalEl) {
+                                const modalInstance = bootstrap.Modal.getInstance(modalEl);
+                                if (modalInstance) {
+                                    modalInstance.hide();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
         });
 
         // ── Condo Selector Toggle ──

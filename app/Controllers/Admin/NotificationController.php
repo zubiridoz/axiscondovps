@@ -40,8 +40,10 @@ class NotificationController extends BaseController
             
             foreach ($payments as $row) {
                 $condoId = $row['condominium_id'];
+                $condo = $db->table('condominiums')->where('id', $condoId)->get()->getRowArray();
+                $condoName = $condo ? $condo['name'] : 'Condominio';
                 $title = "Comprobante Subido";
-                $body = $row['first_name'] . " " . $row['last_name'] . " subió un comprobante de pago para " . $row['unit_number'];
+                $body = $row['first_name'] . " " . $row['last_name'] . " subió un comprobante de pago para " . $row['unit_number'] . " en " . $condoName;
                 
                 foreach ($admins as $admin) {
                     $adminId = $admin['id'];
@@ -101,7 +103,14 @@ class NotificationController extends BaseController
         $items = [];
         foreach ($notifs as $n) {
             $dataPayload = !empty($n['data']) ? json_decode($n['data'], true) : [];
-            $actionUrl = isset($dataPayload['action_url']) ? base_url($dataPayload['action_url']) : null;
+            $actionUrl = null;
+            if (isset($dataPayload['action_url'])) {
+                $parts = explode('#', $dataPayload['action_url']);
+                $actionUrl = base_url($parts[0]);
+                if (count($parts) > 1) {
+                    $actionUrl .= '#' . $parts[1];
+                }
+            }
             
             if (!$actionUrl) {
                 if ($n['type'] === 'poll_activity' || $n['type'] === 'poll_new' || $n['type'] === 'poll_finished') {
@@ -118,7 +127,10 @@ class NotificationController extends BaseController
                     $actionUrl = base_url('admin/anuncios');
                 }
             }
-            
+            if ($n['type'] === 'payment_status' && $actionUrl && strpos($actionUrl, 'pagos-por-unidad') !== false && strpos($actionUrl, '#') === false) {
+                $actionUrl .= '#comprobantes';
+            }
+
             $items[] = [
                 'id' => $n['id'],
                 'type' => $n['type'],

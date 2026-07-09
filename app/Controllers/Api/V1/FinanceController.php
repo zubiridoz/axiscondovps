@@ -261,6 +261,7 @@ class FinanceController extends ResourceController
         
         $condoModel = new CondominiumModel();
         $condominium = $condoModel->find($tenantId);
+        $condoName = $condominium ? $condominium['name'] : 'Condominio';
         $approvalMode = $condominium['payment_approval_mode'] ?? 'manual';
         
         $db = \Config\Database::connect();
@@ -377,8 +378,8 @@ class FinanceController extends ResourceController
                     $admin['id'], 
                     'payment_status', 
                     'Pago Auto Aprobado', 
-                    $uploaderName . ' subió un comprobante para ' . $unitName . ' y fue aprobado automáticamente.',
-                    ['action_url' => 'admin/finanzas/pagos-por-unidad/' . $unit['hash_id']]
+                    $uploaderName . ' subió un comprobante para ' . $unitName . ' en ' . $condoName . ' y fue aprobado automáticamente.',
+                    ['action_url' => 'admin/finanzas/pagos-por-unidad/' . $unit['hash_id'] . '#comprobantes']
                 );
             }
 
@@ -401,8 +402,8 @@ class FinanceController extends ResourceController
                     $admin['id'], 
                     'payment_status', 
                     'Comprobante Subido', 
-                    $uploaderName . ' subió un comprobante de pago para ' . $unitName,
-                    ['action_url' => 'admin/finanzas/pagos-por-unidad/' . $unit['hash_id']]
+                    $uploaderName . ' subió un comprobante de pago para ' . $unitName . ' en ' . $condoName,
+                    ['action_url' => 'admin/finanzas/pagos-por-unidad/' . $unit['hash_id'] . '#comprobantes']
                 );
             }
 
@@ -1124,6 +1125,10 @@ class FinanceController extends ResourceController
             ->where('ucr.condominium_id', $tenantId)
             ->whereIn('r.name', ['admin', 'super_admin'])
             ->get()->getResultArray();
+
+        $condo = $db->table('condominiums')->where('id', $tenantId)->get()->getRowArray();
+        $condoName = $condo ? $condo['name'] : 'Condominio';
+
         $unit = $db->table('units')->where('id', $resident['unit_id'])->get()->getRowArray();
         $unitName = $unit ? $unit['unit_number'] : 'Desconocida';
         
@@ -1136,8 +1141,8 @@ class FinanceController extends ResourceController
                 $admin['id'], 
                 'payment_status', 
                 'Comprobante Subido', 
-                $uploaderName . ' subió un comprobante de pago para ' . $unitName,
-                ['action_url' => 'admin/finanzas/pagos-por-unidad/' . $unit['hash_id']]
+                $uploaderName . ' subió un comprobante de pago para ' . $unitName . ' en ' . $condoName,
+                ['action_url' => 'admin/finanzas/pagos-por-unidad/' . $unit['hash_id'] . '#comprobantes']
             );
         }
 
