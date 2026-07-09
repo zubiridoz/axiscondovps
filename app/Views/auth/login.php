@@ -181,7 +181,7 @@
             <!-- Tabs -->
             <div class="auth-tabs">
                 <a href="javascript:void(0)" class="auth-tab active" id="tab-login" onclick="switchTab('login')">Iniciar Sesión</a>
-                <a href="javascript:void(0)" class="auth-tab" id="tab-register" onclick="switchTab('register')">Crear Cuenta</a>
+                <a href="javascript:void(0)" class="auth-tab" id="tab-register" onclick="switchTab('register')">Registrar Condominio</a>
             </div>
 
             <!-- ═══ FORMULARIO 1: INICIAR SESIÓN ═══ -->
@@ -236,10 +236,25 @@
                 </form>
             </div>
 
-            <!-- ═══ FORMULARIO 2: CREAR CUENTA ═══ -->
+            <!-- ═══ FORMULARIO 2: REGISTRAR CONDOMINIO ═══ -->
             <div id="form-register-section" style="display:none;">
-                <h2 class="form-title">Crear una Cuenta</h2>
-                <p class="form-subtitle">Únete a la comunidad AxisCondo hoy</p>
+                <h2 class="form-title">Registrar Condominio</h2>
+                <p class="form-subtitle" style="color:#d97706; font-weight:600; margin-bottom: 1rem;">Exclusivo para Administradores y Mesas Directivas</p>
+
+                <!-- Advertencia amarilla para Residentes -->
+                <div class="alert alert-warning border-0 mb-3" style="font-size:0.8rem; border-radius:10px; background-color:#fffbeb; color:#b45309; display:flex; align-items:start; gap:0.5rem; padding:0.75rem 1rem;">
+                    <i class="bi bi-exclamation-triangle-fill" style="font-size:1.1rem; color:#d97706; flex-shrink:0; margin-top:1px;"></i>
+                    <div>
+                        <strong>¿Eres residente?</strong> No crees tu cuenta aquí. El registro de residentes es únicamente a través de la invitación enviada por tu administrador a tu correo, verifica en tu spam.<br>
+                        <a href="javascript:void(0)" onclick="switchTab('resident-register')" class="alert-link text-decoration-underline" style="color:#b45309; font-weight:600;">Haz clic aquí para activar tu cuenta de residente</a>.
+                    </div>
+                </div>
+
+                <!-- Bloqueo rojo para Residentes -->
+                <div id="register-block-alert" class="alert alert-danger border-0 mb-3" style="display:none; font-size:0.8rem; border-radius:10px; background-color:#fef2f2; color:#b91c1c; align-items:start; gap:0.5rem; padding:0.75rem 1rem;">
+                    <i class="bi bi-slash-circle-fill" style="font-size:1.1rem; color:#ef4444; flex-shrink:0; margin-top:1px;"></i>
+                    <div id="register-block-message"></div>
+                </div>
 
                 <form action="<?= base_url('register') ?>" method="POST" id="registerForm">
                     <?= csrf_field() ?>
@@ -261,7 +276,7 @@
                         <label class="form-label">Correo Electrónico</label>
                         <div class="input-icon-wrap">
                             <i class="bi bi-envelope field-icon"></i>
-                            <input type="email" class="form-control" name="email" required>
+                            <input type="email" class="form-control" name="email" id="reg_email" required>
                         </div>
                     </div>
                     <div class="mb-3">
@@ -428,6 +443,36 @@
         }
     }
 
+    async function checkAdminRegistrationEmail(email) {
+        if (!email) return;
+        try {
+            const response = await fetch('<?= base_url("api/v1/invitation/check-resident-email") ?>?email=' + encodeURIComponent(email));
+            if (!response.ok) return;
+            const data = await response.json();
+            
+            const submitBtn = document.querySelector('#registerForm button[type="submit"]');
+            const alertDiv = document.getElementById('register-block-alert');
+            const alertMsg = document.getElementById('register-block-message');
+
+            if (data.has_invitation) {
+                if (submitBtn) submitBtn.disabled = true;
+                if (alertDiv && alertMsg) {
+                    alertMsg.innerHTML = `
+                        <strong>¡Alto! Registro Bloqueado.</strong> Detectamos que tu correo <strong>${email}</strong> tiene una invitación para registrarse como residente.<br><br>
+                        Este formulario es <strong>únicamente para crear nuevos condominios</strong> (Administradores). Para activar tu cuenta de residente, por favor 
+                        <a href="javascript:void(0)" onclick="switchTab('resident-register')" class="alert-link text-decoration-underline" style="color:#b91c1c; font-weight:700;">haz clic aquí para activar tu cuenta de residente</a>.
+                    `;
+                    alertDiv.style.display = 'flex';
+                }
+            } else {
+                if (submitBtn) submitBtn.disabled = false;
+                if (alertDiv) alertDiv.style.display = 'none';
+            }
+        } catch (err) {
+            console.error("Error al validar email de registro:", err);
+        }
+    }
+
     function resetResidentForm() {
         const alertContainer = document.getElementById('resident-linking-alert');
         if (alertContainer) {
@@ -464,6 +509,22 @@
             tokenInput.addEventListener('keyup', function() {
                 if (this.value.trim().length >= 8) {
                     checkInvitationStatus(this.value.trim());
+                }
+            });
+        }
+
+        // Listener para validar correo del registro de condominio
+        const regEmailInput = document.getElementById('reg_email');
+        if (regEmailInput) {
+            regEmailInput.addEventListener('change', function() {
+                checkAdminRegistrationEmail(this.value.trim());
+            });
+            regEmailInput.addEventListener('keyup', function() {
+                if (this.value.trim() === '') {
+                    const submitBtn = document.querySelector('#registerForm button[type="submit"]');
+                    const alertDiv = document.getElementById('register-block-alert');
+                    if (submitBtn) submitBtn.disabled = false;
+                    if (alertDiv) alertDiv.style.display = 'none';
                 }
             });
         }

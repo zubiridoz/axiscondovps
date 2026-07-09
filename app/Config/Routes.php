@@ -363,10 +363,12 @@ $routes->post('api/v1/login', 'Api\V1\ApiAuthController::login');
 $routes->post('api/v1/logout', 'Api\V1\ApiAuthController::logout');
 $routes->post('api/v1/register-invitation', 'PublicInvitationController::registerApi');
 $routes->get('api/v1/invitation/validate', 'PublicInvitationController::validateToken');
+$routes->get('api/v1/invitation/check-resident-email', 'PublicInvitationController::checkResidentEmail');
 $routes->options('api/v1/login', 'Api\V1\ApiAuthController::login'); // Preflight CORS
 $routes->options('api/v1/logout', 'Api\V1\ApiAuthController::logout');
 $routes->options('api/v1/register-invitation', 'PublicInvitationController::registerApi');
 $routes->options('api/v1/invitation/validate', 'PublicInvitationController::validateToken');
+$routes->options('api/v1/invitation/check-resident-email', 'PublicInvitationController::checkResidentEmail');
 
 // API Device Push Subscriptions (FCM Token Registration)
 $routes->group('api/v1/devices', ['namespace' => 'App\\Controllers\\Api\\V1', 'filter' => 'apiauth'], static function($routes) {

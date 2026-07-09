@@ -408,4 +408,40 @@ class PublicInvitationController extends BaseController
             'condominium_name' => $condoName
         ]);
     }
+
+    /**
+     * GET /api/v1/invitation/check-resident-email
+     * Comprueba si un correo tiene una invitación de residente o ya es residente.
+     */
+    public function checkResidentEmail()
+    {
+        $email = $this->request->getGet('email');
+        if (empty($email)) {
+            return $this->response->setJSON(['has_invitation' => false]);
+        }
+
+        $db = \Config\Database::connect();
+
+        // 1. Buscar si tiene invitación de residente
+        $invitation = $db->table('resident_invitations')
+                         ->where('email', $email)
+                         ->get()->getRowArray();
+
+        // 2. Buscar si ya es usuario registrado con rol de residente
+        $hasResidentRole = false;
+        $user = $db->table('users')->where('email', $email)->get()->getRowArray();
+        if ($user) {
+            $role = $db->table('user_condominium_roles')
+                       ->where('user_id', $user['id'])
+                       ->where('role_id', 3) // RESIDENT
+                       ->get()->getRowArray();
+            if ($role) {
+                $hasResidentRole = true;
+            }
+        }
+
+        return $this->response->setJSON([
+            'has_invitation' => ($invitation || $hasResidentRole) ? true : false
+        ]);
+    }
 }
