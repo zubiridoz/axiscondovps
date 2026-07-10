@@ -84,9 +84,14 @@ class AuthController extends BaseController
      */
     public function selectTenant($condominiumId = null)
     {
+        // Verificar que exista una sesión activa
+        if (!session()->get('is_logged_in') || !session()->get('user_id')) {
+            return redirect()->to('/login')->with('error', 'Por favor, inicie sesión.');
+        }
+
         if ($condominiumId === null || $condominiumId === '') {
             $loginService = new \App\Services\Auth\LoginService();
-            $fullTenants = $loginService->getUserTenants(session()->get('user_id'));
+            $fullTenants = $loginService->getUserTenants((int) session()->get('user_id'));
             
             // Placeholder: Vista de selección de condominios (Multi-tenant manual)
             return view('auth/select_tenant', ['tenants' => $fullTenants]);
