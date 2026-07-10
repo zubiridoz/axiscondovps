@@ -259,10 +259,24 @@ class OnboardingController extends BaseController
             // F. Crear categorías financieras base
             // ──────────────────────────────────────
             $baseCategories = [
-                ['name' => 'Cuota de Mantenimiento', 'type' => 'income', 'is_system' => 1],
-                ['name' => 'Cuota Extraordinaria',   'type' => 'income', 'is_system' => 1],
-                ['name' => 'Mora / Recargo',         'type' => 'income', 'is_system' => 1],
-                ['name' => 'Gastos Generales',       'type' => 'expense', 'is_system' => 1],
+                ['name' => 'Cuota de Mantenimiento',       'type' => 'income',  'is_system' => 1, 'icon' => 'bi-cash-coin'],
+                ['name' => 'Cuota Extraordinaria',         'type' => 'income',  'is_system' => 1, 'icon' => 'bi-tag'],
+                ['name' => 'Mora / Recargo',               'type' => 'income',  'is_system' => 1, 'icon' => 'bi-exclamation-circle'],
+                ['name' => 'Cargo por Mora',               'type' => 'income',  'is_system' => 1, 'icon' => 'bi-exclamation-triangle'],
+                ['name' => 'Cargo de Reserva de Amenidad', 'type' => 'income',  'is_system' => 1, 'icon' => 'bi-calendar-check'],
+                ['name' => 'Multa de Amenidad',            'type' => 'income',  'is_system' => 1, 'icon' => 'bi-shield-exclamation'],
+                ['name' => 'Multa de Estacionamiento',     'type' => 'income',  'is_system' => 1, 'icon' => 'bi-car-front'],
+                ['name' => 'Multa de Mascota',             'type' => 'income',  'is_system' => 1, 'icon' => 'bi-bug'],
+                ['name' => 'Multa por Infracción',         'type' => 'income',  'is_system' => 1, 'icon' => 'bi-exclamation-octagon'],
+                ['name' => 'Otro Ingreso',                 'type' => 'income',  'is_system' => 1, 'icon' => 'bi-plus-circle'],
+                ['name' => 'Gastos Generales',             'type' => 'expense', 'is_system' => 1, 'icon' => 'bi-wallet2'],
+                ['name' => 'Salario del Personal',         'type' => 'expense', 'is_system' => 1, 'icon' => 'bi-person-badge'],
+                ['name' => 'Mantenimiento y Reparaciones', 'type' => 'expense', 'is_system' => 1, 'icon' => 'bi-tools'],
+                ['name' => 'Servicios Públicos',           'type' => 'expense', 'is_system' => 1, 'icon' => 'bi-lightning'],
+                ['name' => 'Suministros',                  'type' => 'expense', 'is_system' => 1, 'icon' => 'bi-box-seam'],
+                ['name' => 'Servicios Profesionales',       'type' => 'expense', 'is_system' => 1, 'icon' => 'bi-briefcase'],
+                ['name' => 'Seguro',                       'type' => 'expense', 'is_system' => 1, 'icon' => 'bi-shield-check'],
+                ['name' => 'Otro Gasto',                   'type' => 'expense', 'is_system' => 1, 'icon' => 'bi-dash-circle'],
             ];
 
             foreach ($baseCategories as $cat) {
