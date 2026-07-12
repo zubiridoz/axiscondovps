@@ -349,6 +349,19 @@
         color: #854d0e;
     }
 
+    .badge-unit {
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.72rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        background: #e0f2fe;
+        color: #0369a1;
+        border: 1px solid #bae6fd;
+        text-transform: uppercase;
+    }
+
     .action-icons i {
         color: var(--fin-text-muted);
         cursor: pointer;
@@ -835,6 +848,7 @@
                         <th style="width: 40px;"><input type="checkbox" id="selectAllCheckbox"></th>
                         <th>Fecha <i class="bi bi-chevron-up ms-1" style="font-size:0.7rem;"></i></th>
                         <th style="min-width: 200px;">Descripción</th>
+                        <th>Referencia</th>
                         <th>Categoría</th>
                         <th>Monto</th>
                         <th>Estado</th>
@@ -846,12 +860,19 @@
                 <tbody id="tbody-lista">
                     <?php if (!empty($records)): ?>
                         <?php foreach ($records as $rec): ?>
-                            <tr class="mov-row" data-desc="<?= htmlspecialchars(strtolower($rec['descripcion'])) ?>"
+                            <tr class="mov-row" data-desc="<?= htmlspecialchars(strtolower($rec['descripcion'] . ' ' . ($rec['unidad'] && $rec['unidad'] !== 'Gasto / Ingreso General' ? 'unidad ' . $rec['unidad'] : ''))) ?>"
                                 data-type="<?= $rec['tipo'] ?>" data-cat="<?= htmlspecialchars($rec['categoria']) ?>">
                                 <td><input type="checkbox" class="row-checkbox" data-id="<?= esc($rec['id']) ?>"></td>
                                 <td><?= esc($rec['fecha']) ?></td>
                                 <td class="text-uppercase" style="font-size:0.8rem; font-weight:500;">
                                     <?= esc($rec['descripcion']) ?>
+                                </td>
+                                <td>
+                                    <?php if ($rec['tipo'] === 'ingreso' && $rec['unidad'] && $rec['unidad'] !== 'Gasto / Ingreso General'): ?>
+                                        <span class="badge-unit">Unidad <?= esc($rec['unidad']) ?></span>
+                                    <?php else: ?>
+                                        <span class="text-muted">—</span>
+                                    <?php endif; ?>
                                 </td>
                                 <td class="text-uppercase" style="font-size:0.75rem; color:#64748b;">
                                     <?= esc($rec['categoria']) ?>
@@ -896,7 +917,7 @@
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="7" class="text-center text-muted py-4" id="emptyRow">No se encontraron movimientos.
+                            <td colspan="8" class="text-center text-muted py-4" id="emptyRow">No se encontraron movimientos.
                             </td>
                         </tr>
                     <?php endif; ?>
@@ -911,7 +932,7 @@
                             <tr class="group-header mov-row-group" data-target="group-<?= $gidx ?>"
                                 data-cat="<?= htmlspecialchars($catName) ?>" data-type="<?= $group['tipo'] ?>">
                                 <td></td>
-                                <td colspan="3">
+                                <td colspan="4">
                                     <i class="bi bi-chevron-down group-icon me-2"
                                         style="font-size:0.8rem; transition: transform 0.2s;"></i>
                                     <span class="text-uppercase"><?= esc($catName) ?></span> <span
@@ -927,13 +948,20 @@
                             </tr>
                             <?php foreach ($group['records'] as $rec): ?>
                                 <tr class="group-child group-<?= $gidx ?> mov-row" style="background-color: #ffffff;"
-                                    data-desc="<?= htmlspecialchars(strtolower($rec['descripcion'])) ?>"
+                                    data-desc="<?= htmlspecialchars(strtolower($rec['descripcion'] . ' ' . ($rec['unidad'] && $rec['unidad'] !== 'Gasto / Ingreso General' ? 'unidad ' . $rec['unidad'] : ''))) ?>"
                                     data-type="<?= $rec['tipo'] ?>" data-cat="<?= htmlspecialchars($rec['categoria']) ?>">
                                     <td><input type="checkbox" class="row-checkbox" data-id="<?= esc($rec['id']) ?>"></td>
                                     <td class="ps-4 text-muted"><i
                                             class="bi bi-arrow-return-right me-2"></i><?= esc($rec['fecha']) ?></td>
                                     <td class="text-uppercase" style="font-size:0.8rem; font-weight:500;">
                                         <?= esc($rec['descripcion']) ?>
+                                    </td>
+                                    <td>
+                                        <?php if ($rec['tipo'] === 'ingreso' && $rec['unidad'] && $rec['unidad'] !== 'Gasto / Ingreso General'): ?>
+                                            <span class="badge-unit">Unidad <?= esc($rec['unidad']) ?></span>
+                                        <?php else: ?>
+                                            <span class="text-muted">—</span>
+                                        <?php endif; ?>
                                     </td>
                                     <td class="text-uppercase" style="font-size:0.75rem; color:#64748b;">
                                         <?= esc($rec['categoria']) ?>
@@ -976,7 +1004,7 @@
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="7" class="text-center text-muted py-4">No se encontraron movimientos.</td>
+                            <td colspan="8" class="text-center text-muted py-4">No se encontraron movimientos.</td>
                         </tr>
                     <?php endif; ?>
                 </tbody>

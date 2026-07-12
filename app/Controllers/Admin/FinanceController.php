@@ -4185,7 +4185,7 @@ class FinanceController extends BaseController
         $builder->join('units', 'units.id = ft.unit_id', 'left');
         $builder->join('financial_categories cats', 'cats.id = ft.category_id', 'left');
         $builder->where('ft.condominium_id', $condoId);
-        $builder->where('ft.source', 'manual');
+
         $builder->where('ft.status !=', 'cancelled');
         $builder->where('ft.type !=', 'charge'); // Solo Pagos y Gastos
         $m_int = (int)$m;
