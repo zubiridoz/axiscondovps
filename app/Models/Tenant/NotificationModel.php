@@ -24,6 +24,13 @@ class NotificationModel extends BaseTenantModel
      */
     public static function notify(int $condoId, int $userId, string $type, string $title, string $body, array $data = [], bool $sendPush = true): int
     {
+        $db = \Config\Database::connect();
+        $condoRow = $db->table('condominiums')->select('name')->where('id', $condoId)->get()->getRowArray();
+        $condoName = $condoRow ? $condoRow['name'] : '';
+        if ($condoName && strpos($title, '[' . $condoName . ']') === false) {
+            $title = '[' . $condoName . '] ' . $title;
+        }
+
         $model = new self();
         $id = $model->insert([
             'condominium_id' => $condoId,

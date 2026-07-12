@@ -193,7 +193,7 @@ class PublicInvitationController extends BaseController
                         'Residente Registrado',
                         "{$invitation['name']} se ha registrado en la unidad {$unitNumber}.",
                         [],
-                        false
+                        true
                     );
                 } catch (\Throwable $e) {
                     log_message('error', "Error al notificar admin {$admin['user_id']}: " . $e->getMessage());
@@ -346,7 +346,7 @@ class PublicInvitationController extends BaseController
                         'Residente Registrado',
                         "{$invitation['name']} se ha registrado en la unidad {$unitNumber}.",
                         [],
-                        false
+                        true
                     );
                 } catch (\Throwable $e) {
                     log_message('error', "Error al notificar admin {$admin['user_id']}: " . $e->getMessage());

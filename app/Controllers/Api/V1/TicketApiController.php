@@ -581,19 +581,15 @@ class TicketApiController extends ResourceController
                 ->get()
                 ->getResultArray();
 
-            $now = date('Y-m-d H:i:s');
             foreach ($admins as $admin) {
-                $db->table('notifications')->insert([
-                    'condominium_id' => $condoId,
-                    'user_id'        => $admin['id'],
-                    'type'           => 'ticket',
-                    'title'          => $title,
-                    'body'           => $body,
-                    'data'           => json_encode($extraData),
-                    'read_at'        => null,
-                    'created_at'     => $now,
-                    'updated_at'     => $now,
-                ]);
+                \App\Models\Tenant\NotificationModel::notify(
+                    $condoId,
+                    (int) $admin['id'],
+                    'ticket',
+                    $title,
+                    $body,
+                    $extraData
+                );
             }
         } catch (\Throwable $e) {
             log_message('error', '[TICKET_NOTIF] Admin notify failed: ' . $e->getMessage());
@@ -606,19 +602,14 @@ class TicketApiController extends ResourceController
     private function notifyResident(int $condoId, int $residentUserId, string $title, string $body, array $extraData = []): void
     {
         try {
-            $db = \Config\Database::connect();
-            $now = date('Y-m-d H:i:s');
-            $db->table('notifications')->insert([
-                'condominium_id' => $condoId,
-                'user_id'        => $residentUserId,
-                'type'           => 'ticket',
-                'title'          => $title,
-                'body'           => $body,
-                'data'           => json_encode($extraData),
-                'read_at'        => null,
-                'created_at'     => $now,
-                'updated_at'     => $now,
-            ]);
+            \App\Models\Tenant\NotificationModel::notify(
+                $condoId,
+                $residentUserId,
+                'ticket',
+                $title,
+                $body,
+                $extraData
+            );
         } catch (\Throwable $e) {
             log_message('error', '[TICKET_NOTIF] Resident notify failed: ' . $e->getMessage());
         }
