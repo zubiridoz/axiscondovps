@@ -961,6 +961,7 @@
                     <tbody>
                         <?php foreach ($residents as $res): ?>
                             <tr class="res-row" data-type="<?= $res['type'] ?>" data-user-id="<?= $res['user_id'] ?>"
+                                data-unit="<?= esc($res['unit_name'] ?? '') ?>"
                                 style="cursor: pointer;">
                                 <td>
                                     <div class="d-flex align-items-center">
@@ -1028,9 +1029,10 @@
             rows.forEach(row => {
                 const name = row.querySelector('.fw-bold').textContent.toLowerCase();
                 const email = row.querySelector('.text-secondary').textContent.toLowerCase();
+                const unit = row.getAttribute('data-unit') ? row.getAttribute('data-unit').toLowerCase() : '';
                 const type = row.getAttribute('data-type');
 
-                const matchesSearch = name.includes(searchTerm) || email.includes(searchTerm);
+                const matchesSearch = name.includes(searchTerm) || email.includes(searchTerm) || unit.includes(searchTerm);
                 const matchesFilter = currentFilter === 'all' || type === currentFilter;
 
                 if (matchesSearch && matchesFilter) {
