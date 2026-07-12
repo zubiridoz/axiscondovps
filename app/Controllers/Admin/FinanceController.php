@@ -1131,14 +1131,11 @@ class FinanceController extends BaseController
         // Obtener categorías para los filtros
         $categoriesRaw = $db->table('financial_categories')->where('condominium_id', $condoId)->get()->getResultArray();
 
-        $db->query("UPDATE financial_transactions SET source = 'auto' WHERE source = 'manual' AND description LIKE 'Cuota de Mantenimiento%' AND condominium_id = ?", [$condoId]);
-
         $builder = $db->table('financial_transactions ft');
         $builder->select('ft.*, units.unit_number, cats.name as category_name, cats.type as category_type');
         $builder->join('units', 'units.id = ft.unit_id', 'left');
         $builder->join('financial_categories cats', 'cats.id = ft.category_id', 'left');
         $builder->where('ft.condominium_id', $condoId);
-        $builder->where('ft.source', 'manual');
         $builder->where('ft.status !=', 'cancelled');
         $builder->where('ft.type !=', 'charge'); // Solo Pagos y Gastos
         $m_int = (int)$m;
