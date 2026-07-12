@@ -845,11 +845,23 @@
                             </ul>
                         </li>
 
+                        <?php
+                        $__accessTodayCount = 0;
+                        $__accessBadgeTenantId = \App\Services\TenantService::getInstance()->getTenantId();
+                        if ($__accessBadgeTenantId) {
+                            $__todayStart = date('Y-m-d 00:00:00');
+                            $__todayEnd = date('Y-m-d 23:59:59');
+                            $__accessTodayCount = (new \App\Models\Tenant\AccessLogModel())
+                                ->where('condominium_id', $__accessBadgeTenantId)
+                                ->where('type', 'entry')
+                                ->where('created_at >=', $__todayStart)
+                                ->where('created_at <=', $__todayEnd)
+                                ->countAllResults();
+                        }
+                        ?>
                         <li class="nav-item">
-                            <a href="<?= base_url('admin/seguridad') ?>"
-                                class="nav-link <?= (strpos(uri_string(), 'seguridad') !== false || strpos(uri_string(), 'security') !== false) ? 'active-main' : '' ?>">
-                                <i class="bi bi-shield-check"></i> Accesos
-                            </a>
+                            <a href="<?= base_url('admin/seguridad') ?>" class="nav-link d-flex align-items-center <?= (strpos(uri_string(), 'seguridad') !== false || strpos(uri_string(), 'security') !== false) ? 'active-main' : '' ?>"><span><i class="bi bi-shield-check"></i> Accesos</span><?php if ($__accessTodayCount > 0): ?><span class="badge bg-success rounded-pill ms-auto" style="font-size: 0.6rem;"><?= $__accessTodayCount ?></span><?php endif; ?></a>
+
                         </li>
 
                         <!-- Tickets Dropdown -->
