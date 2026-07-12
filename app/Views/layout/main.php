@@ -802,12 +802,17 @@
                         <!-- Residentes Dropdown -->
                         <?php
                         $__pendingInvCount = 0;
+                        $__activeResidentsCount = 0;
                         // We fetch the tenant ID locally here in case $__badgeTenantId is defined further down
                         $__menuTenantId = \App\Services\TenantService::getInstance()->getTenantId();
                         if ($__menuTenantId) {
                             $__pendingInvCount = (new \App\Models\Tenant\ResidentInvitationModel())
                                 ->where('condominium_id', $__menuTenantId)
                                 ->where('invitation_status', 'pending')
+                                ->countAllResults();
+                            $__activeResidentsCount = (new \App\Models\Tenant\ResidentModel())
+                                ->where('condominium_id', $__menuTenantId)
+                                ->where('is_active', 1)
                                 ->countAllResults();
                         }
                         ?>
@@ -823,9 +828,7 @@
                             </a>
                             <ul class="collapse <?= strpos(uri_string(), 'residentes') !== false ? 'show' : '' ?> submenu"
                                 id="residentesSub" data-bs-parent="#menu">
-                                <li><a href="<?= base_url('admin/residentes') ?>"
-                                        class="nav-link <?= uri_string() == 'admin/residentes' ? 'active' : '' ?>"><i
-                                            class="bi bi-circle"></i> Directorio</a>
+                                <li><a href="<?= base_url('admin/residentes') ?>" class="nav-link d-flex align-items-center <?= uri_string() == 'admin/residentes' ? 'active' : '' ?>"><span><i class="bi bi-circle"></i> Directorio</span><?php if ($__activeResidentsCount > 0): ?><span class="badge bg-success rounded-pill ms-auto" style="font-size: 0.6rem;"><?= $__activeResidentsCount ?></span><?php endif; ?></a>
                                 </li>
                                 <li><a href="<?= base_url('admin/residentes/por-asignar') ?>"
                                         class="nav-link <?= uri_string() == 'admin/residentes/por-asignar' ? 'active' : '' ?>"><i
