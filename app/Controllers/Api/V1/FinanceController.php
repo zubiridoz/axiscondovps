@@ -378,7 +378,7 @@ class FinanceController extends ResourceController
                     $admin['id'], 
                     'payment_status', 
                     'Pago Auto Aprobado', 
-                    $uploaderName . ' subió un comprobante para ' . $unitName . ' en ' . $condoName . ' y fue aprobado automáticamente.',
+                    $uploaderName . ' subió un comprobante para la ' . $unitName . ' y fue aprobado automáticamente.',
                     ['action_url' => 'admin/finanzas/pagos-por-unidad/' . $unit['hash_id'] . '#comprobantes']
                 );
             }
@@ -402,7 +402,7 @@ class FinanceController extends ResourceController
                     $admin['id'], 
                     'payment_status', 
                     'Comprobante Subido', 
-                    $uploaderName . ' subió un comprobante de pago para ' . $unitName . ' en ' . $condoName,
+                    $uploaderName . ' subió un comprobante de pago para la ' . $unitName . '.',
                     ['action_url' => 'admin/finanzas/pagos-por-unidad/' . $unit['hash_id'] . '#comprobantes']
                 );
             }
