@@ -293,6 +293,11 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin', 'filter' => ['a
     $routes->post('configuracion/wall-access', 'SettingsController::saveWallAccess');
     // Restricciones por Morosidad
     $routes->post('configuracion/delinquency-restrictions', 'SettingsController::saveDelinquencyRestrictions');
+    // Firma
+    $routes->post('configuracion/signature/save', 'SettingsController::saveSignature');
+    $routes->post('configuracion/signature/delete', 'SettingsController::deleteSignature');
+    $routes->get('configuracion/signature/existing', 'SettingsController::existingSignatures');
+    $routes->post('configuracion/signature/copy', 'SettingsController::copySignature');
     // Finanzas - Datos Bancarios y Configuración de Pagos
     $routes->post('configuracion/bank-details', 'SettingsController::saveBankDetails');
     $routes->post('configuracion/payment-config', 'SettingsController::savePaymentConfig');

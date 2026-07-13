@@ -1036,9 +1036,9 @@ $community = array_merge([
                 data-tab="financialAccess">Acceso Financiero</button>
             <button type="button" class="cfg-nav-link" style="padding-top:0.3rem; padding-bottom:0.3rem;"
                 data-tab="delinquencyRestrictions">Restricciones por Morosidad</button>
-            <!--<button type="button" class="cfg-nav-link" style="padding-top:0.3rem; padding-bottom:0.3rem;"
-                disabled>Firma</button>
             <button type="button" class="cfg-nav-link" style="padding-top:0.3rem; padding-bottom:0.3rem;"
+                data-tab="signature">Firma</button>
+            <!--<button type="button" class="cfg-nav-link" style="padding-top:0.3rem; padding-bottom:0.3rem;"
                 disabled>Alertas Comunitarias</button>-->
         </div>
 
@@ -1570,6 +1570,58 @@ $community = array_merge([
                         </div>
                     </div>
                 </form>
+            </div>
+        </div>
+
+        <!-- ═══ TAB: Firma ═══ -->
+        <div class="cfg-tab-panel" id="tabSignature">
+            <div class="admins-header d-flex justify-content-between align-items-center" style="margin-bottom: 0.5rem;">
+                <div>
+                    <h3 style="color:#2563eb; font-size:1.1rem; display:flex; align-items:center; gap:0.5rem;">
+                        <i class="bi bi-pen" style="font-size:1.3rem;"></i> Firma
+                    </h3>
+                    <p style="color:#64748b; font-size:0.95rem; margin-top:0.3rem;">
+                        Agrega una firma que aparecerá en los comprobantes de pago y documentos oficiales
+                    </p>
+                </div>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="showExistingSignaturesModal()">
+                    <i class="bi bi-folder2-open"></i> Firmas existentes
+                </button>
+            </div>
+
+            <!-- Dashed container -->
+            <div style="border: 2px dashed #cbd5e1; border-radius: 0.65rem; background:#fff; padding: 2.5rem 2rem; text-align: center; margin-top: 1rem;">
+                <?php if (!empty($community['signature_image'])): ?>
+                    <div id="signatureConfiguredView">
+                        <div style="margin-bottom: 1rem;">
+                            <img src="<?= base_url('api/v1/assets/condominiums/' . $community['id'] . '/' . $community['signature_image']) ?>" 
+                                 alt="Firma configurada" style="max-height: 100px; border: 1px solid #e2e8f0; border-radius: 0.25rem; padding: 5px; background: white;">
+                        </div>
+                        <div style="font-weight: 600; color: #0f172a; font-size: 1.1rem;">
+                            <?= esc($community['signature_name']) ?>
+                        </div>
+                        <div style="color: #64748b; font-size: 0.85rem; margin-top: 0.25rem;">
+                            Firmante autorizado
+                        </div>
+                        <div class="mt-3 d-flex justify-content-center gap-2">
+                            <button type="button" class="btn btn-primary btn-sm px-3" onclick="openSignatureModal()">
+                                <i class="bi text-white bi-pencil"></i> Cambiar firma
+                            </button>
+                            <button type="button" class="btn btn-danger btn-sm px-3" onclick="deleteSignature()">
+                                <i class="bi text-white bi-trash"></i> Eliminar firma
+                            </button>
+                        </div>
+                    </div>
+                <?php else: ?>
+                    <div id="signatureEmptyView" class="d-flex justify-content-between align-items-center w-100 px-3 py-2">
+                        <div style="color:#64748b; font-size:0.95rem; display:flex; align-items:center; gap:0.5rem;">
+                            <i class="bi bi-pen" style="font-size: 1.2rem;"></i> Sin firma configurada
+                        </div>
+                        <button type="button" class="btn btn-outline-primary" onclick="openSignatureModal()">
+                            Agregar firma
+                        </button>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
 
@@ -2291,6 +2343,133 @@ $community = array_merge([
         </div>
     </div>
 </div>
+
+<!-- Modal: Firma (Agregar/Editar) -->
+<div class="modal fade cfg-modal" id="modalSignature" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:550px;">
+        <div class="modal-content">
+            <div class="modal-header d-block pb-0 border-bottom-0">
+                <div class="d-flex align-items-start justify-content-between">
+                    <div>
+                        <h5 class="modal-title fw-bold" style="color:#0f172a;">Configurar Firma</h5>
+                        <p class="cfg-modal-subtitle mb-0">Dibuja o sube una imagen de firma que se aplicará en tus recibos de pago.</p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <!-- Tabs for drawing or uploading -->
+                <div class="d-flex border-bottom mb-3" style="gap: 1rem;">
+                    <button type="button" id="tabDrawBtn" class="btn btn-link active fw-semibold pb-2" 
+                            style="text-decoration: none; border-bottom: 2px solid #2563eb; color: #2563eb !important; padding: 0.5rem 1rem; box-shadow: none;" 
+                            onclick="switchSignatureTab('draw')">
+                        <i class="bi bi-pencil"></i> Dibujar
+                    </button>
+                    <button type="button" id="tabUploadBtn" class="btn btn-link fw-semibold pb-2" 
+                            style="text-decoration: none; border-bottom: 2px solid transparent; color: #64748b !important; padding: 0.5rem 1rem; box-shadow: none;" 
+                            onclick="switchSignatureTab('upload')">
+                        <i class="bi bi-upload"></i> Subir imagen
+                    </button>
+                </div>
+
+                <!-- Tab content for drawing -->
+                <div id="sigDrawContainer" class="sig-tab-content">
+                    <div style="position: relative; border: 1px dashed #cbd5e1; border-radius: 0.5rem; background: #f8fafc; margin-bottom: 1rem;">
+                        <canvas id="signatureCanvas" width="500" height="200" style="width: 100%; height: 200px; display: block; cursor: crosshair; background: transparent;"></canvas>
+                        <button type="button" class="btn btn-light btn-sm" style="position: absolute; right: 10px; bottom: 10px; border: 1px solid #cbd5e1;" onclick="clearSignatureCanvas()">
+                            Limpiar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tab content for uploading -->
+                <div id="sigUploadContainer" class="sig-tab-content" style="display: none;">
+                    <div id="dropZoneSignature" class="p-4 text-center" 
+                         style="border: 2px dashed #cbd5e1; border-radius: 0.5rem; background: #f8fafc; cursor: pointer; margin-bottom: 1rem;"
+                         onclick="document.getElementById('sigFileInput').click()">
+                        <i class="bi bi-cloud-upload" style="font-size: 2rem; color: #94a3b8;"></i>
+                        <p class="mb-1 mt-2 fw-semibold" style="color: #475569;">Arrastra una imagen o haz clic para seleccionar</p>
+                        <p class="text-muted small mb-0">PNG, JPG (max 10MB)</p>
+                        <input type="file" id="sigFileInput" accept="image/png, image/jpeg, image/jpg" style="display: none;" onchange="handleSigFileSelect(event)">
+                    </div>
+                    <!-- Preview of uploaded file -->
+                    <div id="sigFilePreviewContainer" class="text-center mb-3" style="display: none;">
+                        <img id="sigFilePreview" src="" alt="Vista previa de firma" style="max-height: 100px; border: 1px solid #e2e8f0; padding: 5px; border-radius: 0.25rem; background: white;">
+                        <button type="button" class="btn btn-outline-danger btn-sm ms-2" onclick="removeUploadedSigFile()">Eliminar</button>
+                    </div>
+                </div>
+
+                <!-- Nombre del firmante input -->
+                <div class="mb-3">
+                    <label for="signatureNameInput" class="form-label fw-semibold" style="color: #334155; font-size: 0.9rem; margin-bottom: 0.4rem;">Nombre del firmante</label>
+                    <input type="text" class="form-control" id="signatureNameInput" placeholder="Ej: Juan Pérez" required>
+                </div>
+
+                <!-- Aplicar a options -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" style="color: #334155; font-size: 0.9rem; margin-bottom: 0.4rem;">Aplicar a</label>
+                    
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="applySignatureScope" id="scopeThisCondo" value="this" checked onclick="toggleScopeOptions()">
+                        <label class="form-check-label" for="scopeThisCondo">Solo esta comunidad</label>
+                    </div>
+                    
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="applySignatureScope" id="scopeSelectedCondos" value="selected" onclick="toggleScopeOptions()">
+                        <label class="form-check-label" for="scopeSelectedCondos">Comunidades seleccionadas</label>
+                    </div>
+                    
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="applySignatureScope" id="scopeAllCondos" value="all" onclick="toggleScopeOptions()">
+                        <label class="form-check-label" for="scopeAllCondos">Todas mis comunidades</label>
+                    </div>
+
+                    <!-- Condos list checkbox list (hidden by default) -->
+                    <div id="scopeCondosSelector" class="ms-4 p-2 border rounded bg-white" style="display: none; max-height: 150px; overflow-y: auto;">
+                        <?php if (!empty($my_condos)): ?>
+                            <?php foreach ($my_condos as $mc): ?>
+                                <?php if ($mc['id'] != $community['id']): ?>
+                                    <div class="form-check mb-1">
+                                        <input class="form-check-input condo-selector-chk" type="checkbox" value="<?= $mc['id'] ?>" id="chkCondo_<?= $mc['id'] ?>">
+                                        <label class="form-check-label small text-dark" for="chkCondo_<?= $mc['id'] ?>">
+                                            <?= esc($mc['name']) ?>
+                                        </label>
+                                    </div>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <div class="text-muted small">No administras otras comunidades.</div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer justify-content-end gap-2">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="saveSignature()">Guardar firma</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Firmas Existentes -->
+<div class="modal fade cfg-modal" id="modalExistingSignatures" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:500px;">
+        <div class="modal-content">
+            <div class="modal-header d-flex justify-content-between align-items-center">
+                <h5 class="modal-title fw-bold" style="color: #0f172a;">Firmas existentes</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div id="existingSignaturesList" style="max-height: 300px; overflow-y: auto;">
+                    <!-- Dynamically loaded list -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
 <!-- ═══════════════════════════════════════════════ -->
 <!-- Modal: Agregar/Editar Recordatorio de Pago    -->
 <!-- ═══════════════════════════════════════════════ -->
@@ -2869,6 +3048,7 @@ $community = array_merge([
             'wallAccess': 'tabWallAccess',
             'paymentReminders': 'tabPaymentReminders',
             'delinquencyRestrictions': 'tabDelinquencyRestrictions',
+            'signature': 'tabSignature',
             'financeSettings': 'tabFinanceSettings',
             'subscription': 'tabSubscription',
             'advanced': 'tabAdvanced'
@@ -4556,6 +4736,356 @@ $community = array_merge([
         if(lfMax) lfMax.addEventListener('input', updateLateFeeHowItWorks);
         if(lfDays) lfDays.addEventListener('input', updateLateFeeHowItWorks);
     });
+
+    // ═══════════════════════════════════════════════════
+    //  FIRMA DIGITAL / IMAGEN
+    // ═══════════════════════════════════════════════════
+    let canvas, ctx;
+    let drawing = false;
+    let hasDrawn = false;
+    let uploadedSigFile = null;
+    let currentSigTab = 'draw';
+
+    window.openSignatureModal = function () {
+        // Reset properties
+        const nameEl = document.querySelector('#signatureConfiguredView div[style*="font-weight: 600"]');
+        document.getElementById('signatureNameInput').value = nameEl ? nameEl.innerText.trim() : '';
+        
+        clearSignatureCanvas();
+        removeUploadedSigFile();
+        switchSignatureTab('draw');
+        
+        // Reset radio and checkboxes
+        document.getElementById('scopeThisCondo').checked = true;
+        toggleScopeOptions();
+        document.querySelectorAll('.condo-selector-chk').forEach(chk => chk.checked = false);
+        
+        const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalSignature'));
+        modal.show();
+        
+        // Setup canvas sizing and events after modal is shown to avoid canvas coordinate offset
+        document.getElementById('modalSignature').addEventListener('shown.bs.modal', function onShown() {
+            initSignatureCanvas();
+            initSignatureDragAndDrop();
+            document.getElementById('modalSignature').removeEventListener('shown.bs.modal', onShown);
+        });
+    };
+
+    function initSignatureCanvas() {
+        canvas = document.getElementById('signatureCanvas');
+        if (!canvas) return;
+        ctx = canvas.getContext('2d');
+        
+        // Clear canvas sizing
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+        
+        ctx.strokeStyle = '#0f172a';
+        ctx.lineWidth = 2.5;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        
+        hasDrawn = false;
+        
+        // Mouse Events
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+        
+        // Touch Events
+        canvas.addEventListener('touchstart', startDrawingTouch);
+        canvas.addEventListener('touchmove', drawTouch);
+        canvas.addEventListener('touchend', stopDrawing);
+    }
+
+    function startDrawing(e) {
+        drawing = true;
+        ctx.beginPath();
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        ctx.moveTo(x, y);
+    }
+
+    function draw(e) {
+        if (!drawing) return;
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        hasDrawn = true;
+    }
+
+    function stopDrawing() {
+        drawing = false;
+    }
+
+    function startDrawingTouch(e) {
+        if (e.touches.length !== 1) return;
+        drawing = true;
+        ctx.beginPath();
+        const rect = canvas.getBoundingClientRect();
+        const touch = e.touches[0];
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+        ctx.moveTo(x, y);
+    }
+
+    function drawTouch(e) {
+        if (!drawing || e.touches.length !== 1) return;
+        const rect = canvas.getBoundingClientRect();
+        const touch = e.touches[0];
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        hasDrawn = true;
+    }
+
+    window.clearSignatureCanvas = function () {
+        if (!canvas) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        hasDrawn = false;
+    };
+
+    window.switchSignatureTab = function (tab) {
+        currentSigTab = tab;
+        document.getElementById('tabDrawBtn').classList.toggle('active', tab === 'draw');
+        document.getElementById('tabUploadBtn').classList.toggle('active', tab === 'upload');
+        
+        if (tab === 'draw') {
+            document.getElementById('tabDrawBtn').style.borderBottomColor = '#2563eb';
+            document.getElementById('tabDrawBtn').style.color = '#2563eb';
+            document.getElementById('tabUploadBtn').style.borderBottomColor = 'transparent';
+            document.getElementById('tabUploadBtn').style.color = '#64748b';
+            
+            document.getElementById('sigDrawContainer').style.display = 'block';
+            document.getElementById('sigUploadContainer').style.display = 'none';
+        } else {
+            document.getElementById('tabUploadBtn').style.borderBottomColor = '#2563eb';
+            document.getElementById('tabUploadBtn').style.color = '#2563eb';
+            document.getElementById('tabDrawBtn').style.borderBottomColor = 'transparent';
+            document.getElementById('tabDrawBtn').style.color = '#64748b';
+            
+            document.getElementById('sigDrawContainer').style.display = 'none';
+            document.getElementById('sigUploadContainer').style.display = 'block';
+        }
+    };
+
+    function initSignatureDragAndDrop() {
+        const dropZone = document.getElementById('dropZoneSignature');
+        if (!dropZone) return;
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, e => {
+                e.preventDefault();
+                dropZone.style.borderColor = '#2563eb';
+                dropZone.style.background = '#eff6ff';
+            }, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, e => {
+                e.preventDefault();
+                dropZone.style.borderColor = '#cbd5e1';
+                dropZone.style.background = '#f8fafc';
+            }, false);
+        });
+        
+        dropZone.addEventListener('drop', e => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length > 0) {
+                document.getElementById('sigFileInput').files = files;
+                handleSigFileSelect({ target: { files } });
+            }
+        }, false);
+    }
+
+    window.handleSigFileSelect = function (e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        if (file.size > 10 * 1024 * 1024) {
+            showToast('El archivo supera los 10MB.', 'error');
+            return;
+        }
+        
+        uploadedSigFile = file;
+        
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            document.getElementById('sigFilePreview').src = evt.target.result;
+            document.getElementById('sigFilePreviewContainer').style.display = 'block';
+            document.getElementById('dropZoneSignature').style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+    };
+
+    window.removeUploadedSigFile = function () {
+        uploadedSigFile = null;
+        document.getElementById('sigFileInput').value = '';
+        document.getElementById('sigFilePreview').src = '';
+        document.getElementById('sigFilePreviewContainer').style.display = 'none';
+        document.getElementById('dropZoneSignature').style.display = 'block';
+    };
+
+    window.toggleScopeOptions = function () {
+        const scope = document.querySelector('input[name="applySignatureScope"]:checked').value;
+        const selector = document.getElementById('scopeCondosSelector');
+        if (scope === 'selected') {
+            selector.style.display = 'block';
+        } else {
+            selector.style.display = 'none';
+        }
+    };
+
+    window.saveSignature = async function () {
+        const name = document.getElementById('signatureNameInput').value.trim();
+        if (!name) {
+            showToast('El nombre del firmante es obligatorio.', 'error');
+            return;
+        }
+        
+        const scope = document.querySelector('input[name="applySignatureScope"]:checked').value;
+        const selectedCondos = [];
+        if (scope === 'selected') {
+            document.querySelectorAll('.condo-selector-chk:checked').forEach(chk => {
+                selectedCondos.push(parseInt(chk.value, 10));
+            });
+            if (selectedCondos.length === 0) {
+                showToast('Selecciona al menos una comunidad.', 'error');
+                return;
+            }
+        }
+        
+        const fd = new FormData();
+        fd.append('name', name);
+        fd.append('scope', scope);
+        fd.append('selected_condos', JSON.stringify(selectedCondos));
+        fd.append('tab', currentSigTab);
+        
+        if (currentSigTab === 'draw') {
+            if (!hasDrawn) {
+                showToast('Por favor, dibuja la firma.', 'error');
+                return;
+            }
+            const dataUrl = canvas.toDataURL('image/png');
+            fd.append('signature_data', dataUrl);
+        } else {
+            if (!uploadedSigFile && !document.querySelector('#signatureConfiguredView img')) {
+                showToast('Por favor, sube una imagen de firma.', 'error');
+                return;
+            }
+            if (uploadedSigFile) {
+                fd.append('signature_file', uploadedSigFile);
+            }
+        }
+        
+        try {
+            const resp = await fetch(`<?= base_url('admin/configuracion') ?>/signature/save`, {
+                method: 'POST',
+                body: fd
+            });
+            const data = await resp.json();
+            if (data.success) {
+                showToast('Firma guardada correctamente.');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast(data.message || 'Error al guardar la firma.', 'error');
+            }
+        } catch (err) {
+            showToast('Error de conexión.', 'error');
+        }
+    };
+
+    window.deleteSignature = async function () {
+        if (!confirm('¿Estás seguro de que deseas eliminar la firma configurada?')) {
+            return;
+        }
+        try {
+            const resp = await fetch(`<?= base_url('admin/configuracion') ?>/signature/delete`, {
+                method: 'POST'
+            });
+            const data = await resp.json();
+            if (data.success) {
+                showToast('Firma eliminada correctamente.');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast(data.message || 'Error al eliminar la firma.', 'error');
+            }
+        } catch (err) {
+            showToast('Error de conexión.', 'error');
+        }
+    };
+
+    window.showExistingSignaturesModal = async function () {
+        const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalExistingSignatures'));
+        modal.show();
+        
+        const listContainer = document.getElementById('existingSignaturesList');
+        listContainer.innerHTML = `
+            <div class="text-center py-4 text-muted">
+                <div class="spinner-border spinner-border-sm" role="status"></div>
+                Cargando firmas...
+            </div>
+        `;
+        
+        try {
+            const resp = await fetch(`<?= base_url('admin/configuracion') ?>/signature/existing`);
+            const data = await resp.json();
+            if (data.success && data.signatures.length > 0) {
+                let html = '<div class="list-group list-group-flush">';
+                data.signatures.forEach(sig => {
+                    html += `
+                        <div class="list-group-item d-flex align-items-center justify-content-between py-3 px-4">
+                            <div class="d-flex align-items-center gap-3">
+                                <img src="${sig.image_url}" alt="Firma" style="max-height: 45px; max-width: 90px; border: 1px solid #e2e8f0; padding: 2px; border-radius: 4px; background: white;">
+                                <div>
+                                    <div class="fw-semibold text-dark small">${sig.signature_name}</div>
+                                    <div style="font-size: 0.78rem; color: #64748b;">${sig.condominium_name}</div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-outline-primary btn-sm px-3" onclick="copyExistingSignature(${sig.condominium_id})">
+                                Usar
+                            </button>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                listContainer.innerHTML = html;
+            } else {
+                listContainer.innerHTML = `<div class="text-center py-5 text-muted small">No se encontraron otras firmas configuradas en tus comunidades.</div>`;
+            }
+        } catch (err) {
+            listContainer.innerHTML = `<div class="text-center py-5 text-danger small">Error de conexión al cargar firmas.</div>`;
+        }
+    };
+
+    window.copyExistingSignature = async function (fromCondoId) {
+        if (!confirm('¿Deseas aplicar esta firma a la comunidad actual?')) return;
+        try {
+            const fd = new FormData();
+            fd.append('from_condominium_id', fromCondoId);
+            
+            const resp = await fetch(`<?= base_url('admin/configuracion') ?>/signature/copy`, {
+                method: 'POST',
+                body: fd
+            });
+            const data = await resp.json();
+            if (data.success) {
+                showToast('Firma copiada y aplicada correctamente.');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast(data.message || 'Error al copiar la firma.', 'error');
+            }
+        } catch (err) {
+            showToast('Error de conexión.', 'error');
+        }
+    };
 </script>
 
 <!-- LATE FEE MODAL -->

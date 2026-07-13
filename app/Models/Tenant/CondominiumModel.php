@@ -56,6 +56,8 @@ class CondominiumModel extends BaseTenantModel
         'late_fee_grace_days',
         'late_fee_categories',
         'late_fee_on_extraordinary',
+        'signature_image',
+        'signature_name',
     ];
 
     // Dates

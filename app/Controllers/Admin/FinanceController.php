@@ -3205,7 +3205,39 @@ class FinanceController extends BaseController
         $pdf->SetFont('helvetica', 'I', 7);
         $pdf->Cell(175.6, 6, $amountWords, 0, 1, 'R');
 
-        $pdf->Ln(8);
+        // Spacing before signature or notice
+        $signatureFile = $demoCondo['signature_image'] ?? '';
+        $signatureName = $demoCondo['signature_name'] ?? '';
+        $hasSignature = false;
+
+        if (!empty($signatureFile)) {
+            $signaturePath = (strpos($signatureFile, '/') !== false)
+                ? WRITEPATH . 'uploads/' . $signatureFile
+                : WRITEPATH . 'uploads/condominiums/' . $demoCondo['id'] . '/' . $signatureFile;
+
+            if (is_file($signaturePath)) {
+                $hasSignature = true;
+                $pdf->Ln(1); // reduced margin
+
+                $imgWidth = 35;
+                $imgHeight = 12;
+                $centerX = 20 + (175.6 - $imgWidth) / 2;
+                
+                $currentY = $pdf->GetY();
+
+                $pdf->Image($signaturePath, $centerX, $currentY, $imgWidth, $imgHeight, '', '', '', false, 300, '', false, false, 0, 'CM', false, false);
+                $pdf->SetY($currentY + $imgHeight); // Move exactly past the image
+
+                $pdf->SetTextColor(15, 23, 42);
+                $pdf->SetFont('helvetica', 'B', 8);
+                $pdf->Cell(175.6, 4, $signatureName, 0, 1, 'C'); // reduced cell height
+                $pdf->Ln(1); // reduced margin
+            }
+        }
+
+        if (!$hasSignature) {
+            $pdf->Ln(2); // reduced margin
+        }
 
         // ── AVISO FISCAL ──
         $pdf->SetFillColor(255, 251, 235); // amber-50
@@ -3214,21 +3246,21 @@ class FinanceController extends BaseController
         $noticeY = $pdf->GetY();
         $pdf->Cell(175.6, 6, '  Aviso fiscal: Este recibo no constituye un CFDI y no tiene validez fiscal para efectos de deducción de impuestos.', 0, 1, 'L', true);
 
-        $pdf->Ln(5);
+        $pdf->Ln(2); // reduced margin
 
         // ── OBSERVACIONES ──
         $pdf->SetTextColor(15, 23, 42);
         $pdf->SetFont('helvetica', 'B', 11);
-        $pdf->Cell(175.6, 7, 'Observaciones', 0, 1, 'L');
+        $pdf->Cell(175.6, 6, 'Observaciones', 0, 1, 'L');
         $pdf->SetDrawColor(226, 232, 240);
         $pdf->Line(20, $pdf->GetY(), 195.6, $pdf->GetY());
-        $pdf->Ln(2);
+        $pdf->Ln(1); // reduced margin
 
         $pdf->SetFont('helvetica', '', 8);
         $pdf->SetTextColor(100, 116, 139);
-        $pdf->Cell(175.6, 5, 'Conserve este recibo para sus registros. El pago se refleja en su estado de cuenta.', 0, 1, 'L');
+        $pdf->Cell(175.6, 4, 'Conserve este recibo para sus registros. El pago se refleja en su estado de cuenta.', 0, 1, 'L');
 
-        $pdf->Ln(10);
+        $pdf->Ln(4); // reduced from 10
 
         // ── PIE ──
         $pdf->SetDrawColor(226, 232, 240);

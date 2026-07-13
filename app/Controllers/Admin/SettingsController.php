@@ -104,11 +104,21 @@ class SettingsController extends BaseController
                 'late_fee_grace_enabled' => !empty($condo['late_fee_grace_enabled']),
                 'late_fee_grace_days'    => (int)($condo['late_fee_grace_days'] ?? 0),
                 'late_fee_categories'    => json_decode($condo['late_fee_categories'] ?? '[]', true) ?: [],
+                'signature_image'        => $condo['signature_image'] ?? null,
+                'signature_name'         => $condo['signature_name'] ?? null,
             ],
             'sections' => $sections,
             'units'    => $units,
             'financial_categories' => $financialCategories,
-            'payment_reminders' => \App\Services\PaymentReminderService::getRemindersForCondominium($condo['id'] ?? 0)
+            'payment_reminders' => \App\Services\PaymentReminderService::getRemindersForCondominium($condo['id'] ?? 0),
+            'my_condos' => $db->table('user_condominium_roles ucr')
+                ->select('c.id, c.name')
+                ->join('condominiums c', 'c.id = ucr.condominium_id')
+                ->where('ucr.user_id', session()->get('user_id'))
+                ->where('ucr.role_id', 2) // ADMIN
+                ->where('c.deleted_at IS NULL')
+                ->get()
+                ->getResultArray()
         ]);
     }
 
@@ -1688,5 +1698,279 @@ class SettingsController extends BaseController
             'success' => true,
             'url'     => $portalUrl
         ]);
+    }
+
+    /**
+     * Guardar firma (dibujada o subida)
+     */
+    public function saveSignature()
+    {
+        try {
+            $this->bootstrapTenant();
+
+            $condoModel = new CondominiumModel();
+            $condo = $condoModel->first();
+            if (!$condo) {
+                return $this->response->setJSON(['success' => false, 'message' => 'Comunidad no encontrada.'])->setStatusCode(404);
+            }
+
+        $name = trim((string) $this->request->getPost('name'));
+        $scope = trim((string) $this->request->getPost('scope')); // 'this', 'selected', 'all'
+        $selectedCondos = json_decode((string) $this->request->getPost('selected_condos'), true) ?: [];
+        $tab = trim((string) $this->request->getPost('tab')); // 'draw', 'upload'
+
+        if ($name === '') {
+            return $this->response->setJSON(['success' => false, 'message' => 'El nombre del firmante es obligatorio.'])->setStatusCode(422);
+        }
+
+        $db = \Config\Database::connect();
+        $userId = session()->get('user_id');
+
+        $fileName = null;
+
+        if ($tab === 'draw') {
+            $sigData = (string) $this->request->getPost('signature_data');
+            if (empty($sigData) || strpos($sigData, 'data:image/png;base64,') !== 0) {
+                return $this->response->setJSON(['success' => false, 'message' => 'Firma dibujada no válida.'])->setStatusCode(422);
+            }
+
+            // Decodificar base64
+            $data = str_replace('data:image/png;base64,', '', $sigData);
+            $data = str_replace(' ', '+', $data);
+            $img = base64_decode($data);
+            if ($img === false) {
+                return $this->response->setJSON(['success' => false, 'message' => 'Error al decodificar la imagen de la firma.'])->setStatusCode(400);
+            }
+
+            // Generar nombre de archivo único
+            $fileName = 'sig_' . bin2hex(random_bytes(8)) . '_' . time() . '.png';
+            $dirPath = WRITEPATH . 'uploads/condominiums/' . $condo['id'];
+            if (!is_dir($dirPath)) {
+                mkdir($dirPath, 0755, true);
+            }
+
+            // Borrar firma anterior si existe
+            if (!empty($condo['signature_image'])) {
+                @unlink($dirPath . '/' . $condo['signature_image']);
+            }
+
+            file_put_contents($dirPath . '/' . $fileName, $img);
+        } else {
+            // Carga de archivo
+            $file = $this->request->getFile('signature_file');
+            if ($file && $file->isValid() && !$file->hasMoved()) {
+                // Borrar anterior
+                if (!empty($condo['signature_image'])) {
+                    \App\Services\AssetService::delete('condominiums', (string) $condo['id'], $condo['signature_image']);
+                }
+                try {
+                    $fileName = \App\Services\AssetService::upload('condominiums', $file, (string) $condo['id'], ['png', 'jpg', 'jpeg']);
+                } catch (\Exception $e) {
+                    return $this->response->setJSON(['success' => false, 'message' => $e->getMessage()])->setStatusCode(500);
+                }
+            } else {
+                // Si no se subió un nuevo archivo pero ya existe una firma configurada
+                if (!empty($condo['signature_image'])) {
+                    $fileName = $condo['signature_image'];
+                } else {
+                    return $this->response->setJSON(['success' => false, 'message' => 'Por favor, dibuja o sube una imagen de firma.'])->setStatusCode(422);
+                }
+            }
+        }
+
+        // Actualizar el condominio actual
+        $condoModel->update($condo['id'], [
+            'signature_image' => $fileName,
+            'signature_name'  => $name,
+        ]);
+
+        // Manejar replicación según el scope
+        if ($scope === 'all' || $scope === 'selected') {
+            // Obtener otros condominios administrados por este admin
+            $query = $db->table('user_condominium_roles ucr')
+                ->select('ucr.condominium_id')
+                ->where('ucr.user_id', $userId)
+                ->where('ucr.role_id', 2); // ADMIN
+
+            if ($scope === 'selected') {
+                // Filtrar solo los seleccionados
+                $selectedCondos = array_map('intval', $selectedCondos);
+                // Excluir el actual de la lista por seguridad
+                $selectedCondos = array_filter($selectedCondos, fn($id) => $id != $condo['id']);
+                if (!empty($selectedCondos)) {
+                    $query->whereIn('ucr.condominium_id', $selectedCondos);
+                } else {
+                    $query->where('1 = 0');
+                }
+            } else {
+                // Excluir el actual
+                $query->where('ucr.condominium_id !=', $condo['id']);
+            }
+
+            $targetCondos = $query->get()->getResultArray();
+
+            foreach ($targetCondos as $tc) {
+                $targetId = $tc['condominium_id'];
+
+                // Copiar archivo físico
+                $srcFile = WRITEPATH . 'uploads/condominiums/' . $condo['id'] . '/' . $fileName;
+                $destDir = WRITEPATH . 'uploads/condominiums/' . $targetId;
+                if (!is_dir($destDir)) {
+                    mkdir($destDir, 0755, true);
+                }
+
+                // Borrar firma anterior en destino si existe
+                $targetCondo = $db->table('condominiums')->where('id', $targetId)->get()->getRowArray();
+                if ($targetCondo && !empty($targetCondo['signature_image'])) {
+                    @unlink($destDir . '/' . $targetCondo['signature_image']);
+                }
+
+                copy($srcFile, $destDir . '/' . $fileName);
+
+                // Actualizar base de datos del destino
+                $db->table('condominiums')
+                    ->where('id', $targetId)
+                    ->update([
+                        'signature_image' => $fileName,
+                        'signature_name'  => $name,
+                        'updated_at'      => date('Y-m-d H:i:s'),
+                    ]);
+            }
+        }
+
+        return $this->response->setJSON(['success' => true]);
+        } catch (\Throwable $e) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Error Interno: ' . $e->getMessage() . ' en ' . $e->getFile() . ':' . $e->getLine()
+            ])->setStatusCode(500);
+        }
+    }
+
+    /**
+     * Eliminar firma de la comunidad actual
+     */
+    public function deleteSignature()
+    {
+        $this->bootstrapTenant();
+
+        $condoModel = new CondominiumModel();
+        $condo = $condoModel->first();
+        if (!$condo) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Comunidad no encontrada.'])->setStatusCode(404);
+        }
+
+        if (!empty($condo['signature_image'])) {
+            \App\Services\AssetService::delete('condominiums', (string) $condo['id'], $condo['signature_image']);
+        }
+
+        $condoModel->update($condo['id'], [
+            'signature_image' => null,
+            'signature_name'  => null,
+        ]);
+
+        return $this->response->setJSON(['success' => true]);
+    }
+
+    /**
+     * Obtener firmas existentes en otras comunidades administradas por este admin
+     */
+    public function existingSignatures()
+    {
+        $this->bootstrapTenant();
+
+        $condoModel = new CondominiumModel();
+        $condo = $condoModel->first();
+        if (!$condo) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Comunidad no encontrada.'])->setStatusCode(404);
+        }
+
+        $db = \Config\Database::connect();
+        $userId = session()->get('user_id');
+
+        $signatures = $db->table('user_condominium_roles ucr')
+            ->select('c.id AS condominium_id, c.name AS condominium_name, c.signature_image, c.signature_name')
+            ->join('condominiums c', 'c.id = ucr.condominium_id')
+            ->where('ucr.user_id', $userId)
+            ->where('ucr.role_id', 2) // ADMIN
+            ->where('c.id !=', $condo['id'])
+            ->where('c.signature_image IS NOT NULL')
+            ->where('c.deleted_at IS NULL')
+            ->get()
+            ->getResultArray();
+
+        // Convertir signature_image a url pública
+        foreach ($signatures as &$sig) {
+            $sig['image_url'] = \App\Services\AssetService::getUrl('condominiums', (string) $sig['condominium_id'], $sig['signature_image']);
+        }
+
+        return $this->response->setJSON(['success' => true, 'signatures' => $signatures]);
+    }
+
+    /**
+     * Copiar firma existente de otra comunidad a la actual
+     */
+    public function copySignature()
+    {
+        $this->bootstrapTenant();
+
+        $condoModel = new CondominiumModel();
+        $condo = $condoModel->first();
+        if (!$condo) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Comunidad no encontrada.'])->setStatusCode(404);
+        }
+
+        $fromCondoId = (int) $this->request->getPost('from_condominium_id');
+
+        $db = \Config\Database::connect();
+        $userId = session()->get('user_id');
+
+        // Validar seguridad: ¿el administrador administra la comunidad de origen?
+        $hasAccess = $db->table('user_condominium_roles')
+            ->where('user_id', $userId)
+            ->where('condominium_id', $fromCondoId)
+            ->where('role_id', 2) // ADMIN
+            ->countAllResults() > 0;
+
+        if (!$hasAccess) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Acceso denegado a la comunidad de origen.'])->setStatusCode(403);
+        }
+
+        $fromCondo = $db->table('condominiums')
+            ->where('id', $fromCondoId)
+            ->where('deleted_at IS NULL')
+            ->get()
+            ->getRowArray();
+
+        if (!$fromCondo || empty($fromCondo['signature_image'])) {
+            return $this->response->setJSON(['success' => false, 'message' => 'La comunidad de origen no tiene una firma configurada.'])->setStatusCode(400);
+        }
+
+        $fileName = $fromCondo['signature_image'];
+        $name = $fromCondo['signature_name'];
+
+        // Copiar archivo físico
+        $srcFile = WRITEPATH . 'uploads/condominiums/' . $fromCondoId . '/' . $fileName;
+        $destDir = WRITEPATH . 'uploads/condominiums/' . $condo['id'];
+        if (!is_dir($destDir)) {
+            mkdir($destDir, 0755, true);
+        }
+
+        // Borrar firma anterior en destino si existe
+        if (!empty($condo['signature_image'])) {
+            @unlink($destDir . '/' . $condo['signature_image']);
+        }
+
+        if (!copy($srcFile, $destDir . '/' . $fileName)) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Error al copiar el archivo físico de la firma.'])->setStatusCode(500);
+        }
+
+        // Actualizar base de datos
+        $condoModel->update($condo['id'], [
+            'signature_image' => $fileName,
+            'signature_name'  => $name,
+        ]);
+
+        return $this->response->setJSON(['success' => true]);
     }
 }
