@@ -323,7 +323,7 @@ function fnDateSpanish($date, $meses)
         background: var(--det-card);
         border: 1px solid var(--det-border);
         border-radius: var(--det-radius);
-        overflow: hidden;
+        overflow: visible;
     }
 
     .fin-table th {
@@ -1408,7 +1408,7 @@ function fnDateSpanish($date, $meses)
             <div class="form-group" style="margin-top:1rem;"><label style="font-size:0.85rem; color:#1e293b; font-weight:600;">Descripción</label><textarea id="swal-fee-desc" rows="3" style="width:100%; border:1px solid #cbd5e1; border-radius:6px; padding:0.6rem 0.8rem; font-size:0.9rem; resize:vertical; max-height:120px;"><?= esc($fee['description']) ?></textarea></div>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-top:1rem;">
                 <div><label style="font-size:0.85rem; color:#1e293b; font-weight:600;">Monto por Unidad *</label><div style="position:relative;"><span style="position:absolute; left:0.8rem; top:0.6rem; color:#94a3b8;">$</span><input type="text" value="<?= esc($fee['amount'], 'attr') ?>" disabled style="width:100%; border:1px solid #cbd5e1; border-radius:6px; padding:0.6rem 0.8rem 0.6rem 1.8rem; font-size:0.9rem; background:#f1f5f9; color:#94a3b8;"></div></div>
-                <div><label style="font-size:0.85rem; color:#1e293b; font-weight:600;">Categoría</label><select id="swal-fee-cat" style="width:100%; border:1px solid #cbd5e1; border-radius:6px; padding:0.6rem 0.8rem; font-size:0.9rem; background:white;"><option value="1">Mejora de Capital</option><option value="2">Reparación de Emergencia</option><option value="3">Honorarios Legales</option><option value="4">Seguro</option><option value="5">Proyecto Especial</option><option value="6">Otro</option></select></div>
+                <div><label style="font-size:0.85rem; color:#1e293b; font-weight:600;">Categoría</label><select id="swal-fee-cat" style="width:100%; border:1px solid #cbd5e1; border-radius:6px; padding:0.6rem 0.8rem; font-size:0.9rem; background:white;"><?php foreach($categories as $cat): ?><option value="<?= $cat['id'] ?>"><?= esc($cat['name']) ?></option><?php endforeach; ?></select></div>
             </div>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-top:1rem;">
                 <div><label style="font-size:0.85rem; color:#1e293b; font-weight:600;">Fecha Inicio *</label><div style="position:relative;"><i class="bi bi-calendar" style="position:absolute; left:0.8rem; top:0.6rem; color:#94a3b8;"></i><input type="text" id="swal-fee-start" value="<?= date('Y-m-d', strtotime($fee['created_at'])) ?>" style="width:100%; border:1px solid #cbd5e1; border-radius:6px; padding:0.6rem 0.8rem 0.6rem 2.2rem; font-size:0.9rem;"></div></div>

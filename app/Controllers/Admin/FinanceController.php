@@ -1202,6 +1202,49 @@ class FinanceController extends BaseController
         return view('admin/finance/movimientos', $data);
     }
 
+    private function getExtraordinaryCategories(int $condoId)
+    {
+        $db = \Config\Database::connect();
+        $requiredNames = [
+            'Mejora de Capital',
+            'Reparación de Emergencia',
+            'Honorarios Legales',
+            'Seguro',
+            'Proyecto Especial',
+            'Fondo de Reserva',
+            'Otro'
+        ];
+        
+        $categories = [];
+        foreach ($requiredNames as $name) {
+            $cat = $db->table('financial_categories')
+                ->where('condominium_id', $condoId)
+                ->where('name', $name)
+                ->where('type', 'income')
+                ->get()->getRowArray();
+                
+            if (!$cat) {
+                $db->table('financial_categories')->insert([
+                    'condominium_id' => $condoId,
+                    'name' => $name,
+                    'description' => null,
+                    'type' => 'income',
+                    'is_system' => 0,
+                    'is_active' => 1,
+                    'icon' => 'bi-tag',
+                    'created_at' => date('Y-m-d H:i:s'),
+                    'updated_at' => date('Y-m-d H:i:s')
+                ]);
+                $cat = $db->table('financial_categories')
+                    ->where('id', $db->insertID())
+                    ->get()->getRowArray();
+            }
+            $categories[] = $cat;
+        }
+        
+        return $categories;
+    }
+
     /**
      * Muestra la vista de Cuotas Extraordinarias
      */
@@ -1232,14 +1275,17 @@ class FinanceController extends BaseController
 
             // Find all transactions linked to this fee
             $txs = $transactionModel->where('extraordinary_fee_id', $fee['id'])->findAll();
-            $unitsLoaded = count($txs);
+            $unitsLoaded = 0;
             $unitsPaid = 0;
             $collectedAmount = 0;
 
             foreach ($txs as $tx) {
-                if ($tx['status'] === 'paid') {
-                    $unitsPaid++;
-                    // Assuming a matching credit was generated, sum the exact amount paid towards this
+                if ($tx['type'] === 'charge') {
+                    $unitsLoaded++;
+                    if ($tx['status'] === 'paid' || $tx['status'] === 'completed') {
+                        $unitsPaid++;
+                    }
+                } elseif ($tx['type'] === 'credit') {
                     $collectedAmount += $tx['amount'];
                 }
             }
@@ -1255,11 +1301,14 @@ class FinanceController extends BaseController
                 : 0;
         }
 
+        $categories = $this->getExtraordinaryCategories($demoCondo['id']);
+
         $data = [
             'title' => 'Cuotas Extraordinarias',
             'condo' => $demoCondo,
             'units' => $units,
             'fees' => $fees,
+            'categories' => $categories,
             'kpis' => [
                 'active' => $activeFeesCount,
                 'expected' => $totalExpected,
@@ -1400,7 +1449,7 @@ class FinanceController extends BaseController
             $payments = $db->table('financial_transactions')
                 ->where('extraordinary_fee_id', $charge['extraordinary_fee_id'])
                 ->where('unit_id', $charge['unit_id'])
-                ->where('type', 'payment')
+                ->where('type', 'credit')
                 ->get()->getResultArray();
 
             $paidSum = 0;
@@ -1438,11 +1487,14 @@ class FinanceController extends BaseController
                 $catName = $cat['name'];
         }
 
+        $categories = $this->getExtraordinaryCategories($demoCondo['id']);
+
         $data = [
             'condo' => $demoCondo,
             'fee' => $fee,
             'catName' => $catName,
             'charges' => $charges,
+            'categories' => $categories,
             'stats' => [
                 'expected' => $totalEsperado,
                 'collected' => $totalRecaudado,
@@ -1570,12 +1622,12 @@ class FinanceController extends BaseController
         $paymentData = [
             'condominium_id' => $demoCondo['id'],
             'unit_id' => $charge['unit_id'],
-            'type' => 'payment',
+            'type' => 'credit',
             'amount' => $amount,
             'description' => 'Pago cuota extraordinaria',
             'payment_method' => $method,
             'category_id' => $catId,
-            'status' => 'completed',
+            'status' => 'paid',
             'billing_period' => $charge['billing_period'] ?? date('Y-m'),
             'extraordinary_fee_id' => $charge['extraordinary_fee_id'],
             'transaction_date' => $date,
@@ -1590,7 +1642,7 @@ class FinanceController extends BaseController
             ->selectSum('amount')
             ->where('extraordinary_fee_id', $charge['extraordinary_fee_id'])
             ->where('unit_id', $charge['unit_id'])
-            ->where('type', 'payment')
+            ->where('type', 'credit')
             ->get()->getRow();
 
         $paidTotal = (float) ($totalPaid->amount ?? 0);
@@ -2191,17 +2243,19 @@ class FinanceController extends BaseController
             return;
 
 
-        // 1. Resetear todos los cargos de la unidad
+        // 1. Resetear todos los cargos de la unidad (excluyendo cuotas extraordinarias)
         $db->table('financial_transactions')
             ->where('unit_id', $unitId)
             ->where('type', 'charge')
+            ->where('extraordinary_fee_id', null)
             ->update(['amount_paid' => 0, 'status' => 'pending']);
 
-        // 2. Obtener todos los abonos (pagos) de la unidad, ordenados por fecha
+        // 2. Obtener todos los abonos (pagos) de la unidad, ordenados por fecha (excluyendo pagos de extraordinarias)
         $payments = $db->table('financial_transactions')
             ->where('unit_id', $unitId)
             ->where('type', 'credit')
             ->where('status', 'paid')
+            ->where('extraordinary_fee_id', null)
             ->where('deleted_at', null)
             ->orderBy('due_date', 'ASC')
             ->orderBy('created_at', 'ASC')
@@ -2215,6 +2269,7 @@ class FinanceController extends BaseController
             $pendingCharges = $db->table('financial_transactions')
                 ->where('unit_id', $unitId)
                 ->where('type', 'charge')
+                ->where('extraordinary_fee_id', null)
                 ->whereIn('status', ['pending', 'partial'])
                 ->where('deleted_at', null)
                 ->orderBy('due_date', 'ASC')
@@ -2612,6 +2667,7 @@ class FinanceController extends BaseController
             ->where('unit_id', $unitId)
             ->where('type', 'credit')
             ->where('status', 'paid')
+            ->where('extraordinary_fee_id', null)
             ->get()->getRowArray();
         $totalCredits = (float) ($creditRow['total_credits'] ?? 0);
 
@@ -2620,6 +2676,7 @@ class FinanceController extends BaseController
             ->where('unit_id', $unitId)
             ->where('type', 'charge')
             ->where('status !=', 'cancelled')
+            ->where('extraordinary_fee_id', null)
             ->get()->getRowArray();
         $totalAllocated = (float) ($chargeAllocatedRow['total_allocated'] ?? 0);
 
@@ -2636,6 +2693,7 @@ class FinanceController extends BaseController
         $pendingCharges = $db->table('financial_transactions')
             ->where('unit_id', $unitId)
             ->where('type', 'charge')
+            ->where('extraordinary_fee_id', null)
             ->whereIn('status', ['pending', 'partial'])
             ->orderBy('due_date', 'ASC')
             ->orderBy('created_at', 'ASC')

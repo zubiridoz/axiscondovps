@@ -959,12 +959,9 @@
                         <label class="form-label">Categoría</label>
                         <select id="w_cat" class="form-control">
                             <option value="">Seleccione...</option>
-                            <option value="1">Mejora de Capital</option>
-                            <option value="2">Reparación de Emergencia</option>
-                            <option value="3">Honorarios Legales</option>
-                            <option value="4">Seguro</option>
-                            <option value="5">Proyecto Especial</option>
-                            <option value="6">Otro</option>
+                            <?php foreach ($categories as $cat): ?>
+                                <option value="<?= $cat['id'] ?>"><?= esc($cat['name']) ?></option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
                 </div>
