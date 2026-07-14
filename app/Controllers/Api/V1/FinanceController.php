@@ -61,6 +61,7 @@ class FinanceController extends ResourceController
                 ->where('type', 'charge')
                 ->where('status !=', 'cancelled')
                 ->where('deleted_at IS NULL')
+                ->where('extraordinary_fee_id IS NULL')
                 ->get()->getRowArray();
             $totalCharges = (float) ($chargesRow['amount'] ?? 0);
 
@@ -70,6 +71,7 @@ class FinanceController extends ResourceController
                 ->where('type', 'credit')
                 ->where('status !=', 'cancelled')
                 ->where('deleted_at IS NULL')
+                ->where('extraordinary_fee_id IS NULL')
                 ->get()->getRowArray();
             $totalCredits = (float) ($creditsRow['amount'] ?? 0);
 
@@ -681,7 +683,7 @@ class FinanceController extends ResourceController
         $endDate   = date('Y-m-t', strtotime($startDate));
 
         $transactions = $db->table('financial_transactions ft')
-            ->select('ft.id, ft.type, ft.amount, ft.description, ft.due_date, ft.status, ft.payment_method, ft.attachment, ft.created_at, IFNULL(cats.name, "General") as concept')
+            ->select('ft.id, ft.type, ft.amount, ft.description, ft.due_date, ft.status, ft.payment_method, ft.attachment, ft.created_at, ft.extraordinary_fee_id, IFNULL(cats.name, "General") as concept')
             ->join('financial_categories cats', 'cats.id = ft.category_id', 'left')
             ->where('ft.unit_id', $unitId)
             ->where('ft.deleted_at IS NULL')
@@ -696,9 +698,14 @@ class FinanceController extends ResourceController
         // Formatear para Flutter
         $items = [];
         foreach ($transactions as $t) {
+            $concept = $t['concept'];
+            if (!empty($t['extraordinary_fee_id']) && !empty($t['description'])) {
+                $concept = $t['description'];
+            }
+
             $items[] = [
                 'id'           => (int) $t['id'],
-                'concept'      => $t['concept'] ?: ($t['type'] === 'charge' ? 'Cuota de Mantenimiento' : 'Pago'),
+                'concept'      => $concept ?: ($t['type'] === 'charge' ? 'Cuota de Mantenimiento' : 'Pago'),
                 'amount'       => (float) $t['amount'],
                 'due_date'     => $t['due_date'],
                 'status'       => $t['status'],

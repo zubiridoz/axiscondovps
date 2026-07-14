@@ -1132,9 +1132,10 @@ class FinanceController extends BaseController
         $categoriesRaw = $db->table('financial_categories')->where('condominium_id', $condoId)->get()->getResultArray();
 
         $builder = $db->table('financial_transactions ft');
-        $builder->select('ft.*, units.unit_number, cats.name as category_name, cats.type as category_type');
+        $builder->select('ft.*, units.unit_number, cats.name as category_name, cats.type as category_type, ef.title as extraordinary_title');
         $builder->join('units', 'units.id = ft.unit_id', 'left');
         $builder->join('financial_categories cats', 'cats.id = ft.category_id', 'left');
+        $builder->join('extraordinary_fees ef', 'ef.id = ft.extraordinary_fee_id', 'left');
         $builder->where('ft.condominium_id', $condoId);
         $builder->where('ft.status !=', 'cancelled');
         $builder->where('ft.type !=', 'charge'); // Solo Pagos y Gastos
@@ -1162,6 +1163,9 @@ class FinanceController extends BaseController
             }
 
             $catName = $row['category_name'] ?: 'Sin Categoría';
+            if (!empty($row['extraordinary_title'])) {
+                $catName = mb_strtoupper($row['extraordinary_title']);
+            }
 
             $rec = [
                 'id' => $row['id'],
@@ -1282,11 +1286,13 @@ class FinanceController extends BaseController
             foreach ($txs as $tx) {
                 if ($tx['type'] === 'charge') {
                     $unitsLoaded++;
+                    
                     if ($tx['status'] === 'paid' || $tx['status'] === 'completed') {
                         $unitsPaid++;
+                        $collectedAmount += (float) $tx['amount']; // Legacy support
+                    } else {
+                        $collectedAmount += (float) $tx['amount_paid'];
                     }
-                } elseif ($tx['type'] === 'credit') {
-                    $collectedAmount += $tx['amount'];
                 }
             }
 
@@ -1381,9 +1387,12 @@ class FinanceController extends BaseController
         if (!empty($charges)) {
             $transactionModel->insertBatch($charges);
 
-            // Notify residents
+            // Notify residents and sync financial state
             $db = \Config\Database::connect();
             foreach ($unitIds as $uId) {
+                // Auto-apply any existing floating credits to this new charge
+                $this->syncUnitFinancialState((int) $uId);
+                
                 $residents = $db->table('residents')
                     ->select('DISTINCT(user_id) as user_id')
                     ->where('unit_id', $uId)
@@ -1445,17 +1454,12 @@ class FinanceController extends BaseController
         foreach ($charges as &$charge) {
             $totalEsperado += $charge['amount'];
 
-            // Obtener pagos reales para este cargo
-            $payments = $db->table('financial_transactions')
-                ->where('extraordinary_fee_id', $charge['extraordinary_fee_id'])
-                ->where('unit_id', $charge['unit_id'])
-                ->where('type', 'credit')
-                ->get()->getResultArray();
-
-            $paidSum = 0;
-            foreach ($payments as $p) {
-                $paidSum += (float) $p['amount'];
+            if ($charge['status'] === 'paid' || $charge['status'] === 'completed') {
+                $paidSum = (float) $charge['amount']; // Legacy support
+            } else {
+                $paidSum = (float) $charge['amount_paid'];
             }
+            
             $charge['paid_amount'] = $paidSum;
             $charge['balance'] = max(0, (float) $charge['amount'] - $paidSum);
 
@@ -1740,6 +1744,32 @@ class FinanceController extends BaseController
 
         $extFeeModel->update($fee['id'], $updateData);
 
+        // Sync child charges
+        $db = \Config\Database::connect();
+        $chargeUpdate = [
+            'description' => "Cuota Extraordinaria: " . $json->title
+        ];
+        
+        if (!empty($json->category_id)) {
+            $chargeUpdate['category_id'] = $json->category_id;
+        }
+        
+        if (property_exists($json, 'due_date')) {
+            if (!empty($json->due_date)) {
+                $chargeUpdate['due_date'] = $json->due_date;
+            } else {
+                // If they cleared it, we could set it to null, but since it falls back to +30 days on creation, 
+                // it's safer to just let it be if it's empty, or we can explicitly set it to null if the schema allows.
+                // Let's set it to null to perfectly mirror the fee's state.
+                $chargeUpdate['due_date'] = null;
+            }
+        }
+
+        $db->table('financial_transactions')
+           ->where('extraordinary_fee_id', $fee['id'])
+           ->where('type', 'charge')
+           ->update($chargeUpdate);
+
         return $this->response->setJSON(['success' => true, 'message' => 'Cuota actualizada correctamente']);
     }
 
@@ -1896,6 +1926,10 @@ class FinanceController extends BaseController
                 if ($t['due_date'] < $todayStr) {
                     $totalOverdueCharges += (float) $t['amount'];
                 }
+            }
+            
+            // Los cargos pendientes se muestran todos (incluyendo extraordinarias)
+            if ($t['type'] === 'charge' && $t['status'] !== 'cancelled') {
                 if ($t['status'] === 'pending' || $t['status'] === 'partial') {
                     $pendingRows[] = $t;
                 }
@@ -1941,6 +1975,16 @@ class FinanceController extends BaseController
         // Cargos pendientes (para el dropdown del modal de revisión)
         $pendingCharges = array_filter($transactions, fn($t) => $t['type'] === 'charge' && in_array($t['status'], ['pending', 'partial']));
 
+        // Cuotas Extraordinarias Pendientes
+        $pendingExtCharges = $db->table('financial_transactions ft')
+            ->select('ft.id, ft.amount, ft.description, ft.status, ef.title')
+            ->join('extraordinary_fees ef', 'ef.id = ft.extraordinary_fee_id', 'inner')
+            ->where('ft.unit_id', $unit['id'])
+            ->where('ft.type', 'charge')
+            ->whereIn('ft.status', ['pending', 'partial'])
+            ->where('ft.deleted_at IS NULL')
+            ->get()->getResultArray();
+
         // Categorías para el modal de edición
         $categories = $db->table('financial_categories')
             ->where('condominium_id', $demoCondo['id'])
@@ -1966,6 +2010,7 @@ class FinanceController extends BaseController
             'paymentHistory' => array_values($paymentHistory),
             'vouchers' => array_values($vouchers),
             'pendingCharges' => array_values($pendingCharges),
+            'pendingExtCharges' => array_values($pendingExtCharges),
             'initialBalance' => $initialBalance,
             'categories' => $categories,
         ]);
@@ -2387,6 +2432,7 @@ class FinanceController extends BaseController
             ->where('ft.unit_id', $unitId)
             ->where('ft.condominium_id', $demoCondo['id'])
             ->where('ft.status !=', 'cancelled')
+            ->where('ft.deleted_at IS NULL')
             ->orderBy('ft.due_date', 'ASC')
             ->orderBy('ft.created_at', 'ASC')
             ->get()->getResultArray();
@@ -2667,16 +2713,16 @@ class FinanceController extends BaseController
             ->where('unit_id', $unitId)
             ->where('type', 'credit')
             ->where('status', 'paid')
-            ->where('extraordinary_fee_id', null)
+            ->where('deleted_at IS NULL')
             ->get()->getRowArray();
         $totalCredits = (float) ($creditRow['total_credits'] ?? 0);
 
         $chargeAllocatedRow = $db->table('financial_transactions')
-            ->select('SUM(amount_paid) as total_allocated')
+            ->select('SUM(CASE WHEN status IN ("paid", "completed") THEN amount ELSE amount_paid END) as total_allocated')
             ->where('unit_id', $unitId)
             ->where('type', 'charge')
             ->where('status !=', 'cancelled')
-            ->where('extraordinary_fee_id', null)
+            ->where('deleted_at IS NULL')
             ->get()->getRowArray();
         $totalAllocated = (float) ($chargeAllocatedRow['total_allocated'] ?? 0);
 
@@ -2693,8 +2739,8 @@ class FinanceController extends BaseController
         $pendingCharges = $db->table('financial_transactions')
             ->where('unit_id', $unitId)
             ->where('type', 'charge')
-            ->where('extraordinary_fee_id', null)
             ->whereIn('status', ['pending', 'partial'])
+            ->where('deleted_at IS NULL')
             ->orderBy('due_date', 'ASC')
             ->orderBy('created_at', 'ASC')
             ->get()->getResultArray();
@@ -3381,6 +3427,7 @@ class FinanceController extends BaseController
             ->where('ft.unit_id', $unitId)
             ->where('ft.condominium_id', $demoCondo['id'])
             ->where('ft.status !=', 'cancelled')
+            ->where('ft.deleted_at IS NULL')
             ->orderBy('ft.due_date', 'ASC')
             ->orderBy('ft.created_at', 'ASC')
             ->get()->getResultArray();
@@ -3402,7 +3449,7 @@ class FinanceController extends BaseController
                 if ($t['due_date'] < $todayStr) {
                     $debt_vencida += (float) $t['amount'];
                 }
-            } else {
+            } else if ($t['type'] === 'credit' && $t['status'] === 'paid') {
                 $runningBalance -= (float) $t['amount'];
                 $totalCredits += (float) $t['amount'];
                 $debt_vencida -= (float) $t['amount'];
@@ -3797,16 +3844,7 @@ class FinanceController extends BaseController
                 $isChargeType = ($r['type'] !== 'payment' && $r['type'] !== 'credit');
                 $isPending = ($r['status'] !== 'paid' && $r['status'] !== 'cancelled');
 
-                if (!$isChargeType || !$isPending) {
-                    return false;
-                }
-
-                $dueDateMillis = isset($r['due_date']) ? strtotime($r['due_date']) : strtotime($r['created_at']);
-                $todayMillis = strtotime(date('Y-m-d') . ' 23:59:59');
-                $currentMonth = date('Y-m');
-                $chargeMonth = date('Y-m', $dueDateMillis);
-
-                return ($chargeMonth <= $currentMonth) || ($dueDateMillis <= $todayMillis);
+                return $isChargeType && $isPending;
             });
 
             if (!empty($pendingCharges)) {
@@ -4963,7 +5001,9 @@ class FinanceController extends BaseController
                 if ($charge) {
                     $chargeAmount = (float) $charge['amount'];
                     $newStatus = ($amount >= $chargeAmount) ? 'paid' : 'partial';
+                    $newPaid = min($amount, $chargeAmount);
                     $db->table('financial_transactions')->where('id', $chargeId)->update([
+                        'amount_paid' => $newPaid,
                         'status' => $newStatus,
                         'updated_at' => date('Y-m-d H:i:s'),
                     ]);

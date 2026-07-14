@@ -934,7 +934,7 @@ $mesesES = ['January' => 'Enero', 'February' => 'Febrero', 'March' => 'Marzo', '
                 <div class="fc-card">
                     <div style="display:flex; flex-direction:column; gap:0.15rem; margin-bottom:1rem;">
                         <div class="widget-title" style="margin-bottom:0;">Tendencias Mensuales</div>
-                        <span class="widget-subtitle">Ingresos, gastos y vencidos — últimos 6 meses</span>
+                        <span class="widget-subtitle">Ingresos, gastos y por cobrar — últimos 6 meses</span>
                     </div>
                     <div style="height: 300px; width: 100%;">
                         <canvas id="monthlyTrendsChart"></canvas>
@@ -1249,9 +1249,9 @@ $mesesES = ['January' => 'Enero', 'February' => 'Febrero', 'March' => 'Marzo', '
                                 minBarLength: 5
                             },
                             {
-                                label: 'Vencidos',
+                                label: 'Por Cobrar',
                                 data: <?= json_encode($trend_vencidos ?? []) ?>,
-                                backgroundColor: '#eab308',
+                                backgroundColor: '#d4a017',
                                 borderRadius: 4,
                                 minBarLength: 5
                             }

@@ -861,7 +861,11 @@
                         <div class="fee-card-header">
                             <div class="fee-card-title">
                                 <?= esc($fee['title']) ?>
-                                <span class="fee-badge">Pendiente</span>
+                                <?php if ($fee['units_loaded'] > 0 && $fee['units_loaded'] == $fee['units_paid']): ?>
+                                    <span class="fee-badge" style="background-color: #d1fae5; color: #065f46;">Completado</span>
+                                <?php else: ?>
+                                    <span class="fee-badge">Pendiente</span>
+                                <?php endif; ?>
                             </div>
                         </div>
                         <?php if (!empty($fee['description'])): ?>

@@ -1810,13 +1810,22 @@ $formatDateEs = function($dateStr) {
                     <div style="margin-bottom:1.15rem;">
                         <label
                             style="font-size:.76rem; color:#64748b; margin-bottom:.35rem; display:block; font-weight:500; text-transform:uppercase; letter-spacing:.5px;">Aplicación de pago</label>
-                        <div style="background-color: #f1f5f9; border-left: 4px solid #3b82f6; padding: 10px 14px; border-radius: 4px 10px 10px 4px; font-size: 0.82rem; color: #334155; display: flex; align-items: flex-start; gap: 8px;">
-                            <i class="bi bi-info-circle-fill" style="color: #3b82f6; margin-top: 2px;"></i>
-                            <div style="line-height: 1.4;">
-                                Este pago se aplicará automáticamente cubriendo primero los saldos y adeudos más antiguos de la unidad.
+                        <?php if (!empty($pendingExtCharges)): ?>
+                            <select id="rvChargeId" style="border:1.5px solid #e2e8f0; border-radius:10px; padding:10px 14px; width:100%; font-size:.88rem; font-weight:500; color:#1e293b; background:#fff; cursor:pointer; transition:border-color .2s; outline:none; box-sizing:border-box;" onfocus="this.style.borderColor='#1D4C9D'" onblur="this.style.borderColor='#e2e8f0'">
+                                <option value="0">Aplicación General (Saldos atrasados)</option>
+                                <?php foreach($pendingExtCharges as $pec): ?>
+                                    <option value="<?= $pec['id'] ?>"><?= esc($pec['title'] ?? 'Cuota Extraordinaria') ?> (Pendiente: MX$<?= number_format($pec['amount'], 2) ?>)</option>
+                                <?php endforeach; ?>
+                            </select>
+                        <?php else: ?>
+                            <div style="background-color: #f1f5f9; border-left: 4px solid #3b82f6; padding: 10px 14px; border-radius: 4px 10px 10px 4px; font-size: 0.82rem; color: #334155; display: flex; align-items: flex-start; gap: 8px;">
+                                <i class="bi bi-info-circle-fill" style="color: #3b82f6; margin-top: 2px;"></i>
+                                <div style="line-height: 1.4;">
+                                    Este pago se aplicará automáticamente cubriendo primero los saldos y adeudos más antiguos de la unidad.
+                                </div>
                             </div>
-                        </div>
-                        <input type="hidden" id="rvChargeId" value="0">
+                            <input type="hidden" id="rvChargeId" value="0">
+                        <?php endif; ?>
                     </div>
                 </div>
 
