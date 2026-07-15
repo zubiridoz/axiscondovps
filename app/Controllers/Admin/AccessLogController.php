@@ -806,8 +806,10 @@ class AccessLogController extends BaseController
         ];
 
         // Ensure tenant is set
-        $demoCondo = (new \App\Models\Tenant\CondominiumModel())->first();
-        if ($demoCondo) \App\Services\TenantService::getInstance()->setTenantId((int)$demoCondo['id']);
+        $condoId = session()->get('user_condominio_id');
+        if ($condoId) {
+            \App\Services\TenantService::getInstance()->setTenantId((int)$condoId);
+        }
 
         $qrModel->insert($data);
 

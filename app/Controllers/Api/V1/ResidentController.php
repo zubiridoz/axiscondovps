@@ -544,6 +544,16 @@ class ResidentController extends ResourceController
         $dateStr       = $json['date'] ?? date('Y-m-d');
         $endDateStr    = $json['end_date'] ?? null;
 
+        // Formato seguro para DB (Flutter puede enviar d/m/Y)
+        if (strpos($dateStr, '/') !== false) {
+            $dt = \DateTime::createFromFormat('d/m/Y', $dateStr);
+            if ($dt) $dateStr = $dt->format('Y-m-d');
+        }
+        if ($endDateStr && strpos($endDateStr, '/') !== false) {
+            $dt = \DateTime::createFromFormat('d/m/Y', $endDateStr);
+            if ($dt) $endDateStr = $dt->format('Y-m-d');
+        }
+
         if (empty($visitorName)) {
             return $this->respondError('El nombre del visitante es obligatorio.');
         }
