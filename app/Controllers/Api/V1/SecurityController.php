@@ -444,7 +444,7 @@ class SecurityController extends ResourceController
             $words = explode(' ', $r['name']);
             $initials = '';
             foreach (array_slice($words, 0, 2) as $w) {
-                if(!empty($w)) $initials .= strtoupper($w[0]);
+                if(!empty($w)) $initials .= mb_strtoupper(mb_substr($w, 0, 1, 'UTF-8'), 'UTF-8');
             }
             $r['initials'] = $initials ?: 'U';
 
@@ -455,9 +455,9 @@ class SecurityController extends ResourceController
             $u['residents'] = $resByUnit[$u['id']] ?? [];
             $u['total_residents'] = count($u['residents']);
             
-            $searchString = strtolower($u['unit_number']);
+            $searchString = mb_strtolower($u['unit_number'], 'UTF-8');
             foreach($u['residents'] as $r) {
-                $searchString .= ' ' . strtolower($r['name']);
+                $searchString .= ' ' . mb_strtolower($r['name'], 'UTF-8');
             }
             $u['search_string'] = $searchString;
         }

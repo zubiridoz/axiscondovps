@@ -119,9 +119,7 @@ class UnitController extends BaseController
      */
     public function indexView()
     {
-        // [HACK LOCAL] Forzamos el contexto Tenant
-        $demoCondo = (new \App\Models\Tenant\CondominiumModel())->first();
-        if ($demoCondo) \App\Services\TenantService::getInstance()->setTenantId((int)$demoCondo['id']);
+        // No forcing TenantId here, handled by TenantFilter
 
         $unitModel = new UnitModel();
         

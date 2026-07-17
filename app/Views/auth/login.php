@@ -231,7 +231,7 @@
                     </a>
 
                     <div class="terms-text">
-                        Al iniciar sesión, aceptas nuestra <a href="#" class="text-decoration-none">Política de Privacidad</a>
+                        Al iniciar sesión, aceptas nuestra <a href="<?= base_url('politica_privacidad_axiscondo.html') ?>" target="_blank" class="text-decoration-none">Política de Privacidad</a>
                     </div>
                 </form>
             </div>
@@ -295,7 +295,7 @@
                     </div>
                     <label class="terms-checkbox">
                         <input type="checkbox" required>
-                        <span>Acepto los <a href="#" class="text-decoration-none">Términos y Condiciones</a> & <a href="#" class="text-decoration-none">Política de Privacidad</a></span>
+                        <span>Acepto los <a href="<?= base_url('politica_privacidad_axiscondo.html') ?>" target="_blank" class="text-decoration-none">Términos y Condiciones</a> & <a href="<?= base_url('politica_privacidad_axiscondo.html') ?>" target="_blank" class="text-decoration-none">Política de Privacidad</a></span>
                     </label>
                     <button type="submit" class="btn btn-primary mt-2">Crear Cuenta</button>
                 </form>
@@ -336,7 +336,7 @@
                     </div>
                     <label class="terms-checkbox">
                         <input type="checkbox" required>
-                        <span>Acepto los <a href="#" class="text-decoration-none">Términos y Condiciones</a></span>
+                        <span>Acepto los <a href="<?= base_url('politica_privacidad_axiscondo.html') ?>" target="_blank" class="text-decoration-none">Términos y Condiciones y Política de Privacidad</a></span>
                     </label>
                     <button type="submit" class="btn-resident-submit mt-2">
                         <i class="bi bi-box-arrow-in-right me-2"></i> Activar Cuenta e Ingresar

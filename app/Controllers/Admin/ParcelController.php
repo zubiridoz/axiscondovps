@@ -14,8 +14,7 @@ class ParcelController extends BaseController
 {
     private function ensureTenant()
     {
-        $demoCondo = (new \App\Models\Tenant\CondominiumModel())->first();
-        if ($demoCondo) \App\Services\TenantService::getInstance()->setTenantId((int)$demoCondo['id']);
+        // No forcing TenantId here, handled by TenantFilter
     }
 
     /**
