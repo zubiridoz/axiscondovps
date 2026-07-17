@@ -38,8 +38,8 @@ class InvitationService
         // 2. Generar token seguro
         $token = bin2hex(random_bytes(32));
 
-        // 3. Preparar expiración (7 días como regla de la especificación técnica)
-        $expiresAt = Time::now()->addDays(7)->format('Y-m-d H:i:s');
+        // 3. Preparar expiración (21 días como regla de la especificación técnica)
+        $expiresAt = Time::now()->addDays(21)->format('Y-m-d H:i:s');
 
         // 4. Guardar en Base de Datos
         $insertData = [
