@@ -171,6 +171,36 @@
         background: #1e293b;
     }
 
+    .btn-filter-vouchers {
+        height: 38px;
+        padding: 0 1.25rem;
+        border: 2px solid #f59e0b;
+        background-color: #fffbeb;
+        color: #d97706;
+        border-radius: 20px;
+        font-size: .85rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(245, 158, 11, 0.15);
+        margin-left: 0.5rem;
+    }
+    
+    .btn-filter-vouchers:hover {
+        background-color: #fef3c7;
+        transform: translateY(-1px);
+    }
+    
+    .btn-filter-vouchers.active {
+        background-color: #f59e0b;
+        color: white;
+        border-color: #d97706;
+        box-shadow: 0 4px 8px rgba(245, 158, 11, 0.3);
+    }
+
     .ppu-content-box {
         background: var(--fin-card-bg);
         border: 1px solid var(--fin-border);
@@ -907,8 +937,8 @@
                 <option value="Al corriente">Al corriente</option>
                 <option value="Moroso">Moroso</option>
             </select>
-            <button type="button" id="btnFilterVouchers" class="toolbar-control d-flex align-items-center gap-2" style="background: white; cursor: pointer; transition: 0.2s;" data-active="false" title="Filtrar unidades con comprobantes enviados por residentes">
-                <i class="bi bi-receipt text-warning"></i> Comprobantes enviados
+            <button type="button" id="btnFilterVouchers" class="btn-filter-vouchers" title="Haz clic para ver solo unidades con comprobantes enviados">
+                <i class="bi bi-receipt"></i> Solo con Comprobantes
             </button>
             <span class="filter-count" id="countLabel"><?= count($records) ?> unidades</span>
         </div>
@@ -1112,15 +1142,9 @@
     document.getElementById('btnFilterVouchers')?.addEventListener('click', function() {
         filterVouchersActive = !filterVouchersActive;
         if (filterVouchersActive) {
-            this.style.background = '#f59e0b';
-            this.style.color = 'white';
-            this.style.borderColor = '#f59e0b';
-            this.querySelector('i').classList.remove('text-warning');
+            this.classList.add('active');
         } else {
-            this.style.background = 'white';
-            this.style.color = 'var(--fin-text-main)';
-            this.style.borderColor = 'var(--fin-border)';
-            this.querySelector('i').classList.add('text-warning');
+            this.classList.remove('active');
         }
         applyFilters();
     });
