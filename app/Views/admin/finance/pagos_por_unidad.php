@@ -907,6 +907,9 @@
                 <option value="Al corriente">Al corriente</option>
                 <option value="Moroso">Moroso</option>
             </select>
+            <button type="button" id="btnFilterVouchers" class="toolbar-control d-flex align-items-center gap-2" style="background: white; cursor: pointer; transition: 0.2s;" data-active="false" title="Filtrar unidades con comprobantes enviados por residentes">
+                <i class="bi bi-receipt text-warning"></i> Comprobantes enviados
+            </button>
             <span class="filter-count" id="countLabel"><?= count($records) ?> unidades</span>
         </div>
 
@@ -932,7 +935,8 @@
                     <?php if (!empty($records)): ?>
                         <?php foreach ($records as $rec): ?>
                             <tr onclick="window.location.href='<?= base_url('admin/finanzas/pagos-por-unidad/' . $rec['hash_id']) ?>'"
-                                data-search="<?= esc(strtolower($rec['unidad_label'])) ?>" data-estado="<?= esc($rec['estado']) ?>">
+                                data-search="<?= esc(strtolower($rec['unidad_label'])) ?>" data-estado="<?= esc($rec['estado']) ?>"
+                                data-pending-vouchers="<?= ($rec['pending_vouchers'] ?? 0) > 0 ? 'yes' : 'no' ?>">
                                 <td onclick="event.stopPropagation()"><input type="checkbox"></td>
                                 <td>
                                     <a class="unit-link"
@@ -1104,6 +1108,23 @@
     });
 
     // ── Live Search + Filter ──
+    let filterVouchersActive = false;
+    document.getElementById('btnFilterVouchers')?.addEventListener('click', function() {
+        filterVouchersActive = !filterVouchersActive;
+        if (filterVouchersActive) {
+            this.style.background = '#f59e0b';
+            this.style.color = 'white';
+            this.style.borderColor = '#f59e0b';
+            this.querySelector('i').classList.remove('text-warning');
+        } else {
+            this.style.background = 'white';
+            this.style.color = 'var(--fin-text-main)';
+            this.style.borderColor = 'var(--fin-border)';
+            this.querySelector('i').classList.add('text-warning');
+        }
+        applyFilters();
+    });
+
     function applyFilters() {
         const search = document.getElementById('searchInput').value.toLowerCase();
         const estado = document.getElementById('filterEstado').value;
@@ -1111,7 +1132,8 @@
         document.querySelectorAll('#unidadesTable tbody tr').forEach(row => {
             const matchSearch = !search || (row.dataset.search && row.dataset.search.includes(search));
             const matchEstado = !estado || row.dataset.estado === estado;
-            const show = matchSearch && matchEstado;
+            const matchVouchers = !filterVouchersActive || row.dataset.pendingVouchers === 'yes';
+            const show = matchSearch && matchEstado && matchVouchers;
             row.style.display = show ? '' : 'none';
             if (show) visible++;
         });
