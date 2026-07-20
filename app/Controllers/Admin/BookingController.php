@@ -97,7 +97,8 @@ class BookingController extends BaseController
             ->select('u.id as user_id, u.first_name, u.last_name, u.avatar, "ADMIN" as role_label, NULL as unit_number, NULL as section_name, NULL as unit_id')
             ->join('users u', 'u.id = ucr.user_id')
             ->where('ucr.condominium_id', $condoId)
-            ->where('ucr.role_id', 2);
+            ->where('ucr.role_id', 2)
+            ->where('u.status', 'active');
 
         if ($q !== '') {
             $adminQuery->groupStart()
@@ -115,7 +116,8 @@ class BookingController extends BaseController
             ->join('units un', 'un.id = res.unit_id', 'left')
             ->join('sections s', 's.id = un.section_id', 'left')
             ->where('res.condominium_id', $condoId)
-            ->where('res.is_active', 1);
+            ->where('res.is_active', 1)
+            ->where('u.status', 'active');
 
         if ($q !== '') {
             $residentQuery->groupStart()
@@ -126,10 +128,34 @@ class BookingController extends BaseController
         }
         $residents = $residentQuery->limit(8)->get()->getResultArray();
 
+        // Unidades sin residentes (o con residentes pendientes)
+        $unitsQuery = $db->table('units un')
+            ->select('"' . session()->get('user_id') . '" as user_id, "Unidad" as first_name, un.unit_number as last_name, "" as avatar, "UNIT" as role_label, un.unit_number, s.name as section_name, un.id as unit_id')
+            ->join('sections s', 's.id = un.section_id', 'left')
+            ->where('un.condominium_id', $condoId)
+            ->whereNotIn('un.id', function($builder) use ($condoId) {
+                $builder->select('res.unit_id')
+                        ->from('residents res')
+                        ->join('users u', 'u.id = res.user_id')
+                        ->where('res.condominium_id', $condoId)
+                        ->where('res.is_active', 1)
+                        ->where('u.status', 'active')
+                        ->where('res.unit_id IS NOT NULL');
+            });
+
+        if ($q !== '') {
+            $unitsQuery->groupStart()
+                ->like('un.unit_number', $q)
+                ->orLike('s.name', $q)
+                ->groupEnd();
+        }
+        $units = $unitsQuery->limit(8)->get()->getResultArray();
+
         return $this->response->setJSON([
             'status' => 200,
             'admins' => $admins,
             'residents' => $residents,
+            'units' => $units,
         ]);
     }
 
@@ -228,6 +254,13 @@ class BookingController extends BaseController
 
         $bookingModel = new BookingModel();
 
+        // Check if user is active
+        $db = \Config\Database::connect();
+        $user = $db->table('users')->where('id', $userId)->get()->getRowArray();
+        if (!$user || $user['status'] !== 'active') {
+            return $this->response->setJSON(['status' => 403, 'error' => 'El usuario no está activo o aún no ha completado su registro']);
+        }
+
         // Validar Límite Máximo de Reservas Activas
         $maxReservations = $amenity['max_active_reservations'] ?? 'unlimited';
         if ($maxReservations !== 'unlimited' && is_numeric($maxReservations)) {
@@ -274,6 +307,47 @@ class BookingController extends BaseController
         
         if ($db->transStatus() === false) {
             return $this->response->setJSON(['status' => 500, 'error' => 'Error al procesar el cargo de la reserva']);
+        }
+
+        try {
+            $db = \Config\Database::connect();
+            $amenityDb = $db->table('amenities')->select('name, price')->where('id', $amenityId)->get()->getRowArray();
+            $amenityName = $amenityDb ? $amenityDb['name'] : 'Amenidad';
+            
+            $fmtDate = date('d/m/Y', strtotime($startTime));
+            $fmtTime = date('H:i', strtotime($startTime));
+            
+            $body = "El administrador ha creado una reserva para {$amenityName} el {$fmtDate} a las {$fmtTime}.";
+            if (($amenityDb['price'] ?? 0) > 0) {
+                $body .= " Se ha generado un cargo por $" . number_format($amenityDb['price'], 2) . " en tu estado de cuenta.";
+            }
+
+            $residents = [];
+            if (!empty($unitId)) {
+                $residents = $db->table('residents')
+                    ->select('DISTINCT(user_id) as user_id')
+                    ->where('unit_id', $unitId)
+                    ->where('condominium_id', $condoId)
+                    ->where('is_active', 1)
+                    ->where('user_id IS NOT NULL')
+                    ->get()->getResultArray();
+            } else if ($userId != session()->get('user_id')) {
+                $residents = [['user_id' => $userId]];
+            }
+
+            foreach ($residents as $r) {
+                \App\Models\Tenant\NotificationModel::notify(
+                    $condoId, 
+                    (int) $r['user_id'], 
+                    'amenidad', 
+                    'Nueva Reserva de Amenidad', 
+                    $body,
+                    ['type' => 'amenity', 'booking_id' => $bookingId],
+                    true
+                );
+            }
+        } catch (\Exception $e) {
+            log_message('error', "Error al notificar creación de reserva: " . $e->getMessage());
         }
 
         return $this->response->setJSON(['status' => 201, 'message' => 'Reserva creada exitosamente', 'id' => $bookingId]);

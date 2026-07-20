@@ -1409,11 +1409,11 @@ $formatTimeRange = function ($start, $end) {
             try {
                 const res = await fetch(BASE + 'admin/amenidades/reservas/usuarios?q=' + encodeURIComponent(q));
                 const data = await res.json();
-                renderUserList(data.admins || [], data.residents || []);
+                renderUserList(data.admins || [], data.residents || [], data.units || []);
             } catch (e) { console.error(e); }
         }
 
-        function renderUserList(admins, residents) {
+        function renderUserList(admins, residents, units = []) {
             const container = document.getElementById('userListContainer');
             let html = '';
             if (admins.length) {
@@ -1424,8 +1424,12 @@ $formatTimeRange = function ($start, $end) {
                 html += '<div class="user-group-label">Residentes</div>';
                 residents.forEach(u => { html += userOptionHtml(u); });
             }
-            if (!admins.length && !residents.length) {
-                html = '<div class="text-center text-muted py-3" style="font-size:.85rem">No se encontraron usuarios</div>';
+            if (units.length) {
+                html += '<div class="user-group-label">Unidades Sin Residente Registrado</div>';
+                units.forEach(u => { html += userOptionHtml(u); });
+            }
+            if (!admins.length && !residents.length && !units.length) {
+                html = '<div class="text-center text-muted py-3" style="font-size:.85rem">No se encontraron resultados</div>';
             }
             container.innerHTML = html;
             container.querySelectorAll('.user-option').forEach(opt => {

@@ -19,6 +19,7 @@ class FinancialTransactionModel extends BaseTenantModel
         'type',
         'amount',
         'description',
+        'issue_date',
         'due_date',
         'status',
         'late_fee_applied',
@@ -121,7 +122,8 @@ class FinancialTransactionModel extends BaseTenantModel
             'type'           => 'charge',
             'amount'         => $price,
             'description'    => $desc,
-            'due_date'       => date('Y-m-d', strtotime($booking['start_time'])),
+            'issue_date'     => date('Y-m-d'),
+            'due_date'       => date('Y-m-d', strtotime('-7 days', strtotime($booking['start_time']))),
             'status'         => 'pending',
             'source'         => $sourceStr,
         ]);
