@@ -286,10 +286,31 @@ class TicketApiController extends ResourceController
             ->get()
             ->getResultArray();
 
+        $userIds = array_unique(array_column($rows, 'user_id'));
+        $userRoles = [];
+        if (!empty($userIds)) {
+            $rolesData = $db->table('user_condominium_roles ucr')
+                ->select('ucr.user_id, r.name as role_name')
+                ->join('roles r', 'r.id = ucr.role_id')
+                ->whereIn('ucr.user_id', $userIds)
+                ->where('ucr.condominium_id', $condoId)
+                ->get()
+                ->getResultArray();
+            foreach ($rolesData as $rd) {
+                $userRoles[$rd['user_id']] = strtoupper($rd['role_name']);
+            }
+        }
+
         $messages = [];
         foreach ($rows as $row) {
+            $uId = (int)$row['user_id'];
+            $roleName = $userRoles[$uId] ?? '';
+            $isResident = ($roleName === 'RESIDENT');
+
             $name = trim(($row['first_name'] ?? '') . ' ' . ($row['last_name'] ?? ''));
-            if ($name === '') $name = 'Administrador';
+            if ($name === '') {
+                $name = $isResident ? 'Residente' : 'Administrador';
+            }
 
             $mediaUrls = $row['media_urls'] ? json_decode($row['media_urls'], true) : [];
             $mediaOut = [];
@@ -302,9 +323,10 @@ class TicketApiController extends ResourceController
 
             $messages[] = [
                 'id'         => (int) $row['id'],
-                'user_id'    => (int) $row['user_id'],
+                'user_id'    => $uId,
                 'name'       => $name,
-                'is_mine'    => ((int) $row['user_id'] === (int) $userId),
+                'role'       => $isResident ? 'resident' : 'admin',
+                'is_mine'    => ($uId === (int) $userId),
                 'message'    => $row['message'],
                 'media_urls' => $mediaOut,
                 'time_label' => $timeLabel,

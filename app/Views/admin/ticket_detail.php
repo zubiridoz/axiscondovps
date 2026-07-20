@@ -2377,7 +2377,13 @@
                 msgDiv.className = 'conv-msg';
 
                 // Header
-                let badgeHtml = `<span class="conv-msg-badge badge-admin">Administrador</span>`;
+                let badgeHtml = '';
+                if (m.role === 'resident') {
+                    badgeHtml = `<span class="conv-msg-badge bg-secondary text-white">Residente</span>`;
+                } else {
+                    badgeHtml = `<span class="conv-msg-badge badge-admin">Administrador</span>`;
+                }
+                
                 if (isInternal) {
                     badgeHtml += ` <span class="conv-msg-badge badge-internal"><i class="bi bi-lock"></i> Nota interna</span>`;
                 }
