@@ -274,22 +274,27 @@ class ResidentInvitationsController extends BaseController
         $condo = $condoModel->find($invitation['condominium_id']);
         $condoName = $condo ? $condo['name'] : 'tu comunidad';
 
-        // Reenviar el correo real
+        $nuevoFecha = date('Y-m-d H:i:s');
+        $expiresAt = \CodeIgniter\I18n\Time::now()->addDays(21)->format('Y-m-d H:i:s');
+        $newToken = bin2hex(random_bytes(32));
+
+        // Reenviar el correo real con el token nuevo
         $emailService = new \App\Services\EmailService();
         $emailSent = $emailService->sendResidentInvitation(
             $invitation['email'],
             $invitation['name'],
             $condoName,
-            $invitation['token']
+            $newToken
         );
 
         if (!$emailSent) {
             return $this->response->setJSON(['success' => false, 'message' => 'No se pudo enviar el correo. Verifica la configuración SMTP.']);
         }
 
-        $nuevoFecha = date('Y-m-d H:i:s');
         $data = [
             'invited_at' => $nuevoFecha,
+            'expires_at' => $expiresAt,
+            'token' => $newToken,
             'invitation_status' => 'pending'
         ];
         

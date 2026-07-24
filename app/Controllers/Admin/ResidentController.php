@@ -254,9 +254,16 @@ class ResidentController extends BaseController
                ]);
         }
 
-        // Solo mostrar invitaciones pendientes
+        // Auto-expirar invitaciones que ya pasaron de la fecha de expiración
+        $db->table('resident_invitations')
+           ->where('condominium_id', $condoId)
+           ->where('invitation_status', 'pending')
+           ->where('expires_at <', date('Y-m-d H:i:s'))
+           ->update(['invitation_status' => 'expired']);
+
+        // Mostrar invitaciones pendientes y expiradas
         $dbInvitations = $invitationModel->where('condominium_id', $condoId)
-                                         ->where('invitation_status', 'pending')
+                                         ->whereIn('invitation_status', ['pending', 'expired'])
                                          ->orderBy('created_at', 'DESC')
                                          ->findAll();
                                          
@@ -298,6 +305,16 @@ class ResidentController extends BaseController
             if ($inv['role'] == 'tenant') $roleStr = 'Inquilino';
             if ($inv['role'] == 'admin') $roleStr = 'Administrador';
 
+            // Calcular vigencia
+            $daysLeft = 0;
+            if ($inv['invitation_status'] === 'pending' && !empty($inv['expires_at'])) {
+                $expiresTime = strtotime($inv['expires_at']);
+                $nowTime = time();
+                if ($expiresTime > $nowTime) {
+                    $daysLeft = ceil(($expiresTime - $nowTime) / 86400);
+                }
+            }
+
             $invitations[] = [
                 'id' => $inv['id'],
                 'name' => $inv['name'],
@@ -310,7 +327,8 @@ class ResidentController extends BaseController
                 'last_invite' => $inv['invited_at'] ? date('d/m/Y', strtotime($inv['invited_at'])) : '-',
                 'last_invite_formatted' => $inv['invited_at'] ? date('j \d\e F \d\e Y, H:i', strtotime($inv['invited_at'])) : '-',
                 'status' => $statusStr,
-                'status_raw' => $inv['invitation_status']
+                'status_raw' => $inv['invitation_status'],
+                'days_left' => $daysLeft
             ];
         }
 

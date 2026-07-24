@@ -1018,11 +1018,23 @@
                                 </td>
                                 <td><span class="text-dark fw-500"><?= $inv['unit'] ?></span></td>
                                 <td class="text-secondary"><?= $inv['type'] ?></td>
-                                <td class="text-muted"><?= $inv['last_invite'] ?></td>
+                                <td class="text-muted">
+                                    <div class="d-flex flex-column" style="font-size: 0.85rem;">
+                                        <span><?= $inv['last_invite'] ?></span>
+                                        <?php if ($inv['status_raw'] === 'pending' && isset($inv['days_left']) && $inv['days_left'] > 0): ?>
+                                            <span style="font-size: 0.75rem; color: #10b981;">Expira en <?= $inv['days_left'] ?> día(s)</span>
+                                        <?php elseif ($inv['status_raw'] === 'pending' && isset($inv['days_left']) && $inv['days_left'] == 0): ?>
+                                            <span style="font-size: 0.75rem; color: #f59e0b;">Expira hoy</span>
+                                        <?php endif; ?>
+                                    </div>
+                                </td>
                                 <td>
                                     <?php if ($inv['status_raw'] === 'pending'): ?>
                                         <span class="status-pill status-pending"><i class="bi bi-clock-history"></i>
                                             Pendiente</span>
+                                    <?php elseif ($inv['status_raw'] === 'expired'): ?>
+                                        <span class="status-pill" style="background:#fee2e2; color:#b91c1c; border: 1px solid #fecaca;"><i class="bi bi-exclamation-triangle"></i>
+                                            Expirada</span>
                                     <?php else: ?>
                                         <span class="status-pill status-tosend"><i class="bi bi-send-dash"></i> Por
                                             enviar</span>
