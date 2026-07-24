@@ -1442,11 +1442,11 @@
         // BULK RESEND (SECUENCIAL)
         // ========================
         window.confirmResendInvitations = async function (btn) {
-            const rows = document.querySelectorAll('.inv-row[data-status-raw="pending"]');
+            const rows = document.querySelectorAll('.inv-row[data-status-raw="pending"], .inv-row[data-status-raw="expired"]');
             const pendingIds = Array.from(rows).map(r => r.getAttribute('data-id'));
 
             if (pendingIds.length === 0) {
-                Swal.fire({ icon: 'info', title: 'Nada que reenviar', text: 'No hay invitaciones pendientes.', confirmButtonColor: '#1e293b' });
+                Swal.fire({ icon: 'info', title: 'Nada que reenviar', text: 'No hay invitaciones pendientes o expiradas.', confirmButtonColor: '#1e293b' });
                 return;
             }
 

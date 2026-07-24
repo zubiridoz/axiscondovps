@@ -28,12 +28,13 @@ class PollNotificationService
             $uid = $res['user_id'];
             if (!empty($uid) && !in_array($uid, $notifiedUsers)) {
                 $notifiedUsers[] = $uid;
+                $shortTitle = mb_strimwidth($title, 0, 45, '...');
                 NotificationModel::notify(
                     $condoId,
                     $uid,
                     'poll_new',
                     'Nueva encuesta',
-                    "📊 Nueva encuesta disponible: {$title}",
+                    "📊 Nueva encuesta disponible: {$shortTitle}",
                     ['type' => 'poll']
                 );
             }
@@ -51,8 +52,9 @@ class PollNotificationService
         $residentInfo = self::getResidentInfo($userId);
         $nombre = $residentInfo['name'];
         $unidad = $residentInfo['unit'];
+        $shortTitle = mb_strimwidth($pollTitle, 0, 45, '...');
 
-        $body = "🗳️ El residente {$nombre} de la unidad {$unidad} votó en la encuesta '{$pollTitle}'";
+        $body = "🗳️ El residente {$nombre} de la unidad {$unidad} votó en la encuesta '{$shortTitle}'";
 
         self::notifyAdmins('Nuevo voto en encuesta', $body, $condoId);
     }
@@ -67,8 +69,9 @@ class PollNotificationService
 
         $residentInfo = self::getResidentInfo($userId);
         $nombre = $residentInfo['name'];
+        $shortTitle = mb_strimwidth($pollTitle, 0, 45, '...');
 
-        $body = "🔄 El residente {$nombre} cambió su voto en la encuesta '{$pollTitle}'";
+        $body = "🔄 El residente {$nombre} cambió su voto en la encuesta '{$shortTitle}'";
 
         self::notifyAdmins('Cambio de voto', $body, $condoId);
     }
@@ -90,12 +93,13 @@ class PollNotificationService
             $uid = $res['user_id'];
             if (!empty($uid) && !in_array($uid, $notifiedUsers)) {
                 $notifiedUsers[] = $uid;
+                $shortTitle = mb_strimwidth($title, 0, 45, '...');
                 NotificationModel::notify(
                     $condoId,
                     $uid,
                     'poll_finished',
                     'Encuesta finalizada',
-                    "✅ La encuesta '{$title}' ha finalizado",
+                    "✅ La encuesta '{$shortTitle}' ha finalizado",
                     ['type' => 'poll']
                 );
             }
