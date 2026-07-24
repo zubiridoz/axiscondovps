@@ -196,6 +196,23 @@ class AccessLogController extends BaseController
         }
         unset($sm);
 
+        // Map real device names to access logs
+        foreach ($accessLogs as &$log) {
+            if (!empty($log['recorded_by'])) {
+                foreach ($securityDevices as $sd) {
+                    if ((int)$sd['user_id'] === (int)$log['recorded_by']) {
+                        $log['gate_number'] = $sd['name'];
+                        break;
+                    }
+                }
+            }
+            // Fallback just in case
+            if (empty($log['gate_number'])) {
+                $log['gate_number'] = 'Caseta Principal';
+            }
+        }
+        unset($log);
+
         $stats = [
             'total_entradas' => $totalEntradasHoy,
             'adentro'        => $actualmenteAdentro,
