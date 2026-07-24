@@ -43,7 +43,7 @@ class Email extends BaseConfig
     /**
      * SMTP Password
      */
-    public string $SMTPPass = 'd3vCOMPRE+';
+    public string $SMTPPass = 'd3vCOMPRE256+';
 
     /**
      * SMTP Port
