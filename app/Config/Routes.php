@@ -180,6 +180,7 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin', 'filter' => ['a
     $routes->post('documentos/track-view/(:num)', 'FileController::trackView/$1');
     $routes->get('encuestas', 'PollController::indexView');
     $routes->post('encuestas/crear', 'PollController::create');
+    $routes->post('encuestas/editar/(:any)', 'PollController::edit/$1');
     $routes->get('encuestas/detalles/(:any)', 'PollController::details/$1');
     $routes->post('encuestas/cerrar/(:any)', 'PollController::close/$1');
     $routes->post('encuestas/eliminar/(:any)', 'PollController::delete/$1');

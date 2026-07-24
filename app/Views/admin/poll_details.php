@@ -231,6 +231,23 @@ $colors = ['c1', 'c2', 'c3', 'c4', 'c5'];
         color: #3F67AC;
     }
 
+    .btn-edit-poll {
+        background: transparent;
+        border: 1px solid #3b82f6;
+        color: #2563eb;
+        width: 100%;
+        border-radius: 4px;
+        padding: 0.4rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-top: 1.5rem;
+        transition: all 0.2s;
+    }
+
+    .btn-edit-poll:hover {
+        background: #eff6ff;
+    }
+
     .btn-close-poll {
         background: transparent;
         border: 1px solid #fbbf24;
@@ -240,7 +257,7 @@ $colors = ['c1', 'c2', 'c3', 'c4', 'c5'];
         padding: 0.4rem;
         font-size: 0.85rem;
         font-weight: 600;
-        margin-top: 1.5rem;
+        margin-top: 0.5rem;
         transition: all 0.2s;
     }
 
@@ -425,7 +442,9 @@ $colors = ['c1', 'c2', 'c3', 'c4', 'c5'];
         <div class="cc-hero-breadcrumb">
             <i class="bi bi-check2-square"></i>
             <i class="bi bi-chevron-right"></i>
-            Detalles de la encuesta <i class="bi bi-chevron-right"></i><?= esc($poll['title']) ?>
+            <span class="text-nowrap flex-shrink-0">Detalles de la encuesta</span> 
+            <i class="bi bi-chevron-right flex-shrink-0"></i>
+            <span class="text-truncate" title="<?= esc($poll['title']) ?>" style="max-width: 300px;"><?= esc($poll['title']) ?></span>
         </div>
     </div>
 
@@ -478,6 +497,9 @@ $colors = ['c1', 'c2', 'c3', 'c4', 'c5'];
             </div>
 
             <?php if ($isActive && ($endTs == 0 || $endTs > $nowTs)): ?>
+                <button class="btn-edit-poll mb-2" onclick="openEditPollModal()">
+                    <i class="bi bi-pencil-square me-1"></i> Editar Encuesta
+                </button>
                 <button class="btn-close-poll" onclick="confirmClosePoll(event, '<?= esc($poll['hash_id']) ?>')">
                     <i class="bi bi-x-circle me-1"></i> Cerrar Encuesta
                 </button>
@@ -626,6 +648,65 @@ $colors = ['c1', 'c2', 'c3', 'c4', 'c5'];
     </div>
 </div>
 
+<!-- Edit Poll Modal -->
+<div class="modal fade" id="editPollModal" tabindex="-1" aria-labelledby="editPollModalLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header border-bottom-0 pb-0">
+                <div class="w-100">
+                    <h5 class="modal-title fw-bold" id="editPollModalLabel">Editar Encuesta</h5>
+                    <p class="text-secondary small mb-0">Modifica los detalles de la encuesta en curso</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="editPollForm">
+                    <div class="card premium-card mb-3">
+                        <div class="card-body">
+                            <label class="form-label fw-semibold">Título de la Encuesta</label>
+                            <textarea id="editPollTitle" class="form-control premium-input" rows="3" required><?= esc($poll['title']) ?></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="card premium-card mb-3">
+                        <div class="card-body">
+                            <label class="form-label fw-semibold">Descripción Adicional (Opcional)</label>
+                            <textarea id="editPollDescription" class="form-control premium-input" rows="4"><?= esc($poll['description']) ?></textarea>
+                        </div>
+                    </div>
+
+                    <div class="card premium-card mb-3">
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Categoría</label>
+                                    <select id="editPollCategory" class="form-select premium-input">
+                                        <option value="General" <?= ($poll['category'] ?? '') == 'General' ? 'selected' : '' ?>>General</option>
+                                        <option value="Mantenimiento" <?= ($poll['category'] ?? '') == 'Mantenimiento' ? 'selected' : '' ?>>Mantenimiento</option>
+                                        <option value="Seguridad" <?= ($poll['category'] ?? '') == 'Seguridad' ? 'selected' : '' ?>>Seguridad</option>
+                                        <option value="Finanzas" <?= ($poll['category'] ?? '') == 'Finanzas' ? 'selected' : '' ?>>Finanzas</option>
+                                        <option value="Eventos" <?= ($poll['category'] ?? '') == 'Eventos' ? 'selected' : '' ?>>Eventos</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Fecha Límite</label>
+                                    <input type="datetime-local" id="editPollEndDate" class="form-control premium-input" value="<?= $poll['end_date'] ? date('Y-m-d\TH:i', strtotime((string)$poll['end_date'])) : '' ?>">
+                                    <div class="form-text">Déjalo en blanco si no tiene límite.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn text-white px-4" style="background-color: #3F67AC" id="btnSaveEditPoll">Guardar Cambios</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     function showToast(icon, title) {
         if (window.Swal) {
@@ -708,6 +789,64 @@ $colors = ['c1', 'c2', 'c3', 'c4', 'c5'];
             });
         }
     }
+
+    let editPollModalInstance = null;
+
+    function openEditPollModal() {
+        if (!editPollModalInstance) {
+            editPollModalInstance = new bootstrap.Modal(document.getElementById('editPollModal'));
+        }
+        editPollModalInstance.show();
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const btnSaveEditPoll = document.getElementById('btnSaveEditPoll');
+        if (btnSaveEditPoll) {
+            btnSaveEditPoll.addEventListener('click', function() {
+                const title = document.getElementById('editPollTitle').value.trim();
+                const description = document.getElementById('editPollDescription').value.trim();
+                const category = document.getElementById('editPollCategory').value;
+                const endDate = document.getElementById('editPollEndDate').value;
+
+                if (!title) {
+                    showToast('error', 'El título de la encuesta es obligatorio');
+                    return;
+                }
+
+                btnSaveEditPoll.disabled = true;
+                btnSaveEditPoll.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Guardando...';
+
+                fetch('<?= base_url("admin/encuestas/editar/" . esc($poll['id'])) ?>', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        '<?= csrf_token() ?>': '<?= csrf_hash() ?>'
+                    },
+                    body: JSON.stringify({
+                        title: title,
+                        description: description,
+                        category: category,
+                        end_date: endDate || null
+                    })
+                }).then(res => res.json()).then(data => {
+                    if (data.status === 200) {
+                        showToast('success', '✅ Encuesta actualizada correctamente');
+                        if (editPollModalInstance) editPollModalInstance.hide();
+                        setTimeout(() => window.location.reload(), 1500);
+                    } else {
+                        showToast('error', data.error || 'No se pudo actualizar la encuesta');
+                        btnSaveEditPoll.disabled = false;
+                        btnSaveEditPoll.innerHTML = 'Guardar Cambios';
+                    }
+                }).catch(() => {
+                    showToast('error', 'Error de red al actualizar la encuesta');
+                    btnSaveEditPoll.disabled = false;
+                    btnSaveEditPoll.innerHTML = 'Guardar Cambios';
+                });
+            });
+        }
+    });
 </script>
 
 <?= $this->endSection() ?>

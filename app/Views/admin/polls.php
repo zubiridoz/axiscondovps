@@ -200,6 +200,20 @@ foreach ($rawPolls as $poll) {
         flex: 1;
     }
 
+    .text-truncate-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .text-truncate-3 {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
     .polls-filter-title {
         color: #57708f;
         font-size: 0.75rem;
@@ -557,11 +571,11 @@ foreach ($rawPolls as $poll) {
                         <article class="poll-card poll-item" data-status="<?= esc($poll['status_key']) ?>"
                             data-category="<?= esc($poll['category_key']) ?>" data-search="<?= esc($poll['search']) ?>">
                             <div class="d-flex justify-content-between align-items-start gap-2">
-                                <h4 style="white-space: pre-wrap; word-break: break-word;"><?= esc($poll['title']) ?></h4>
-                                <span class="poll-category-tag"><?= esc($poll['category_label']) ?></span>
+                                <h4 class="text-truncate-2 mb-0" style="white-space: pre-wrap; word-break: break-word;"><?= esc($poll['title']) ?></h4>
+                                <span class="poll-category-tag flex-shrink-0"><?= esc($poll['category_label']) ?></span>
                             </div>
 
-                            <p style="white-space: pre-wrap; word-break: break-word;"><?= esc($poll['description'] !== '' ? $poll['description'] : 'Sin descripcion registrada.') ?>
+                            <p class="text-truncate-3 mt-2" style="white-space: pre-wrap; word-break: break-word;"><?= esc($poll['description'] !== '' ? $poll['description'] : 'Sin descripcion registrada.') ?>
                             </p>
 
                             <div class="d-flex align-items-center gap-2 mb-2">

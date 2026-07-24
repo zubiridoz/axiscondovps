@@ -119,6 +119,57 @@ class PollController extends BaseController
     }
 
     /**
+     * Edita una encuesta existente
+     */
+    public function edit($id = null)
+    {
+        if (!$id) return $this->response->setJSON(['status' => 400, 'error' => 'ID no proporcionado']);
+
+        $pollModel = new PollModel();
+        $poll = $pollModel->find($id);
+
+        if (!$poll) {
+            return $this->response->setJSON(['status' => 404, 'error' => 'Encuesta no encontrada']);
+        }
+
+        $now = time();
+        $hasEndDate = !empty($poll['end_date']) && $poll['end_date'] !== '0000-00-00 00:00:00';
+        $endTs = $hasEndDate ? strtotime((string)$poll['end_date']) : 0;
+        $isClosed = (int)$poll['is_active'] === 0 || ($hasEndDate && $endTs <= $now);
+
+        if ($isClosed) {
+            return $this->response->setJSON(['status' => 403, 'error' => 'No se puede editar una encuesta que ya está cerrada.']);
+        }
+
+        $payload = $this->request->getJSON();
+        if (!$payload) {
+            return $this->response->setJSON(['status' => 400, 'error' => 'Datos inválidos']);
+        }
+
+        $title       = trim($payload->title ?? '');
+        $description = trim($payload->description ?? '');
+        $endDate     = $payload->end_date ?? null;
+        $category    = trim($payload->category ?? 'General');
+
+        if (empty($title)) {
+             return $this->response->setJSON(['status' => 400, 'error' => 'El título de la encuesta es obligatorio']);
+        }
+
+        $updateData = [
+            'title'       => $title,
+            'description' => $description,
+            'end_date'    => $endDate,
+            'category'    => $category,
+        ];
+
+        if ($pollModel->update($id, $updateData)) {
+            return $this->response->setJSON(['status' => 200, 'message' => 'Encuesta actualizada correctamente']);
+        }
+
+        return $this->response->setJSON(['status' => 500, 'error' => 'Error al actualizar la encuesta']);
+    }
+
+    /**
      * Activa una encuesta para que inicie la votación
      */
     public function activate($id = null)
