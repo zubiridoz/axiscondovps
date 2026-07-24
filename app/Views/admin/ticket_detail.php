@@ -720,7 +720,8 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(0, 0, 0, 0.85);
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
         z-index: 99999;
         flex-direction: column;
         align-items: center;
@@ -729,6 +730,38 @@
 
     .lightbox-overlay.active {
         display: flex;
+    }
+
+    .lightbox-nav {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        color: #fff;
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        cursor: pointer;
+        transition: 0.2s;
+        backdrop-filter: blur(6px);
+        z-index: 100001;
+    }
+
+    .lightbox-nav:hover {
+        background: rgba(255, 255, 255, 0.4);
+    }
+
+    .lightbox-prev {
+        left: 20px;
+    }
+
+    .lightbox-next {
+        right: 20px;
     }
 
     .lightbox-close {
@@ -1764,6 +1797,8 @@
 <!-- Image and Video Lightbox Overlay -->
 <div class="lightbox-overlay" id="lightbox-overlay">
     <button class="lightbox-close" id="lightbox-close"><i class="bi bi-x-lg"></i></button>
+    <button class="lightbox-nav lightbox-prev" id="lightbox-prev" style="display:none;"><i class="bi bi-chevron-left"></i></button>
+    <button class="lightbox-nav lightbox-next" id="lightbox-next" style="display:none;"><i class="bi bi-chevron-right"></i></button>
     <div class="lightbox-content" id="lightbox-content">
         <img src="" alt="" id="lightbox-img">
         <video src="" id="lightbox-vid" controls style="display:none; max-width: 90vw; max-height: 80vh; border-radius: 12px; box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);"></video>
@@ -2467,22 +2502,41 @@
         const lbImg = document.getElementById('lightbox-img');
         const lbVid = document.getElementById('lightbox-vid');
         const lbClose = document.getElementById('lightbox-close');
+        const lbPrevBtn = document.getElementById('lightbox-prev');
+        const lbNextBtn = document.getElementById('lightbox-next');
+        let lbGalleryItems = [];
+        let lbCurrentIndex = -1;
 
-        function openLightbox(src, isVideo = false) {
-            if (isVideo) {
+        function updateLightboxNav() {
+            if (lbGalleryItems.length > 1) {
+                lbPrevBtn.style.display = 'flex';
+                lbNextBtn.style.display = 'flex';
+            } else {
+                lbPrevBtn.style.display = 'none';
+                lbNextBtn.style.display = 'none';
+            }
+        }
+
+        function showLightboxItem(index) {
+            if (index < 0 || index >= lbGalleryItems.length) return;
+            lbCurrentIndex = index;
+            const item = lbGalleryItems[index];
+
+            if (item.isVideo) {
                 lbImg.style.display = 'none';
                 lbVid.style.display = 'block';
-                lbVid.src = src;
+                lbVid.src = item.src;
                 lbVid.play().catch(e => console.log("Auto-play prevented"));
             } else {
                 lbVid.style.display = 'none';
                 lbVid.pause();
                 lbVid.src = '';
                 lbImg.style.display = 'block';
-                lbImg.src = src;
+                lbImg.src = item.src;
             }
             lbOverlay.classList.add('active');
             document.body.style.overflow = 'hidden';
+            updateLightboxNav();
         }
 
         function closeLightbox() {
@@ -2492,7 +2546,21 @@
             lbVid.src = '';
             lbVid.style.display = 'none';
             document.body.style.overflow = '';
+            lbGalleryItems = [];
+            lbCurrentIndex = -1;
         }
+
+        lbPrevBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (lbCurrentIndex > 0) showLightboxItem(lbCurrentIndex - 1);
+            else showLightboxItem(lbGalleryItems.length - 1);
+        });
+
+        lbNextBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (lbCurrentIndex < lbGalleryItems.length - 1) showLightboxItem(lbCurrentIndex + 1);
+            else showLightboxItem(0);
+        });
 
         lbClose.addEventListener('click', closeLightbox);
         lbOverlay.addEventListener('click', (e) => {
@@ -2500,34 +2568,60 @@
         });
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && lbOverlay.classList.contains('active')) closeLightbox();
+            if (e.key === 'ArrowLeft' && lbOverlay.classList.contains('active')) {
+                if (lbCurrentIndex > 0) showLightboxItem(lbCurrentIndex - 1);
+                else showLightboxItem(lbGalleryItems.length - 1);
+            }
+            if (e.key === 'ArrowRight' && lbOverlay.classList.contains('active')) {
+                if (lbCurrentIndex < lbGalleryItems.length - 1) showLightboxItem(lbCurrentIndex + 1);
+                else showLightboxItem(0);
+            }
         });
 
         // Attach lightbox to dynamically rendered media
         document.addEventListener('click', (e) => {
             const img = e.target.closest('.conv-msg-media img, .report-attached-img');
-            if (img) {
-                e.preventDefault();
-                openLightbox(img.src, false);
-                return;
-            }
-
             const vidWrapper = e.target.closest('.conv-msg-vid, .report-attached-vid');
-            if (vidWrapper && vidWrapper.dataset.url) {
+            const fcThumb = e.target.closest('.file-card-thumb');
+            
+            if (fcThumb && fcThumb.hasAttribute('data-is-doc')) {
                 e.preventDefault();
-                openLightbox(vidWrapper.dataset.url, true);
+                window.open(fcThumb.dataset.url, '_blank');
                 return;
             }
 
-            // Also lightbox for file-card clicks
-            const fcThumb = e.target.closest('.file-card-thumb');
-            if (fcThumb && fcThumb.dataset.url) {
+            if (img || (vidWrapper && vidWrapper.dataset.url) || (fcThumb && fcThumb.dataset.url)) {
                 e.preventDefault();
-                if (fcThumb.hasAttribute('data-is-doc')) {
-                    window.open(fcThumb.dataset.url, '_blank');
-                } else {
-                    openLightbox(fcThumb.dataset.url, fcThumb.hasAttribute('data-is-video'));
+                
+                // Agrupar elementos por mensaje, reporte o cuadrícula
+                let container = e.target.closest('.conv-msg, .td-panel, #files-grid');
+                if (!container) container = document.body;
+                
+                const mediaNodes = container.querySelectorAll('.conv-msg-media img, .report-attached-img, .conv-msg-vid, .report-attached-vid, .file-card-thumb:not([data-is-doc])');
+                
+                lbGalleryItems = [];
+                let clickedIndex = 0;
+                
+                mediaNodes.forEach((node) => {
+                    if (node.tagName.toLowerCase() === 'img') {
+                        lbGalleryItems.push({ src: node.src, isVideo: false });
+                        if (node === img) clickedIndex = lbGalleryItems.length - 1;
+                    } else if (node.classList.contains('conv-msg-vid') || node.classList.contains('report-attached-vid')) {
+                        lbGalleryItems.push({ src: node.dataset.url, isVideo: true });
+                        if (node === vidWrapper) clickedIndex = lbGalleryItems.length - 1;
+                    } else if (node.classList.contains('file-card-thumb')) {
+                        lbGalleryItems.push({ src: node.dataset.url, isVideo: node.hasAttribute('data-is-video') });
+                        if (node === fcThumb) clickedIndex = lbGalleryItems.length - 1;
+                    }
+                });
+                
+                if (lbGalleryItems.length === 0) {
+                    if (img) lbGalleryItems.push({ src: img.src, isVideo: false });
+                    else if (vidWrapper) lbGalleryItems.push({ src: vidWrapper.dataset.url, isVideo: true });
+                    else if (fcThumb) lbGalleryItems.push({ src: fcThumb.dataset.url, isVideo: fcThumb.hasAttribute('data-is-video') });
                 }
-                return;
+                
+                showLightboxItem(clickedIndex);
             }
         });
 
