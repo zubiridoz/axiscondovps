@@ -557,11 +557,11 @@ foreach ($rawPolls as $poll) {
                         <article class="poll-card poll-item" data-status="<?= esc($poll['status_key']) ?>"
                             data-category="<?= esc($poll['category_key']) ?>" data-search="<?= esc($poll['search']) ?>">
                             <div class="d-flex justify-content-between align-items-start gap-2">
-                                <h4><?= esc($poll['title']) ?></h4>
+                                <h4 style="white-space: pre-wrap; word-break: break-word;"><?= esc($poll['title']) ?></h4>
                                 <span class="poll-category-tag"><?= esc($poll['category_label']) ?></span>
                             </div>
 
-                            <p><?= esc($poll['description'] !== '' ? $poll['description'] : 'Sin descripcion registrada.') ?>
+                            <p style="white-space: pre-wrap; word-break: break-word;"><?= esc($poll['description'] !== '' ? $poll['description'] : 'Sin descripcion registrada.') ?>
                             </p>
 
                             <div class="d-flex align-items-center gap-2 mb-2">

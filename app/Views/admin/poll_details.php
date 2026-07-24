@@ -488,7 +488,7 @@ $colors = ['c1', 'c2', 'c3', 'c4', 'c5'];
     <!-- Middle Column (Bars) -->
     <div>
         <div class="votes-container">
-            <h5><?= esc($poll['title']) ?></h5>
+            <h5 style="white-space: pre-wrap; word-break: break-word;"><?= esc($poll['title']) ?></h5>
             <?php if (!empty($poll['description'])): ?>
                 <p class="text-muted mb-4" style="font-size: 0.95rem;"><?= nl2br(esc($poll['description'])) ?></p>
             <?php endif; ?>
