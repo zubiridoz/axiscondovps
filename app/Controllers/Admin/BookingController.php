@@ -262,20 +262,7 @@ class BookingController extends BaseController
         }
 
         // Validar Límite Máximo de Reservas Activas
-        $maxReservations = $amenity['max_active_reservations'] ?? 'unlimited';
-        if ($maxReservations !== 'unlimited' && is_numeric($maxReservations)) {
-            $maxAllowed = (int)$maxReservations;
-            $activeCount = $bookingModel
-                ->where('amenity_id', $amenityId)
-                ->where('user_id', $userId)
-                ->whereIn('status', ['pending', 'approved'])
-                ->where('end_time >', date('Y-m-d H:i:s'))
-                ->countAllResults();
-
-            if ($activeCount >= $maxAllowed) {
-                return $this->response->setJSON(['status' => 403, 'error' => "Este usuario ha alcanzado el límite máximo de ({$maxAllowed}) reservas activas para esta amenidad."]);
-            }
-        }
+        // Omitido: Los administradores pueden saltarse esta restricción desde el panel web.
 
         // Admin creates = auto-approved
         $data = [

@@ -172,18 +172,20 @@ class BookingController extends ResourceController
         }
 
         // Validar Límite Máximo de Reservas Activas (por unidad, incluye las de admin)
-        $maxReservations = $amenity['max_active_reservations'] ?? 'unlimited';
-        if ($maxReservations !== 'unlimited' && is_numeric($maxReservations)) {
-            $maxAllowed = (int)$maxReservations;
-            $activeCount = $bookingModel
-                ->where('amenity_id', $amenityId)
-                ->where('unit_id', $bookingUnitId)
-                ->whereIn('status', ['pending', 'approved'])
-                ->where('end_time >', date('Y-m-d H:i:s'))
-                ->countAllResults();
+        if (!$isAdmin) {
+            $maxReservations = $amenity['max_active_reservations'] ?? 'unlimited';
+            if ($maxReservations !== 'unlimited' && is_numeric($maxReservations)) {
+                $maxAllowed = (int)$maxReservations;
+                $activeCount = $bookingModel
+                    ->where('amenity_id', $amenityId)
+                    ->where('unit_id', $bookingUnitId)
+                    ->whereIn('status', ['pending', 'approved'])
+                    ->where('end_time >', date('Y-m-d H:i:s'))
+                    ->countAllResults();
 
-            if ($activeCount >= $maxAllowed) {
-                return $this->respondError("Has alcanzado el límite máximo de ({$maxAllowed}) reservas activas para esta amenidad.", 403);
+                if ($activeCount >= $maxAllowed) {
+                    return $this->respondError("Has alcanzado el límite máximo de ({$maxAllowed}) reservas activas para esta amenidad.", 403);
+                }
             }
         }
 
