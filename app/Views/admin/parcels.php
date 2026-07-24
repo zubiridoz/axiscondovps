@@ -960,6 +960,68 @@ $pageRows = array_slice($activeRows, $offset, $perPage);
     }
 
     /* ── end Hero ── */
+    /* ── Image Lightbox ── */
+    .lightbox-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
+        z-index: 99999;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .lightbox-overlay.active {
+        display: flex;
+    }
+
+    .lightbox-close {
+        position: absolute;
+        top: 16px;
+        right: 20px;
+        z-index: 100001;
+        background: rgba(255, 255, 255, 0.15);
+        border: none;
+        color: #fff;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        cursor: pointer;
+        transition: 0.2s;
+        backdrop-filter: blur(6px);
+    }
+
+    .lightbox-close:hover {
+        background: rgba(255, 255, 255, 0.3);
+    }
+
+    .lightbox-content {
+        max-width: 90vw;
+        max-height: 80vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        border-radius: 12px;
+    }
+
+    .lightbox-content img {
+        max-width: 90vw;
+        max-height: 80vh;
+        object-fit: contain;
+        border-radius: 12px;
+        box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+        transition: transform 0.2s;
+    }
 </style>
 
 <?php if ($isHistory): ?>
@@ -1358,25 +1420,11 @@ $pageRows = array_slice($activeRows, $offset, $perPage);
     </div>
 </div>
 
-<!-- LIGHTBOX -->
-<div class="modal fade" id="photoLightbox" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content"
-            style="background: rgba(0,0,0,0.92); border: none; border-radius: 0.75rem; overflow: hidden;">
-            <div class="d-flex justify-content-end p-3 pb-0">
-                <button type="button" class="btn btn-sm d-flex align-items-center justify-content-center"
-                    data-bs-dismiss="modal" aria-label="Cerrar"
-                    style="width:36px; height:36px; border-radius:50%; background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.25); color:#fff; font-size:1.1rem; transition: background 0.2s;"
-                    onmouseover="this.style.background='rgba(255,255,255,0.3)'"
-                    onmouseout="this.style.background='rgba(255,255,255,0.15)'">
-                    <i class="bi bi-x-lg"></i>
-                </button>
-            </div>
-            <div class="p-3 pt-2">
-                <img id="lightboxImg" src="" class="w-100 rounded" alt="Paquete"
-                    style="max-height:75vh; object-fit:contain;">
-            </div>
-        </div>
+<!-- Image Lightbox Overlay -->
+<div class="lightbox-overlay" id="lightbox-overlay">
+    <button class="lightbox-close" id="lightbox-close"><i class="bi bi-x-lg"></i></button>
+    <div class="lightbox-content" id="lightbox-content">
+        <img src="" alt="" id="lightbox-img">
     </div>
 </div>
 
@@ -1625,9 +1673,9 @@ $pageRows = array_slice($activeRows, $offset, $perPage);
     }
 
     function openLightbox(url) {
-        document.getElementById('lightboxImg').src = url;
-        var lb = new bootstrap.Modal(document.getElementById('photoLightbox'));
-        lb.show();
+        document.getElementById('lightbox-img').src = url;
+        document.getElementById('lightbox-overlay').classList.add('active');
+        document.body.style.overflow = 'hidden';
     }
 
     var _pendingDeliverId = null;
@@ -1724,5 +1772,26 @@ $pageRows = array_slice($activeRows, $offset, $perPage);
         var min = d.getMinutes().toString().padStart(2, '0');
         return days[d.getDay()] + ', ' + months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear() + ', ' + h + ':' + min + ' ' + ampm;
     }
+
+    // Lightbox Logic for Parcels
+    const lbOverlay = document.getElementById('lightbox-overlay');
+    const lbClose = document.getElementById('lightbox-close');
+    const lbImg = document.getElementById('lightbox-img');
+
+    function closeLightbox() {
+        if(lbOverlay) lbOverlay.classList.remove('active');
+        if(lbImg) lbImg.src = '';
+        document.body.style.overflow = '';
+    }
+
+    if (lbClose) lbClose.addEventListener('click', closeLightbox);
+    if (lbOverlay) {
+        lbOverlay.addEventListener('click', (e) => {
+            if (e.target === lbOverlay) closeLightbox();
+        });
+    }
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && lbOverlay && lbOverlay.classList.contains('active')) closeLightbox();
+    });
 </script>
 <?= $this->endSection() ?>

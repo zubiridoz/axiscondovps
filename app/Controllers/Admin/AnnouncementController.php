@@ -259,9 +259,8 @@ class AnnouncementController extends BaseController
 
         if (!$ann) return $this->response->setJSON(['status' => 404, 'error' => 'Anuncio no encontrado']);
 
-        // Increment views
-        $model->set('view_count', 'view_count + 1', false)->where('id', $id)->update();
-        $ann['view_count'] = ((int)($ann['view_count'] ?? 0)) + 1;
+        // Do not increment views in the admin panel to show real app views
+        $ann['view_count'] = ((int)($ann['view_count'] ?? 0));
 
         // Attachments
         $attachModel = new AnnouncementAttachmentModel();
@@ -270,14 +269,30 @@ class AnnouncementController extends BaseController
         // Likes
         $likeModel = new AnnouncementLikeModel();
         $ann['like_count'] = $likeModel->where('announcement_id', $id)->countAllResults();
+        
+        $likers = $likeModel->select('users.first_name, units.unit_number')
+            ->join('users', 'users.id = announcement_likes.user_id', 'left')
+            ->join('residents', 'residents.user_id = users.id', 'left')
+            ->join('units', 'units.id = residents.unit_id', 'left')
+            ->where('announcement_likes.announcement_id', $id)
+            ->findAll();
+        
+        $ann['likers_names'] = array_map(function($l) {
+            $name = trim($l['first_name'] ?? '') ?: 'Usuario';
+            $unit = !empty($l['unit_number']) ? ' - ' . $l['unit_number'] : ' - Admin';
+            return $name . $unit;
+        }, $likers);
+
         $currentUser = session()->get('user_id') ?? 4;
         $ann['user_liked'] = $likeModel->where('announcement_id', $id)->where('user_id', $currentUser)->countAllResults() > 0;
 
         // Comments
         $commentModel = new AnnouncementCommentModel();
         $comments = $commentModel
-            ->select('announcement_comments.*, users.first_name, users.last_name')
+            ->select('announcement_comments.*, users.first_name, units.unit_number')
             ->join('users', 'users.id = announcement_comments.user_id', 'left')
+            ->join('residents', 'residents.user_id = users.id', 'left')
+            ->join('units', 'units.id = residents.unit_id', 'left')
             ->where('announcement_id', $id)
             ->orderBy('announcement_comments.created_at', 'ASC')
             ->findAll();
@@ -311,7 +326,26 @@ class AnnouncementController extends BaseController
         }
 
         $count = $likeModel->where('announcement_id', $id)->countAllResults();
-        return $this->response->setJSON(['status' => 200, 'liked' => $liked, 'count' => $count]);
+
+        $likers = $likeModel->select('users.first_name, units.unit_number')
+            ->join('users', 'users.id = announcement_likes.user_id', 'left')
+            ->join('residents', 'residents.user_id = users.id', 'left')
+            ->join('units', 'units.id = residents.unit_id', 'left')
+            ->where('announcement_likes.announcement_id', $id)
+            ->findAll();
+        
+        $likersNames = array_map(function($l) {
+            $name = trim($l['first_name'] ?? '') ?: 'Usuario';
+            $unit = !empty($l['unit_number']) ? ' - ' . $l['unit_number'] : ' - Admin';
+            return $name . $unit;
+        }, $likers);
+
+        return $this->response->setJSON([
+            'status' => 200, 
+            'liked' => $liked, 
+            'count' => $count,
+            'likers_names' => $likersNames
+        ]);
     }
 
     /* ─── Comment ─── */

@@ -959,8 +959,9 @@ $jsonData = htmlspecialchars(json_encode($rawAnnouncements, JSON_UNESCAPED_UNICO
     .an-lightbox {
         position: fixed;
         inset: 0;
-        background: rgba(0, 0, 0, .88);
-        z-index: 9800;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
+        z-index: 99999;
         display: none;
         align-items: center;
         justify-content: center;
@@ -1541,6 +1542,7 @@ $jsonData = htmlspecialchars(json_encode($rawAnnouncements, JSON_UNESCAPED_UNICO
             <div>
                 <div class="an-author" id="an-det-author">Autor</div>
                 <div class="an-meta" id="an-det-meta">Admin • hace 1 min</div>
+                <div class="an-meta mt-1" style="color: #64748b; font-size: 0.8rem;"><i class="bi bi-eye"></i> <span id="an-det-views">0</span> vistas reales</div>
             </div>
             <button class="an-edit-btn" id="an-det-edit"><i class="bi bi-pencil"></i> Editar</button>
             <button class="an-detail-close" id="an-detail-close">&times;</button>
@@ -1557,6 +1559,7 @@ $jsonData = htmlspecialchars(json_encode($rawAnnouncements, JSON_UNESCAPED_UNICO
                             class="bi bi-hand-thumbs-up"></i> Like</button>
                 </h5>
                 <div id="an-det-like-text" class="an-no-content">No hay likes aún</div>
+                <div id="an-det-likers-list" style="margin-top: 0.5rem; font-size: 0.85rem; color: #475569;"></div>
             </div>
             <div class="an-section">
                 <h5><i class="bi bi-chat"></i> Comentarios (<span id="an-det-comment-count">0</span>)</h5>
@@ -1755,6 +1758,7 @@ $jsonData = htmlspecialchars(json_encode($rawAnnouncements, JSON_UNESCAPED_UNICO
                 var ts = new Date(a.created_at);
                 var rel = timeAgo(ts);
                 $('an-det-meta').textContent = 'Admin • ' + rel;
+                $('an-det-views').textContent = a.view_count || 0;
                 $('an-det-content').innerHTML = a.content || '';
 
                 // Attachments
@@ -1786,6 +1790,13 @@ $jsonData = htmlspecialchars(json_encode($rawAnnouncements, JSON_UNESCAPED_UNICO
                 // Likes
                 $('an-det-like-count').textContent = a.like_count || 0;
                 $('an-det-like-text').textContent = a.like_count > 0 ? a.like_count + ' persona(s) dieron like' : 'No hay likes aún';
+                
+                var likersHtml = '';
+                if (a.likers_names && a.likers_names.length > 0) {
+                    likersHtml = a.likers_names.map(function(name) { return '<i class="bi bi-person-fill me-1"></i>' + esc(name); }).join('<br>');
+                }
+                $('an-det-likers-list').innerHTML = likersHtml;
+
                 var likeBtn = $('an-det-like-btn');
                 likeBtn.classList.toggle('liked', !!a.user_liked);
                 likeBtn.innerHTML = a.user_liked ? '<i class="bi bi-hand-thumbs-up-fill"></i> Te gusta' : '<i class="bi bi-hand-thumbs-up"></i> Like';
@@ -1797,8 +1808,11 @@ $jsonData = htmlspecialchars(json_encode($rawAnnouncements, JSON_UNESCAPED_UNICO
                     cWrap.innerHTML = '<div style="text-align:center;padding:1.2rem;color:#94a3b8"><i class="bi bi-chat" style="font-size:2rem;display:block;margin-bottom:.4rem"></i>No hay comentarios aún<br><small>¡Sé el primero en comentar!</small></div>';
                 } else {
                     a.comments.forEach(function (cm) {
-                        var cfn = (cm.first_name || '') + ' ' + (cm.last_name || ''); cfn = cfn.trim() || 'Usuario';
-                        var cini = ((cm.first_name || '').charAt(0) + (cm.last_name || '').charAt(0)).toUpperCase();
+                        var fname = (cm.first_name || '').trim() || 'Usuario';
+                        var unitPart = cm.unit_number ? ' - ' + cm.unit_number : ' - Admin';
+                        var cfn = fname + unitPart;
+                        var cini = fname.charAt(0).toUpperCase() || 'U';
+                        
                         var ctime = timeAgo(new Date(cm.created_at));
                         var item = document.createElement('div'); item.className = 'an-comment-item';
                         item.innerHTML = '<span class="an-avatar" style="width:30px;height:30px;font-size:.7rem">' + esc(cini) + '</span><div style="flex:1; position:relative;"><div><span class="an-comment-author">' + esc(cfn) + '</span> <span class="an-comment-time">' + esc(ctime) + '</span></div><div class="an-comment-text">' + esc(cm.content) + '</div><button title="Eliminar comentario" onclick="window.deleteComment(' + cm.id + ')" style="position:absolute; right:0; top:0; background:none; border:none; color:#cbd5e1; font-size:1rem; cursor:pointer;" onmouseover="this.style.color=\'#ef4444\'" onmouseout="this.style.color=\'#cbd5e1\'"><i class="bi bi-trash3"></i></button></div>';
@@ -1841,6 +1855,13 @@ $jsonData = htmlspecialchars(json_encode($rawAnnouncements, JSON_UNESCAPED_UNICO
                 if (d.status === 200) {
                     $('an-det-like-count').textContent = d.count;
                     $('an-det-like-text').textContent = d.count > 0 ? d.count + ' persona(s) dieron like' : 'No hay likes aún';
+                    
+                    var likersHtml = '';
+                    if (d.likers_names && d.likers_names.length > 0) {
+                        likersHtml = d.likers_names.map(function(name) { return '<i class="bi bi-person-fill me-1"></i>' + esc(name); }).join('<br>');
+                    }
+                    $('an-det-likers-list').innerHTML = likersHtml;
+
                     var btn = $('an-det-like-btn');
                     btn.classList.toggle('liked', d.liked);
                     btn.innerHTML = d.liked ? '<i class="bi bi-hand-thumbs-up-fill"></i> Te gusta' : '<i class="bi bi-hand-thumbs-up"></i> Like';
