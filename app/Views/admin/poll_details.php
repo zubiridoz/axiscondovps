@@ -248,6 +248,22 @@ $colors = ['c1', 'c2', 'c3', 'c4', 'c5'];
         background: #eff6ff;
     }
 
+    .btn-download-poll {
+        background: transparent;
+        border: 1px solid #1D4C9D;
+        color: #1D4C9D;
+        width: 100%;
+        border-radius: 4px;
+        padding: 0.4rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+
+    .btn-download-poll:hover {
+        background: #e0e7ff;
+    }
+
     .btn-close-poll {
         background: transparent;
         border: 1px solid #fbbf24;
@@ -500,10 +516,14 @@ $colors = ['c1', 'c2', 'c3', 'c4', 'c5'];
                 <button class="btn-edit-poll mb-2" onclick="openEditPollModal()">
                     <i class="bi bi-pencil-square me-1"></i> Editar Encuesta
                 </button>
-                <button class="btn-close-poll" onclick="confirmClosePoll(event, '<?= esc($poll['hash_id']) ?>')">
+                <button class="btn-close-poll mb-2" onclick="confirmClosePoll(event, '<?= esc($poll['hash_id']) ?>')">
                     <i class="bi bi-x-circle me-1"></i> Cerrar Encuesta
                 </button>
             <?php endif; ?>
+            
+            <button class="btn-download-poll <?= ($isActive && ($endTs == 0 || $endTs > $nowTs)) ? '' : 'mt-4' ?>" onclick="downloadPollPdf('<?= esc($poll['hash_id']) ?>')">
+                <i class="bi bi-file-earmark-pdf me-1"></i> Descargar PDF
+            </button>
         </div>
     </div>
 
@@ -797,6 +817,27 @@ $colors = ['c1', 'c2', 'c3', 'c4', 'c5'];
             editPollModalInstance = new bootstrap.Modal(document.getElementById('editPollModal'));
         }
         editPollModalInstance.show();
+    }
+
+    function downloadPollPdf(hashId) {
+        Swal.fire({
+            title: 'Descargar Reporte',
+            text: '¿Qué tipo de reporte deseas descargar?',
+            icon: 'question',
+            showCancelButton: true,
+            showDenyButton: true,
+            confirmButtonText: 'Reporte Detallado',
+            confirmButtonColor: '#1D4C9D',
+            denyButtonText: 'Resumen Anónimo',
+            denyButtonColor: '#64748b',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.open(`<?= base_url('admin/encuestas/exportar') ?>/${hashId}?detailed=1`, '_blank');
+            } else if (result.isDenied) {
+                window.open(`<?= base_url('admin/encuestas/exportar') ?>/${hashId}?detailed=0`, '_blank');
+            }
+        });
     }
 
     document.addEventListener('DOMContentLoaded', function() {
