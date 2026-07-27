@@ -570,7 +570,7 @@ class SecurityController extends ResourceController
             ->select('q.token, q.unit_id, q.visitor_name, q.valid_from, q.valid_until, q.usage_limit, q.times_used, q.status, q.visit_type, q.vehicle_type, u.unit_number')
             ->join('units u', 'u.id = q.unit_id', 'left')
             ->where('q.condominium_id', $tenantId)
-            ->where('q.status', 'active')
+            ->whereIn('q.status', ['active', 'renovado'])
             ->where('q.valid_until >=', $now)
             ->where('q.times_used < q.usage_limit', null, false)
             ->get()
