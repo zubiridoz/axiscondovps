@@ -93,6 +93,35 @@ class ParcelController extends BaseController
         $parcel['resident_names'] = implode(', ', $names) ?: 'Sin Asignar';
         $parcel['residents'] = $residents;
 
+        // Receiver (guard/device)
+        $receiver = $db->table('users')
+            ->select('first_name, last_name')
+            ->where('id', $parcel['received_by'])
+            ->get()
+            ->getRowArray();
+        
+        if ($receiver) {
+            $parcel['received_by_name'] = trim($receiver['first_name'] . ' ' . $receiver['last_name']);
+        } else {
+            $parcel['received_by_name'] = 'Desconocido';
+        }
+
+        // Deliverer (guard/admin)
+        $deliverer = null;
+        if (!empty($parcel['delivered_by'])) {
+            $deliverer = $db->table('users')
+                ->select('first_name, last_name')
+                ->where('id', $parcel['delivered_by'])
+                ->get()
+                ->getRowArray();
+        }
+        
+        if ($deliverer) {
+            $parcel['delivered_by_name'] = trim($deliverer['first_name'] . ' ' . $deliverer['last_name']);
+        } else {
+            $parcel['delivered_by_name'] = null;
+        }
+
         // Photo URL
         if (!empty($parcel['photo_url'])) {
             $fileName = basename($parcel['photo_url']);
@@ -131,6 +160,7 @@ class ParcelController extends BaseController
         $parcelModel->update($id, [
             'status'         => 'delivered_to_resident',
             'delivered_at'   => date('Y-m-d H:i:s'),
+            'delivered_by'   => session()->get('user_id'),
             'picked_up_name' => $this->request->getPost('picked_up_name') ?: 'Entrega desde administración',
         ]);
 

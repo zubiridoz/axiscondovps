@@ -1583,6 +1583,9 @@ $pageRows = array_slice($activeRows, $offset, $perPage);
                 html += '<div class="tl-item"><span class="tl-dot received"></span>';
                 html += '<div class="tl-date"><i class="bi bi-clock"></i> ' + createdFormatted + '</div>';
                 html += '<div class="tl-event">Paquete recibido</div>';
+                if (p.received_by_name) {
+                    html += '<div style="font-size:0.75rem; color:#64748b; margin-top:2px;"><i class="bi bi-person-video2"></i> Registrado por: ' + p.received_by_name + '</div>';
+                }
                 html += '</div>';
 
                 // Photo
@@ -1607,6 +1610,9 @@ $pageRows = array_slice($activeRows, $offset, $perPage);
                     html += '<div class="tl-item"><span class="tl-dot delivered"></span>';
                     html += '<div class="tl-date"><i class="bi bi-clock"></i> ' + deliveredFormatted + '</div>';
                     html += '<div class="tl-event">Entregado a ' + (p.picked_up_name || 'residente') + '</div>';
+                    if (p.delivered_by_name) {
+                        html += '<div style="font-size:0.75rem; color:#64748b; margin-top:2px;"><i class="bi bi-person-video2"></i> Entregado por: ' + p.delivered_by_name + '</div>';
+                    }
                     html += '</div>';
 
                     // Signature

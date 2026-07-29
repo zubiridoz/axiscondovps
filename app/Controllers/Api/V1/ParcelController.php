@@ -229,6 +229,7 @@ class ParcelController extends ResourceController
         $updateData = [
             'status'         => 'delivered_to_resident',
             'delivered_at'   => date('Y-m-d H:i:s'),
+            'delivered_by'   => $this->request->userId ?? null,
             'picked_up_by'   => $pickedUpBy ?: null,
             'picked_up_name' => $pickedUpName,
         ];

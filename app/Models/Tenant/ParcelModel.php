@@ -22,6 +22,7 @@ class ParcelModel extends BaseTenantModel
         'tracking_number',
         'status',
         'delivered_at',
+        'delivered_by',
         'picked_up_by',
         'picked_up_name',
         'signature_url',
