@@ -969,12 +969,14 @@
             <button type="button" id="btnFilterVouchers" class="btn-filter-vouchers" title="Ver unidades con comprobantes que requieren revisión">
                 <i class="bi bi-receipt"></i> Por Aprobar
             </button>
-            <button type="button" id="btnFilterApprovedVouchers" class="btn-filter-vouchers-success" title="Ver unidades con pagos aprobados automáticamente este mes">
-                <i class="bi bi-robot"></i> Auto-Aprobados (Este Mes)
-            </button>
-            <button type="button" id="btnFilterApprovedVouchersLastMonth" class="btn-filter-vouchers-success" style="background-color: #f1f5f9; color: #64748b; border-color: #cbd5e1;" title="Ver unidades con pagos aprobados automáticamente el mes anterior">
-                <i class="bi bi-robot"></i> Auto-Aprobados (Mes Anterior)
-            </button>
+            <?php if (($condo['payment_approval_mode'] ?? 'manual') === 'automatic'): ?>
+                <button type="button" id="btnFilterApprovedVouchers" class="btn-filter-vouchers-success" title="Ver unidades con pagos aprobados automáticamente este mes">
+                    <i class="bi bi-robot"></i> Auto-Aprobados (Este Mes)
+                </button>
+                <button type="button" id="btnFilterApprovedVouchersLastMonth" class="btn-filter-vouchers-success" style="background-color: #f1f5f9; color: #64748b; border-color: #cbd5e1;" title="Ver unidades con pagos aprobados automáticamente el mes anterior">
+                    <i class="bi bi-robot"></i> Auto-Aprobados (Mes Anterior)
+                </button>
+            <?php endif; ?>
             <span class="filter-count" id="countLabel"><?= count($records) ?> unidades</span>
         </div>
 

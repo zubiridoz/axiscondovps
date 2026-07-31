@@ -29,12 +29,19 @@
                         <div class="col-md-6">
                             <form id="invite-form">
                                 <div class="mb-3">
-                                    <label class="form-label-premium">Nombre</label>
-                                    <input type="text" id="inv-first-name" class="form-control axis-pill-input" placeholder="John Doe">
+                                    <label class="form-label-premium">Nombre Completo</label>
+                                    <input type="text" id="inv-first-name" class="form-control axis-pill-input" placeholder="Ethan Zubiri">
                                 </div>
                                 <div class="mb-4">
                                     <label class="form-label-premium"><i class="bi bi-envelope me-1"></i> Correo Electrónico</label>
-                                    <input type="email" id="inv-email" class="form-control axis-pill-input" placeholder="john@example.com" required>
+                                    <input type="email" id="inv-email" class="form-control axis-pill-input" placeholder="ethan@example.com" required>
+                                </div>
+                                <div class="mb-4">
+                                    <label class="form-label-premium">Tipo de Residente</label>
+                                    <select id="inv-role" class="form-select axis-pill-input" style="padding-left: 1.25rem;">
+                                        <option value="owner">Propietario</option>
+                                        <option value="tenant">Inquilino</option>
+                                    </select>
                                 </div>
                                 <div class="mb-4">
                                     <label class="form-label-premium">Unidad</label>
@@ -74,7 +81,7 @@
                                     <div class="info-icon"><i class="bi bi-send"></i></div>
                                     <div class="info-text">
                                         <h6>¿Qué sucede después?</h6>
-                                        <p>The invitation will be sent via email.</p>
+                                        <p>La invitación será enviada por correo electrónico.</p>
                                     </div>
                                 </div>
                                 <div class="info-item">
@@ -805,7 +812,7 @@
                 phone: phoneEl ? phoneEl.value : '',
                 email: document.getElementById('inv-email').value,
                 unit_id: document.getElementById('invite-unit-id').value,
-                role: 'owner'
+                role: document.getElementById('inv-role').value
             };
             if (!data.name || !data.email) {
                 Swal.fire({ icon: 'warning', title: 'Campos Incompletos', text: 'Por favor completa los campos obligatorios (*).', confirmButtonColor: '#6366f1' });
