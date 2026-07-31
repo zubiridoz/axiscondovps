@@ -619,11 +619,17 @@
                         </li>
                         <?php
                         $__pendingBookingsCount = 0;
+                        $__approvedBookingsCount = 0;
                         $__amenBadgeTenantId = \App\Services\TenantService::getInstance()->getTenantId();
                         if ($__amenBadgeTenantId) {
                             $__pendingBookingsCount = (new \App\Models\Tenant\BookingModel())
                                 ->where('condominium_id', $__amenBadgeTenantId)
                                 ->where('status', 'pending')
+                                ->countAllResults();
+                            $__approvedBookingsCount = (new \App\Models\Tenant\BookingModel())
+                                ->where('condominium_id', $__amenBadgeTenantId)
+                                ->where('status', 'approved')
+                                ->where('end_time >=', date('Y-m-d H:i:s'))
                                 ->countAllResults();
                         }
                         ?>
@@ -632,10 +638,16 @@
                                 class="nav-link d-flex align-items-center <?= strpos(uri_string(), 'amenidades') !== false ? 'active-main' : '' ?>"
                                 data-bs-target="#amenidadesSub">
                                 <i class="bi bi-gift"></i> Amenidades
-                                <?php if ($__pendingBookingsCount > 0): ?>
-                                    <span class="badge bg-warning rounded-pill ms-auto me-1"
-                                        style="font-size:0.6rem;"><?= $__pendingBookingsCount ?></span>
-                                <?php endif; ?>
+                                <div class="ms-auto d-flex align-items-center gap-1 me-2">
+                                    <?php if ($__pendingBookingsCount > 0): ?>
+                                        <span class="badge bg-warning rounded-pill"
+                                            style="font-size:0.6rem;" title="Pendientes"><?= $__pendingBookingsCount ?></span>
+                                    <?php endif; ?>
+                                    <?php if ($__approvedBookingsCount > 0): ?>
+                                        <span class="badge bg-success rounded-pill"
+                                            style="font-size:0.6rem;" title="Aprobadas Próximas"><?= $__approvedBookingsCount ?></span>
+                                    <?php endif; ?>
+                                </div>
                                 <i class="bi bi-chevron-left chevron"></i>
                             </a>
                             <ul class="collapse <?= strpos(uri_string(), 'amenidades') !== false ? 'show' : '' ?> submenu"
@@ -647,10 +659,16 @@
                                 <li><a href="<?= base_url('admin/amenidades/reservas') ?>"
                                         class="nav-link <?= uri_string() == 'admin/amenidades/reservas' ? 'active' : '' ?>">
                                         <i class="bi bi-circle"></i> Reservas
-                                        <?php if ($__pendingBookingsCount > 0): ?>
-                                            <span class="badge bg-warning rounded-pill ms-auto"
-                                                style="font-size:0.6rem;"><?= $__pendingBookingsCount ?></span>
-                                        <?php endif; ?>
+                                        <div class="ms-auto d-flex align-items-center gap-1">
+                                            <?php if ($__pendingBookingsCount > 0): ?>
+                                                <span class="badge bg-warning rounded-pill"
+                                                    style="font-size:0.6rem;" title="Pendientes"><?= $__pendingBookingsCount ?></span>
+                                            <?php endif; ?>
+                                            <?php if ($__approvedBookingsCount > 0): ?>
+                                                <span class="badge bg-success rounded-pill"
+                                                    style="font-size:0.6rem;" title="Aprobadas Próximas"><?= $__approvedBookingsCount ?></span>
+                                            <?php endif; ?>
+                                        </div>
                                     </a>
                                 </li>
                                 <li><a href="<?= base_url('admin/amenidades/estadisticas') ?>"

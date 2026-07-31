@@ -1,6 +1,11 @@
 <?= $this->extend('layout/main') ?>
 
 <?= $this->section('content') ?>
+<!-- Flatpickr Premium Calendars -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
+
 <?php
 $meses = ['', 'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 $mesesCortos = ['', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
@@ -8,6 +13,7 @@ $mesesCortos = ['', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep
 $statusLabels = [
     'pending' => ['Pendiente', 'bk-badge-pending', 'bi-clock-history'],
     'approved' => ['Aprobado', 'bk-badge-approved', 'bi-check-circle'],
+    'completed' => ['Finalizado', 'bk-badge-completed', 'bi-check-all'],
     'rejected' => ['Rechazado', 'bk-badge-rejected', 'bi-x-circle'],
     'cancelled' => ['Cancelado', 'bk-badge-cancelled', 'bi-slash-circle'],
 ];
@@ -137,7 +143,7 @@ $formatTimeRange = function ($start, $end) {
     /* ── KPIs ── */
     .bk-stats {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(5, 1fr);
         gap: 1rem;
         margin-bottom: 1.25rem
     }
@@ -359,10 +365,38 @@ $formatTimeRange = function ($start, $end) {
         border: 1px solid #dcfce7
     }
 
+    .bk-badge-completed {
+        background: #f1f5f9;
+        color: #475569;
+        border: 1px solid #e2e8f0
+    }
+
     .bk-badge-rejected {
         background: #fef2f2;
-        color: #dc2626;
+        color: #ef4444;
         border: 1px solid #fee2e2
+    }
+
+    /* Flatpickr Premium Custom Styles */
+    .flatpickr-calendar {
+        border-radius: 12px !important;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1) !important;
+        border: 1px solid #e2e8f0 !important;
+        font-family: inherit !important;
+    }
+    .flatpickr-day.selected {
+        background: #334155 !important;
+        border-color: #334155 !important;
+    }
+    .flatpickr-day.inRange {
+        background: rgba(51, 65, 85, 0.05) !important;
+        border-color: transparent !important;
+        box-shadow: none !important;
+    }
+    .flatpickr-day.startRange, .flatpickr-day.endRange {
+        background: #334155 !important;
+        border-color: #334155 !important;
+        color: white !important;
     }
 
     .bk-badge-cancelled {
@@ -944,6 +978,13 @@ $formatTimeRange = function ($start, $end) {
     </div>
     <div class="bk-stat">
         <div>
+            <div class="bk-stat-label" style="color:#475569">Finalizadas</div>
+            <div class="bk-stat-value"><?= $completed ?? 0 ?></div>
+        </div>
+        <div class="bk-stat-icon" style="background:#f1f5f9; color:#475569"><i class="bi bi-check-all"></i></div>
+    </div>
+    <div class="bk-stat">
+        <div>
             <div class="bk-stat-label" style="color:#ef4444">Rechazadas</div>
             <div class="bk-stat-value"><?= $rejected ?? 0 ?></div>
         </div>
@@ -969,6 +1010,7 @@ $formatTimeRange = function ($start, $end) {
             <button class="bk-pill active" data-filter="all">Todos</button>
             <button class="bk-pill" data-filter="pending">Pendientes</button>
             <button class="bk-pill" data-filter="approved">Aprobadas</button>
+            <button class="bk-pill" data-filter="completed">Finalizadas</button>
             <button class="bk-pill" data-filter="rejected">Rechazadas</button>
         </div>
         <select class="bk-amenity-filter" id="amenityFilter">
@@ -977,6 +1019,10 @@ $formatTimeRange = function ($start, $end) {
                 <option value="<?= esc($a['name']) ?>"><?= esc($a['name']) ?></option>
             <?php endforeach; ?>
         </select>
+        <form method="GET" action="<?= base_url('admin/amenidades/reservas') ?>" id="monthFilterForm" style="margin:0;">
+            <input type="text" name="month" id="monthFilter" class="bk-amenity-filter" style="width:auto; padding-right:1rem; cursor:pointer;" 
+                value="<?= esc($selectedMonth ?? '') ?>" placeholder="Filtro Histórico" title="Filtrar por mes histórico">
+        </form>
     </div>
 </div>
 
@@ -999,7 +1045,7 @@ $formatTimeRange = function ($start, $end) {
                     <th>Amenidad</th>
                     <th>Residente</th>
                     <th>Unidad</th>
-                    <th>Fecha</th>
+                    <th id="sortDateBtn" style="cursor:pointer;" title="Ordenar por Fecha">Fecha <i class="bi bi-arrow-down-up ms-1 text-muted"></i></th>
                     <th>Horario</th>
                     <th>Estado</th>
                     <th class="text-end">Acciones</th>
@@ -1014,6 +1060,7 @@ $formatTimeRange = function ($start, $end) {
                     <tr class="bk-row <?= $b['status'] === 'pending' ? 'is-pending' : '' ?>"
                         data-status="<?= esc($b['status']) ?>" data-amenity="<?= esc($b['amenity_name'] ?? '') ?>"
                         data-search="<?= esc(strtolower(($b['short_hash'] ?? '') . ' ' . ($b['amenity_name'] ?? '') . ' ' . ($b['first_name'] ?? '') . ' ' . ($b['last_name'] ?? '') . ' ' . ($b['unit_number'] ?? '') . ' ' . ($b['section_name'] ?? ''))) ?>"
+                        data-date="<?= $b['start_time'] ?>"
                         data-id="<?= $b['id'] ?>" data-json="<?= esc(json_encode([
                               'id' => $b['id'],
                               'status' => $b['status'],
@@ -1267,6 +1314,39 @@ $formatTimeRange = function ($start, $end) {
         if (searchInput) searchInput.addEventListener('input', applyFilters);
         if (amenityFilter) amenityFilter.addEventListener('change', applyFilters);
 
+        const monthFilter = document.getElementById('monthFilter');
+        if (monthFilter) {
+            flatpickr(monthFilter, {
+                locale: "es",
+                dateFormat: "Y-m",
+                altInput: true,
+                altFormat: "F Y",
+                onChange: function(selectedDates, dateStr, instance) {
+                    document.getElementById('monthFilterForm').submit();
+                }
+            });
+        }
+
+        // ────── SORTING TABLE ──────
+        const sortDateBtn = document.getElementById('sortDateBtn');
+        let dateSortAsc = false; // By default DB sends DESC
+
+        if (sortDateBtn) {
+            sortDateBtn.addEventListener('click', () => {
+                dateSortAsc = !dateSortAsc;
+                const tbody = document.querySelector('#bkTable tbody');
+                const rows = Array.from(tbody.querySelectorAll('.bk-row'));
+                
+                rows.sort((a, b) => {
+                    const dateA = new Date(a.dataset.date);
+                    const dateB = new Date(b.dataset.date);
+                    return dateSortAsc ? dateA - dateB : dateB - dateA;
+                });
+                
+                rows.forEach(row => tbody.appendChild(row));
+            });
+        }
+
         // ────── ROW CLICK → DETAIL MODAL ──────
         document.querySelectorAll('.bk-row').forEach(tr => {
             tr.addEventListener('click', function () {
@@ -1279,6 +1359,7 @@ $formatTimeRange = function ($start, $end) {
             const statusMap = {
                 pending: { label: 'Pendiente', cls: 'bk-badge-pending', icon: 'bi-clock-history' },
                 approved: { label: 'Aprobado', cls: 'bk-badge-approved', icon: 'bi-check-circle' },
+                completed: { label: 'Finalizado', cls: 'bk-badge-completed', icon: 'bi-check-all' },
                 rejected: { label: 'Rechazado', cls: 'bk-badge-rejected', icon: 'bi-x-circle' },
                 cancelled: { label: 'Cancelado', cls: 'bk-badge-cancelled', icon: 'bi-slash-circle' },
             };

@@ -35,8 +35,20 @@ class BookingController extends BaseController
         $amenityModel = new AmenityModel();
         $db = \Config\Database::connect();
 
+        $selectedMonth = $this->request->getGet('month'); // YYYY-MM
+        $filterStartDate = null;
+        $filterEndDate = null;
+
+        if (!empty($selectedMonth) && preg_match('/^\d{4}-\d{2}$/', $selectedMonth)) {
+            $filterStartDate = $selectedMonth . '-01 00:00:00';
+            $filterEndDate = date('Y-m-t 23:59:59', strtotime($filterStartDate));
+        } else {
+            // Default: from 30 days ago to infinite future
+            $filterStartDate = date('Y-m-d 00:00:00', strtotime('-30 days'));
+        }
+
         // Reservas enriquecidas con amenidad, usuario, unidad, sección y rol
-        $bookings = $db->table('bookings b')
+        $builder = $db->table('bookings b')
             ->select('b.*, 
                       a.name as amenity_name, a.image as amenity_image, a.hash_id as amenity_hash,
                       u.first_name, u.last_name, u.avatar,
@@ -50,18 +62,43 @@ class BookingController extends BaseController
             ->join('user_condominium_roles ucr', 'ucr.user_id = b.user_id AND ucr.condominium_id = b.condominium_id', 'left')
             ->join('roles r', 'r.id = ucr.role_id', 'left')
             ->where('b.condominium_id', $condoId)
-            ->where('b.deleted_at IS NULL')
-            ->orderBy('b.created_at', 'DESC')
-            ->get()
-            ->getResultArray();
+            ->where('b.deleted_at IS NULL');
+
+        if ($filterStartDate) $builder->where('b.start_time >=', $filterStartDate);
+        if ($filterEndDate) $builder->where('b.start_time <=', $filterEndDate);
+
+        $bookings = $builder->orderBy('b.start_time', 'DESC')->get()->getResultArray();
+
+        $now = date('Y-m-d H:i:s');
+        foreach ($bookings as &$b) {
+            if ($b['status'] === 'approved' && $b['end_time'] < $now) {
+                $b['status'] = 'completed';
+            }
+        }
+        unset($b);
 
         // Amenidades reservables para el selector del modal
         $amenities = $amenityModel->where('is_reservable', 1)->where('is_active', 1)->findAll();
 
-        // KPIs - Reseteamos el query builder entre cada conteo
+        // Helpers para aplicar el filtro de fecha a los KPIs (excepto pendientes)
+        $applyDateFilter = function($query) use ($filterStartDate, $filterEndDate) {
+            if ($filterStartDate) $query->where('start_time >=', $filterStartDate);
+            if ($filterEndDate) $query->where('start_time <=', $filterEndDate);
+            return $query;
+        };
+
+        // KPIs
+        // Pendientes siempre se muestran todas para que no se escape ninguna petición al admin
         $pending  = $bookingModel->where('condominium_id', $condoId)->where('status', 'pending')->countAllResults();
-        $approved = $bookingModel->where('condominium_id', $condoId)->where('status', 'approved')->countAllResults();
-        $rejected = $bookingModel->where('condominium_id', $condoId)->where('status', 'rejected')->countAllResults();
+        
+        $qApproved = $bookingModel->where('condominium_id', $condoId)->where('status', 'approved')->where('end_time >=', $now);
+        $approved = $applyDateFilter($qApproved)->countAllResults();
+        
+        $qCompleted = $bookingModel->where('condominium_id', $condoId)->where('status', 'approved')->where('end_time <', $now);
+        $completed = $applyDateFilter($qCompleted)->countAllResults();
+        
+        $qRejected = $bookingModel->where('condominium_id', $condoId)->where('status', 'rejected');
+        $rejected = $applyDateFilter($qRejected)->countAllResults();
 
         $todayStart = date('Y-m-d 00:00:00');
         $todayEnd   = date('Y-m-d 23:59:59');
@@ -77,8 +114,10 @@ class BookingController extends BaseController
             'amenities'     => $amenities,
             'pending'       => $pending,
             'approved'      => $approved,
+            'completed'     => $completed,
             'rejected'      => $rejected,
             'todayBookings' => $todayBookings,
+            'selectedMonth' => $selectedMonth,
         ]);
     }
 
