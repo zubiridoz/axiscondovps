@@ -3362,7 +3362,18 @@ class FinanceController extends BaseController
 
         $pdf->SetFont('helvetica', '', 8);
         $pdf->SetTextColor(100, 116, 139);
-        $pdf->Cell(175.6, 4, 'Conserve este recibo para sus registros. El pago se refleja en su estado de cuenta.', 0, 1, 'L');
+        $pdf->SetFont('helvetica', '', 8);
+        $pdf->Cell(175.6, 4, 'Conserve este recibo para sus registros.', 0, 1, 'L');
+        
+        $pdf->SetFont('helvetica', 'B', 8);
+        $pdf->Cell(175.6, 4, 'Su comprobante será validado con el estado de cuenta bancario.', 0, 1, 'L');
+        
+        $pdf->SetFont('helvetica', '', 8);
+        $str1 = 'De no haber depósito el mismo se tendrá como ';
+        $pdf->Cell($pdf->GetStringWidth($str1), 4, $str1, 0, 0, 'L');
+        
+        $pdf->SetFont('helvetica', 'B', 8);
+        $pdf->Cell(0, 4, 'NO PAGADO.', 0, 1, 'L');
 
         $pdf->Ln(4); // reduced from 10
 
