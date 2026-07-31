@@ -1114,13 +1114,14 @@ $formatDateEs = function($dateStr) {
                         <tbody>
                             <?php $cnt = 1;
                             foreach ($vouchers as $v):
+                                $isAutoApproved = ($v['status'] === 'approved' && $v['created_at'] === $v['updated_at']);
                                 $statusClass = match ($v['status']) {
                                     'approved' => 'badge-paid',
                                     'rejected' => 'badge-overdue',
                                     default => 'badge-pending',
                                 };
                                 $statusLabel = match ($v['status']) {
-                                    'approved' => '<i class="bi bi-check-circle-fill"></i> Aprobado',
+                                    'approved' => $isAutoApproved ? '<i class="bi bi-robot"></i> Auto-Aprobado' : '<i class="bi bi-check-circle-fill"></i> Aprobado',
                                     'rejected' => '<i class="bi bi-x-circle-fill"></i> Rechazado',
                                     default => '<i class="bi bi-hourglass-split"></i> Pendiente',
                                 };

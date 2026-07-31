@@ -1105,14 +1105,23 @@ class FinanceController extends ResourceController
         $newName = 'receipt_' . $transactionId . '_' . time() . '.' . $file->getClientExtension();
         $file->move($uploadPath, $newName);
 
+        $condoModel = new \App\Models\Tenant\CondominiumModel();
+        $condominium = $condoModel->find($tenantId);
+        $approvalMode = $condominium['payment_approval_mode'] ?? 'manual';
+        $paymentStatus = ($approvalMode === 'automatic') ? 'approved' : 'pending';
+
         // Guardar referencia en la transacción
-        $db->table('financial_transactions')->where('id', $transactionId)->update([
+        $transactionUpdate = [
             'attachment'  => 'payments/' . $tenantId . '/' . $newName,
             'updated_at'  => date('Y-m-d H:i:s'),
-        ]);
+        ];
+        if ($approvalMode === 'automatic') {
+            $transactionUpdate['status'] = 'paid';
+        }
+        $db->table('financial_transactions')->where('id', $transactionId)->update($transactionUpdate);
 
         // Registrar en tabla de pagos también
-        $paymentModel = new PaymentModel();
+        $paymentModel = new \App\Models\Tenant\PaymentModel();
         $paymentModel->insert([
             'condominium_id' => $tenantId,
             'unit_id'        => $resident['unit_id'],
@@ -1122,7 +1131,7 @@ class FinanceController extends ResourceController
             'reference_code' => '',
             'proof_url'      => 'payments/' . $tenantId . '/' . $newName,
             'notes'          => 'Comprobante subido desde la app',
-            'status'         => 'pending',
+            'status'         => $paymentStatus,
         ]);
 
         // Notificar a todos los administradores del condominio
@@ -1133,8 +1142,7 @@ class FinanceController extends ResourceController
             ->whereIn('r.name', ['admin', 'super_admin'])
             ->get()->getResultArray();
 
-        $condo = $db->table('condominiums')->where('id', $tenantId)->get()->getRowArray();
-        $condoName = $condo ? $condo['name'] : 'Condominio';
+        $condoName = $condominium ? $condominium['name'] : 'Condominio';
 
         $unit = $db->table('units')->where('id', $resident['unit_id'])->get()->getRowArray();
         $unitName = $unit ? $unit['unit_number'] : 'Desconocida';
@@ -1143,18 +1151,26 @@ class FinanceController extends ResourceController
         $uploaderName = $userObj ? ($userObj['first_name'] . ' ' . $userObj['last_name']) : 'Un residente';
         
         foreach ($admins as $admin) {
+            $notifMsg = ($approvalMode === 'automatic')
+                ? $uploaderName . ' subió un comprobante de pago para ' . $unitName . ' y fue aprobado automáticamente.'
+                : $uploaderName . ' subió un comprobante de pago para ' . $unitName . ' en ' . $condoName;
+
             \App\Models\Tenant\NotificationModel::notify(
                 $tenantId, 
                 $admin['id'], 
                 'payment_status', 
                 'Comprobante Subido', 
-                $uploaderName . ' subió un comprobante de pago para ' . $unitName . ' en ' . $condoName,
+                $notifMsg,
                 ['action_url' => 'admin/finanzas/pagos-por-unidad/' . $unit['hash_id'] . '#comprobantes']
             );
         }
 
+        $successMsg = ($approvalMode === 'automatic')
+            ? 'Comprobante subido y pago aprobado automáticamente.'
+            : 'Comprobante subido exitosamente. Pendiente de validación por la administración.';
+
         return $this->respondSuccess([
-            'message'  => 'Comprobante subido exitosamente. Pendiente de validación por la administración.',
+            'message'  => $successMsg,
             'filename' => $newName,
         ]);
     }

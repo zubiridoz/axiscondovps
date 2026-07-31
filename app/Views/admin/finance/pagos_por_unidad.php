@@ -201,6 +201,36 @@
         box-shadow: 0 4px 8px rgba(245, 158, 11, 0.3);
     }
 
+    .btn-filter-vouchers-success {
+        height: 38px;
+        padding: 0 1.25rem;
+        border: 2px solid #10b981;
+        background-color: #ecfdf5;
+        color: #059669;
+        border-radius: 20px;
+        font-size: .85rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(16, 185, 129, 0.15);
+        margin-left: 0.5rem;
+    }
+    
+    .btn-filter-vouchers-success:hover {
+        background-color: #d1fae5;
+        transform: translateY(-1px);
+    }
+    
+    .btn-filter-vouchers-success.active {
+        background-color: #10b981;
+        color: white;
+        border-color: #059669;
+        box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+    }
+
     .ppu-content-box {
         background: var(--fin-card-bg);
         border: 1px solid var(--fin-border);
@@ -937,8 +967,11 @@
                 <option value="Al corriente">Al corriente</option>
                 <option value="Moroso">Moroso</option>
             </select>
-            <button type="button" id="btnFilterVouchers" class="btn-filter-vouchers" title="Haz clic para ver solo unidades con comprobantes enviados">
-                <i class="bi bi-receipt"></i> Solo con Comprobantes
+            <button type="button" id="btnFilterVouchers" class="btn-filter-vouchers" title="Ver unidades con comprobantes que requieren revisión">
+                <i class="bi bi-receipt"></i> Por Aprobar
+            </button>
+            <button type="button" id="btnFilterApprovedVouchers" class="btn-filter-vouchers-success" title="Ver unidades con pagos aprobados automáticamente este mes">
+                <i class="bi bi-robot"></i> Auto-Aprobados
             </button>
             <span class="filter-count" id="countLabel"><?= count($records) ?> unidades</span>
         </div>
@@ -966,7 +999,8 @@
                         <?php foreach ($records as $rec): ?>
                             <tr onclick="window.location.href='<?= base_url('admin/finanzas/pagos-por-unidad/' . $rec['hash_id']) ?>'"
                                 data-search="<?= esc(strtolower($rec['unidad_label'])) ?>" data-estado="<?= esc($rec['estado']) ?>"
-                                data-pending-vouchers="<?= ($rec['pending_vouchers'] ?? 0) > 0 ? 'yes' : 'no' ?>">
+                                data-pending-vouchers="<?= ($rec['pending_vouchers'] ?? 0) > 0 ? 'yes' : 'no' ?>"
+                                data-approved-vouchers="<?= ($rec['approved_vouchers'] ?? 0) > 0 ? 'yes' : 'no' ?>">
                                 <td onclick="event.stopPropagation()"><input type="checkbox"></td>
                                 <td>
                                     <a class="unit-link"
@@ -1002,11 +1036,19 @@
                                     <?php endif; ?>
                                 </td>
                                 <td class="text-center" onclick="event.stopPropagation()">
-                                    <?php if (($rec['pending_vouchers'] ?? 0) > 0): ?>
-                                        <a href="<?= base_url('admin/finanzas/pagos-por-unidad/' . $rec['hash_id']) ?>#comprobantes" class="badge rounded-pill shadow-sm" style="font-size:0.8rem; padding: 0.35em 0.65em; font-weight:700; vertical-align:middle; background-color: #f59e0b; color: white; text-decoration: none;" title="<?= $rec['pending_vouchers'] ?> comprobante(s) pendiente(s)"><?= $rec['pending_vouchers'] ?></a>
-                                    <?php else: ?>
-                                        <span style="color:#cbd5e1;">—</span>
-                                    <?php endif; ?>
+                                    <div style="display: flex; gap: 0.25rem; justify-content: center; align-items: center;">
+                                        <?php if (($rec['pending_vouchers'] ?? 0) > 0): ?>
+                                            <a href="<?= base_url('admin/finanzas/pagos-por-unidad/' . $rec['hash_id']) ?>#comprobantes" class="badge rounded-pill shadow-sm" style="font-size:0.8rem; padding: 0.35em 0.65em; font-weight:700; background-color: #f59e0b; color: white; text-decoration: none;" title="<?= $rec['pending_vouchers'] ?> comprobante(s) por aprobar"><?= $rec['pending_vouchers'] ?></a>
+                                        <?php endif; ?>
+                                        
+                                        <?php if (($rec['approved_vouchers'] ?? 0) > 0): ?>
+                                            <a href="<?= base_url('admin/finanzas/pagos-por-unidad/' . $rec['hash_id']) ?>#comprobantes" class="badge rounded-pill shadow-sm" style="font-size:0.8rem; padding: 0.35em 0.65em; font-weight:700; background-color: #10b981; color: white; text-decoration: none;" title="<?= $rec['approved_vouchers'] ?> pago(s) auto-aprobado(s) este mes"><?= $rec['approved_vouchers'] ?> <i class="bi bi-robot" style="font-size:0.7rem; margin-left:1px;"></i></a>
+                                        <?php endif; ?>
+
+                                        <?php if (($rec['pending_vouchers'] ?? 0) == 0 && ($rec['approved_vouchers'] ?? 0) == 0): ?>
+                                            <span style="color:#cbd5e1;">—</span>
+                                        <?php endif; ?>
+                                    </div>
                                 </td>
                                 <td class="action-icons" onclick="event.stopPropagation()">
 
@@ -1138,34 +1180,80 @@
     });
 
     // ── Live Search + Filter ──
-    let filterVouchersActive = false;
-    document.getElementById('btnFilterVouchers')?.addEventListener('click', function() {
+    let filterVouchersActive = sessionStorage.getItem('ppu_filterVouchers') === 'true';
+    let filterApprovedVouchersActive = sessionStorage.getItem('ppu_filterApproved') === 'true';
+
+    const btnFilterVouchers = document.getElementById('btnFilterVouchers');
+    const btnFilterApproved = document.getElementById('btnFilterApprovedVouchers');
+    const searchInput = document.getElementById('searchInput');
+    const filterEstado = document.getElementById('filterEstado');
+
+    // Restore UI state from session storage
+    if (filterVouchersActive && btnFilterVouchers) btnFilterVouchers.classList.add('active');
+    if (filterApprovedVouchersActive && btnFilterApproved) btnFilterApproved.classList.add('active');
+    if (sessionStorage.getItem('ppu_search')) searchInput.value = sessionStorage.getItem('ppu_search');
+    if (sessionStorage.getItem('ppu_estado')) filterEstado.value = sessionStorage.getItem('ppu_estado');
+
+    btnFilterVouchers?.addEventListener('click', function() {
         filterVouchersActive = !filterVouchersActive;
         if (filterVouchersActive) {
-            this.classList.add('active');
-        } else {
-            this.classList.remove('active');
+            // Desactivar el otro filtro si está activo
+            filterApprovedVouchersActive = false;
+            sessionStorage.setItem('ppu_filterApproved', false);
+            btnFilterApproved?.classList.remove('active');
         }
+        
+        sessionStorage.setItem('ppu_filterVouchers', filterVouchersActive);
+        if (filterVouchersActive) this.classList.add('active');
+        else this.classList.remove('active');
+        applyFilters();
+    });
+
+    btnFilterApproved?.addEventListener('click', function() {
+        filterApprovedVouchersActive = !filterApprovedVouchersActive;
+        if (filterApprovedVouchersActive) {
+            // Desactivar el otro filtro si está activo
+            filterVouchersActive = false;
+            sessionStorage.setItem('ppu_filterVouchers', false);
+            btnFilterVouchers?.classList.remove('active');
+        }
+        
+        sessionStorage.setItem('ppu_filterApproved', filterApprovedVouchersActive);
+        if (filterApprovedVouchersActive) this.classList.add('active');
+        else this.classList.remove('active');
         applyFilters();
     });
 
     function applyFilters() {
-        const search = document.getElementById('searchInput').value.toLowerCase();
-        const estado = document.getElementById('filterEstado').value;
+        const search = searchInput.value.toLowerCase();
+        const estado = filterEstado.value;
         let visible = 0;
         document.querySelectorAll('#unidadesTable tbody tr').forEach(row => {
             const matchSearch = !search || (row.dataset.search && row.dataset.search.includes(search));
             const matchEstado = !estado || row.dataset.estado === estado;
             const matchVouchers = !filterVouchersActive || row.dataset.pendingVouchers === 'yes';
-            const show = matchSearch && matchEstado && matchVouchers;
+            const matchApprovedVouchers = !filterApprovedVouchersActive || row.dataset.approvedVouchers === 'yes';
+            const show = matchSearch && matchEstado && matchVouchers && matchApprovedVouchers;
             row.style.display = show ? '' : 'none';
             if (show) visible++;
         });
         document.getElementById('countLabel').textContent = visible + ' unidades';
-        document.getElementById('pagInfo').textContent = '1-' + visible + ' de ' + visible;
+        const pagInfo = document.getElementById('pagInfo');
+        if (pagInfo) pagInfo.textContent = '1-' + visible + ' de ' + visible;
     }
-    document.getElementById('searchInput').addEventListener('input', applyFilters);
-    document.getElementById('filterEstado').addEventListener('change', applyFilters);
+    
+    searchInput.addEventListener('input', function() {
+        sessionStorage.setItem('ppu_search', this.value);
+        applyFilters();
+    });
+    
+    filterEstado.addEventListener('change', function() {
+        sessionStorage.setItem('ppu_estado', this.value);
+        applyFilters();
+    });
+
+    // Apply filters on initial load
+    applyFilters();
 
     // ── Mora Modal ──
     function openMoraModal(unitId, unitNumber) {

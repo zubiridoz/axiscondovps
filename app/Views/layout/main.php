@@ -738,11 +738,19 @@
                         <!-- Finanzas Dropdown -->
                         <?php
                         $__pendingVouchersCount = 0;
+                        $__approvedVouchersCount = 0;
                         $__finBadgeTenantId = \App\Services\TenantService::getInstance()->getTenantId();
                         if ($__finBadgeTenantId) {
                             $__pendingVouchersCount = (new \App\Models\Tenant\PaymentModel())
                                 ->where('condominium_id', $__finBadgeTenantId)
                                 ->where('status', 'pending')
+                                ->where('deleted_at IS NULL')
+                                ->countAllResults();
+                            $__approvedVouchersCount = (new \App\Models\Tenant\PaymentModel())
+                                ->where('condominium_id', $__finBadgeTenantId)
+                                ->where('status', 'approved')
+                                ->where('created_at >=', date('Y-m-01 00:00:00'))
+                                ->where('created_at = updated_at')
                                 ->where('deleted_at IS NULL')
                                 ->countAllResults();
                         }
@@ -752,9 +760,15 @@
                                 class="nav-link d-flex align-items-center <?= strpos(uri_string(), 'finanzas') !== false ? 'active-main' : '' ?>"
                                 data-bs-target="#finanzasSub">
                                 <i class="bi bi-credit-card"></i> Finanzas
+                                <?php $__hasMsAuto = false; ?>
                                 <?php if ($__pendingVouchersCount > 0): ?>
                                     <span class="badge bg-warning rounded-pill ms-auto me-1"
                                         style="font-size:0.6rem;"><?= $__pendingVouchersCount ?></span>
+                                    <?php $__hasMsAuto = true; ?>
+                                <?php endif; ?>
+                                <?php if ($__approvedVouchersCount > 0): ?>
+                                    <span class="badge bg-success rounded-pill <?= !$__hasMsAuto ? 'ms-auto ' : '' ?>me-1"
+                                        style="font-size:0.6rem;"><?= $__approvedVouchersCount ?></span>
                                 <?php endif; ?>
                                 <i class="bi bi-chevron-left chevron"></i>
                             </a>
@@ -772,13 +786,19 @@
                                         class="nav-link <?= uri_string() == 'admin/finanzas/movimientos' ? 'active' : '' ?>"><i
                                             class="bi bi-circle"></i> Movimientos
                                         Mensuales</a></li>
-                                <li><a href="<?= base_url('admin/finanzas/pagos-por-unidad') ?>"
+                                <li><a href="<?= base_url('admin/finanzas/pagos-por-unidad') ?>" onclick="sessionStorage.removeItem('ppu_filterVouchers'); sessionStorage.removeItem('ppu_filterApproved'); sessionStorage.removeItem('ppu_search'); sessionStorage.removeItem('ppu_estado');"
                                         class="nav-link <?= strpos(uri_string(), 'admin/finanzas/pagos-por-unidad') === 0 ? 'active' : '' ?>"><i
                                             class="bi bi-circle"></i> Pagos
                                         por Unidad
+                                        <?php $__hasMsAutoPpu = false; ?>
                                         <?php if ($__pendingVouchersCount > 0): ?>
                                             <span class="badge bg-warning rounded-pill ms-auto"
                                                 style="font-size:0.6rem;"><?= $__pendingVouchersCount ?></span>
+                                            <?php $__hasMsAutoPpu = true; ?>
+                                        <?php endif; ?>
+                                        <?php if ($__approvedVouchersCount > 0): ?>
+                                            <span class="badge bg-success rounded-pill <?= !$__hasMsAutoPpu ? 'ms-auto' : 'ms-1' ?>"
+                                                style="font-size:0.6rem;"><?= $__approvedVouchersCount ?></span>
                                         <?php endif; ?>
                                     </a></li>
                                 <li><a href="<?= base_url('admin/finanzas/morosidad') ?>"
@@ -839,10 +859,15 @@
                                 class="nav-link d-flex align-items-center <?= strpos(uri_string(), 'residentes') !== false ? 'active-main' : '' ?>"
                                 data-bs-target="#residentesSub">
                                 <i class="bi bi-people"></i> Residentes
+                                <?php $__hasMsAutoRes = false; ?>
                                 <?php if ($__pendingInvCount > 0): ?>
-                                    <span class="badge bg-danger rounded-pill ms-auto me-2" style="font-size: 0.6rem;"><?= $__pendingInvCount ?></span>
+                                    <span class="badge bg-danger rounded-pill ms-auto me-1" style="font-size: 0.6rem;"><?= $__pendingInvCount ?></span>
+                                    <?php $__hasMsAutoRes = true; ?>
                                 <?php endif; ?>
-                                <i class="bi bi-chevron-left chevron" <?= ($__pendingInvCount > 0) ? 'style="margin-left: 0;"' : '' ?>></i>
+                                <?php if ($__activeResidentsCount > 0): ?>
+                                    <span class="badge bg-success rounded-pill <?= !$__hasMsAutoRes ? 'ms-auto ' : '' ?>me-2" style="font-size: 0.6rem;"><?= $__activeResidentsCount ?></span>
+                                <?php endif; ?>
+                                <i class="bi bi-chevron-left chevron" <?= ($__pendingInvCount > 0 || $__activeResidentsCount > 0) ? 'style="margin-left: 0;"' : '' ?>></i>
                             </a>
                             <ul class="collapse <?= strpos(uri_string(), 'residentes') !== false ? 'show' : '' ?> submenu"
                                 id="residentesSub" data-bs-parent="#menu">

@@ -1847,9 +1847,26 @@ class FinanceController extends BaseController
             $pendingByUnit[(int) $pv['unit_id']] = (int) $pv['cnt'];
         }
 
-        // Merge pending count into records
+        // Count approved vouchers in current month (ONLY AUTO-APPROVED)
+        $startOfMonth = date('Y-m-01 00:00:00');
+        $approvedVouchers = $db->table('payments')
+            ->select('unit_id, COUNT(*) as cnt')
+            ->where('condominium_id', $demoCondo['id'])
+            ->where('status', 'approved')
+            ->where('created_at >=', $startOfMonth)
+            ->where('created_at = updated_at') // Indicates it was approved instantly upon creation (auto)
+            ->where('deleted_at IS NULL')
+            ->groupBy('unit_id')
+            ->get()->getResultArray();
+        $approvedByUnit = [];
+        foreach ($approvedVouchers as $av) {
+            $approvedByUnit[(int) $av['unit_id']] = (int) $av['cnt'];
+        }
+
+        // Merge counts into records
         foreach ($records as &$rec) {
             $rec['pending_vouchers'] = $pendingByUnit[$rec['id']] ?? 0;
+            $rec['approved_vouchers'] = $approvedByUnit[$rec['id']] ?? 0;
         }
         unset($rec);
 
