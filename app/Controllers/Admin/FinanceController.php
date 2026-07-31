@@ -1863,10 +1863,29 @@ class FinanceController extends BaseController
             $approvedByUnit[(int) $av['unit_id']] = (int) $av['cnt'];
         }
 
+        // Count approved vouchers in LAST month (ONLY AUTO-APPROVED)
+        $startOfLastMonth = date('Y-m-01 00:00:00', strtotime('first day of last month'));
+        $endOfLastMonth = date('Y-m-t 23:59:59', strtotime('last day of last month'));
+        $approvedVouchersLastMonth = $db->table('payments')
+            ->select('unit_id, COUNT(*) as cnt')
+            ->where('condominium_id', $demoCondo['id'])
+            ->where('status', 'approved')
+            ->where('created_at >=', $startOfLastMonth)
+            ->where('created_at <=', $endOfLastMonth)
+            ->where('created_at = updated_at')
+            ->where('deleted_at IS NULL')
+            ->groupBy('unit_id')
+            ->get()->getResultArray();
+        $approvedByUnitLastMonth = [];
+        foreach ($approvedVouchersLastMonth as $av) {
+            $approvedByUnitLastMonth[(int) $av['unit_id']] = (int) $av['cnt'];
+        }
+
         // Merge counts into records
         foreach ($records as &$rec) {
             $rec['pending_vouchers'] = $pendingByUnit[$rec['id']] ?? 0;
             $rec['approved_vouchers'] = $approvedByUnit[$rec['id']] ?? 0;
+            $rec['approved_vouchers_last_month'] = $approvedByUnitLastMonth[$rec['id']] ?? 0;
         }
         unset($rec);
 

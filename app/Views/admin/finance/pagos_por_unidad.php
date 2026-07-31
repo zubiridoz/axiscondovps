@@ -249,16 +249,15 @@
     .ppu-table {
         width: 100%;
         border-collapse: collapse;
-        min-width: 900px;
     }
 
     .ppu-table th,
     .ppu-table td {
-        padding: .9rem 1.25rem;
+        padding: .75rem 1rem;
         text-align: left;
         font-size: .85rem;
         border-bottom: 1px solid #f1f5f9;
-        white-space: nowrap;
+        white-space: normal !important;
     }
 
     .ppu-table th {
@@ -971,7 +970,10 @@
                 <i class="bi bi-receipt"></i> Por Aprobar
             </button>
             <button type="button" id="btnFilterApprovedVouchers" class="btn-filter-vouchers-success" title="Ver unidades con pagos aprobados automáticamente este mes">
-                <i class="bi bi-robot"></i> Auto-Aprobados
+                <i class="bi bi-robot"></i> Auto-Aprobados (Este Mes)
+            </button>
+            <button type="button" id="btnFilterApprovedVouchersLastMonth" class="btn-filter-vouchers-success" style="background-color: #f1f5f9; color: #64748b; border-color: #cbd5e1;" title="Ver unidades con pagos aprobados automáticamente el mes anterior">
+                <i class="bi bi-robot"></i> Auto-Aprobados (Mes Anterior)
             </button>
             <span class="filter-count" id="countLabel"><?= count($records) ?> unidades</span>
         </div>
@@ -1000,7 +1002,8 @@
                             <tr onclick="window.location.href='<?= base_url('admin/finanzas/pagos-por-unidad/' . $rec['hash_id']) ?>'"
                                 data-search="<?= esc(strtolower($rec['unidad_label'])) ?>" data-estado="<?= esc($rec['estado']) ?>"
                                 data-pending-vouchers="<?= ($rec['pending_vouchers'] ?? 0) > 0 ? 'yes' : 'no' ?>"
-                                data-approved-vouchers="<?= ($rec['approved_vouchers'] ?? 0) > 0 ? 'yes' : 'no' ?>">
+                                data-approved-vouchers="<?= ($rec['approved_vouchers'] ?? 0) > 0 ? 'yes' : 'no' ?>"
+                                data-approved-vouchers-last-month="<?= ($rec['approved_vouchers_last_month'] ?? 0) > 0 ? 'yes' : 'no' ?>">
                                 <td onclick="event.stopPropagation()"><input type="checkbox"></td>
                                 <td>
                                     <a class="unit-link"
@@ -1045,7 +1048,11 @@
                                             <a href="<?= base_url('admin/finanzas/pagos-por-unidad/' . $rec['hash_id']) ?>#comprobantes" class="badge rounded-pill shadow-sm" style="font-size:0.8rem; padding: 0.35em 0.65em; font-weight:700; background-color: #10b981; color: white; text-decoration: none;" title="<?= $rec['approved_vouchers'] ?> pago(s) auto-aprobado(s) este mes"><?= $rec['approved_vouchers'] ?> <i class="bi bi-robot" style="font-size:0.7rem; margin-left:1px;"></i></a>
                                         <?php endif; ?>
 
-                                        <?php if (($rec['pending_vouchers'] ?? 0) == 0 && ($rec['approved_vouchers'] ?? 0) == 0): ?>
+                                        <?php if (($rec['approved_vouchers_last_month'] ?? 0) > 0): ?>
+                                            <a href="<?= base_url('admin/finanzas/pagos-por-unidad/' . $rec['hash_id']) ?>#comprobantes" class="badge rounded-pill shadow-sm" style="font-size:0.8rem; padding: 0.35em 0.65em; font-weight:700; background-color: #94a3b8; color: white; text-decoration: none;" title="<?= $rec['approved_vouchers_last_month'] ?> pago(s) auto-aprobado(s) el mes anterior"><?= $rec['approved_vouchers_last_month'] ?> <i class="bi bi-robot" style="font-size:0.7rem; margin-left:1px;"></i></a>
+                                        <?php endif; ?>
+
+                                        <?php if (($rec['pending_vouchers'] ?? 0) == 0 && ($rec['approved_vouchers'] ?? 0) == 0 && ($rec['approved_vouchers_last_month'] ?? 0) == 0): ?>
                                             <span style="color:#cbd5e1;">—</span>
                                         <?php endif; ?>
                                     </div>
@@ -1182,26 +1189,50 @@
     // ── Live Search + Filter ──
     let filterVouchersActive = sessionStorage.getItem('ppu_filterVouchers') === 'true';
     let filterApprovedVouchersActive = sessionStorage.getItem('ppu_filterApproved') === 'true';
+    let filterApprovedLastMonthActive = sessionStorage.getItem('ppu_filterApprovedLastMonth') === 'true';
 
     const btnFilterVouchers = document.getElementById('btnFilterVouchers');
     const btnFilterApproved = document.getElementById('btnFilterApprovedVouchers');
+    const btnFilterApprovedLastMonth = document.getElementById('btnFilterApprovedVouchersLastMonth');
     const searchInput = document.getElementById('searchInput');
     const filterEstado = document.getElementById('filterEstado');
 
     // Restore UI state from session storage
     if (filterVouchersActive && btnFilterVouchers) btnFilterVouchers.classList.add('active');
     if (filterApprovedVouchersActive && btnFilterApproved) btnFilterApproved.classList.add('active');
+    if (filterApprovedLastMonthActive && btnFilterApprovedLastMonth) {
+        btnFilterApprovedLastMonth.classList.add('active');
+        btnFilterApprovedLastMonth.style.backgroundColor = '#64748b';
+        btnFilterApprovedLastMonth.style.color = 'white';
+    }
     if (sessionStorage.getItem('ppu_search')) searchInput.value = sessionStorage.getItem('ppu_search');
     if (sessionStorage.getItem('ppu_estado')) filterEstado.value = sessionStorage.getItem('ppu_estado');
 
-    btnFilterVouchers?.addEventListener('click', function() {
-        filterVouchersActive = !filterVouchersActive;
-        if (filterVouchersActive) {
-            // Desactivar el otro filtro si está activo
+    function deactivateOtherFilters(except) {
+        if (except !== 'vouchers') {
+            filterVouchersActive = false;
+            sessionStorage.setItem('ppu_filterVouchers', false);
+            btnFilterVouchers?.classList.remove('active');
+        }
+        if (except !== 'approved') {
             filterApprovedVouchersActive = false;
             sessionStorage.setItem('ppu_filterApproved', false);
             btnFilterApproved?.classList.remove('active');
         }
+        if (except !== 'lastmonth') {
+            filterApprovedLastMonthActive = false;
+            sessionStorage.setItem('ppu_filterApprovedLastMonth', false);
+            btnFilterApprovedLastMonth?.classList.remove('active');
+            if(btnFilterApprovedLastMonth) {
+                btnFilterApprovedLastMonth.style.backgroundColor = '#f1f5f9';
+                btnFilterApprovedLastMonth.style.color = '#64748b';
+            }
+        }
+    }
+
+    btnFilterVouchers?.addEventListener('click', function() {
+        filterVouchersActive = !filterVouchersActive;
+        if (filterVouchersActive) deactivateOtherFilters('vouchers');
         
         sessionStorage.setItem('ppu_filterVouchers', filterVouchersActive);
         if (filterVouchersActive) this.classList.add('active');
@@ -1211,16 +1242,30 @@
 
     btnFilterApproved?.addEventListener('click', function() {
         filterApprovedVouchersActive = !filterApprovedVouchersActive;
-        if (filterApprovedVouchersActive) {
-            // Desactivar el otro filtro si está activo
-            filterVouchersActive = false;
-            sessionStorage.setItem('ppu_filterVouchers', false);
-            btnFilterVouchers?.classList.remove('active');
-        }
+        if (filterApprovedVouchersActive) deactivateOtherFilters('approved');
         
         sessionStorage.setItem('ppu_filterApproved', filterApprovedVouchersActive);
         if (filterApprovedVouchersActive) this.classList.add('active');
         else this.classList.remove('active');
+        applyFilters();
+    });
+
+    btnFilterApprovedLastMonth?.addEventListener('click', function() {
+        filterApprovedLastMonthActive = !filterApprovedLastMonthActive;
+        if (filterApprovedLastMonthActive) deactivateOtherFilters('lastmonth');
+        
+        sessionStorage.setItem('ppu_filterApprovedLastMonth', filterApprovedLastMonthActive);
+        if (filterApprovedLastMonthActive) {
+            this.classList.add('active');
+            this.style.backgroundColor = '#64748b';
+            this.style.color = 'white';
+            this.style.borderColor = '#475569';
+        } else {
+            this.classList.remove('active');
+            this.style.backgroundColor = '#f1f5f9';
+            this.style.color = '#64748b';
+            this.style.borderColor = '#cbd5e1';
+        }
         applyFilters();
     });
 
@@ -1233,7 +1278,8 @@
             const matchEstado = !estado || row.dataset.estado === estado;
             const matchVouchers = !filterVouchersActive || row.dataset.pendingVouchers === 'yes';
             const matchApprovedVouchers = !filterApprovedVouchersActive || row.dataset.approvedVouchers === 'yes';
-            const show = matchSearch && matchEstado && matchVouchers && matchApprovedVouchers;
+            const matchApprovedLastMonth = !filterApprovedLastMonthActive || row.dataset.approvedVouchersLastMonth === 'yes';
+            const show = matchSearch && matchEstado && matchVouchers && matchApprovedVouchers && matchApprovedLastMonth;
             row.style.display = show ? '' : 'none';
             if (show) visible++;
         });

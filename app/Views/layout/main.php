@@ -786,7 +786,7 @@
                                         class="nav-link <?= uri_string() == 'admin/finanzas/movimientos' ? 'active' : '' ?>"><i
                                             class="bi bi-circle"></i> Movimientos
                                         Mensuales</a></li>
-                                <li><a href="<?= base_url('admin/finanzas/pagos-por-unidad') ?>" onclick="sessionStorage.removeItem('ppu_filterVouchers'); sessionStorage.removeItem('ppu_filterApproved'); sessionStorage.removeItem('ppu_search'); sessionStorage.removeItem('ppu_estado');"
+                                <li><a href="<?= base_url('admin/finanzas/pagos-por-unidad') ?>" onclick="sessionStorage.removeItem('ppu_filterVouchers'); sessionStorage.removeItem('ppu_filterApproved'); sessionStorage.removeItem('ppu_filterApprovedLastMonth'); sessionStorage.removeItem('ppu_search'); sessionStorage.removeItem('ppu_estado');"
                                         class="nav-link <?= strpos(uri_string(), 'admin/finanzas/pagos-por-unidad') === 0 ? 'active' : '' ?>"><i
                                             class="bi bi-circle"></i> Pagos
                                         por Unidad
@@ -859,15 +859,10 @@
                                 class="nav-link d-flex align-items-center <?= strpos(uri_string(), 'residentes') !== false ? 'active-main' : '' ?>"
                                 data-bs-target="#residentesSub">
                                 <i class="bi bi-people"></i> Residentes
-                                <?php $__hasMsAutoRes = false; ?>
                                 <?php if ($__pendingInvCount > 0): ?>
-                                    <span class="badge bg-danger rounded-pill ms-auto me-1" style="font-size: 0.6rem;"><?= $__pendingInvCount ?></span>
-                                    <?php $__hasMsAutoRes = true; ?>
+                                    <span class="badge bg-danger rounded-pill ms-auto me-2" style="font-size: 0.6rem;"><?= $__pendingInvCount ?></span>
                                 <?php endif; ?>
-                                <?php if ($__activeResidentsCount > 0): ?>
-                                    <span class="badge bg-success rounded-pill <?= !$__hasMsAutoRes ? 'ms-auto ' : '' ?>me-2" style="font-size: 0.6rem;"><?= $__activeResidentsCount ?></span>
-                                <?php endif; ?>
-                                <i class="bi bi-chevron-left chevron" <?= ($__pendingInvCount > 0 || $__activeResidentsCount > 0) ? 'style="margin-left: 0;"' : '' ?>></i>
+                                <i class="bi bi-chevron-left chevron" <?= ($__pendingInvCount > 0) ? 'style="margin-left: 0;"' : '' ?>></i>
                             </a>
                             <ul class="collapse <?= strpos(uri_string(), 'residentes') !== false ? 'show' : '' ?> submenu"
                                 id="residentesSub" data-bs-parent="#menu">

@@ -1238,7 +1238,7 @@
                                                 <span class="unit-card-floor">Piso <?= esc($u['floor']) ?></span>
                                             </div>
                                             <div class="unit-card-debt">
-                                                <i class="bi bi-exclamation-circle"></i> $<?= number_format($u['debt'], 2) ?>
+                                                <i class="bi bi-exclamation-circle-fill"></i> MX$<?= number_format($u['debt'], 2) ?> (Moroso)
                                             </div>
                                         </div>
                                     <?php else: ?>
@@ -1295,12 +1295,12 @@
                                     </td>
                                     <!-- Display the amount due or in favor for ALL units, color coded based on their status, this list prints all units -->
                                     <?php if ($u['debt_vencida'] > 0.01): ?>
-                                        <td class="td-debt" style="text-align:center;">
-                                            MX$<?= number_format($u['debt'], 2) ?>
+                                        <td style="text-align:center; color: #ef4444; font-weight: 600; font-size: 0.9rem;">
+                                            <i class="bi bi-exclamation-circle-fill me-1"></i> MX$<?= number_format($u['debt'], 2) ?> (Moroso)
                                         </td>
                                     <?php elseif ($u['debt'] > 0.01): ?>
                                         <td style="text-align:center; color: #0284c7; font-weight: 600; font-size: 0.9rem;">
-                                            <i class="bi bi-info-circle-fill me-1"></i> MX$<?= number_format($u['debt'], 2) ?>
+                                            <i class="bi bi-info-circle-fill me-1"></i> MX$<?= number_format($u['debt'], 2) ?> (Al corriente)
                                         </td>
                                     <?php elseif ($u['debt'] <= -0.01): ?>
                                         <td style="text-align:center; color: #059669; font-weight: 600; font-size: 0.9rem;">
