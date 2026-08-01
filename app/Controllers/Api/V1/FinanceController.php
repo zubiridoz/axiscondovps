@@ -1117,15 +1117,45 @@ class FinanceController extends ResourceController
         ];
         if ($approvalMode === 'automatic') {
             $transactionUpdate['status'] = 'paid';
+            $transactionUpdate['amount_paid'] = $transaction['amount'];
         }
         $db->table('financial_transactions')->where('id', $transactionId)->update($transactionUpdate);
+
+        $paymentTxId = $transactionId;
+        if ($approvalMode === 'automatic') {
+            $catRow = $db->table('financial_categories')
+                ->where('condominium_id', $tenantId)
+                ->where('name', 'Cuota de Mantenimiento')
+                ->get()->getRowArray();
+
+            $creditData = [
+                'condominium_id' => $tenantId,
+                'unit_id'        => $resident['unit_id'],
+                'type'           => 'credit',
+                'amount'         => $transaction['amount'],
+                'description'    => 'PAGO - AUTO APROBADO',
+                'due_date'       => date('Y-m-d'),
+                'status'         => 'paid',
+                'payment_method' => 'Transferencia Bancaria',
+                'attachment'     => 'payments/' . $tenantId . '/' . $newName,
+                'created_at'     => date('Y-m-d H:i:s'),
+                'updated_at'     => date('Y-m-d H:i:s'),
+            ];
+            
+            if ($catRow) {
+                $creditData['category_id'] = $catRow['id'];
+            }
+            
+            $db->table('financial_transactions')->insert($creditData);
+            $paymentTxId = $db->insertID();
+        }
 
         // Registrar en tabla de pagos también
         $paymentModel = new \App\Models\Tenant\PaymentModel();
         $paymentModel->insert([
             'condominium_id' => $tenantId,
             'unit_id'        => $resident['unit_id'],
-            'transaction_id' => $transactionId,
+            'transaction_id' => $paymentTxId,
             'amount'         => $transaction['amount'],
             'payment_method' => 'transfer',
             'reference_code' => '',
