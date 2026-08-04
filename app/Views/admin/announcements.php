@@ -233,13 +233,15 @@ $jsonData = htmlspecialchars(json_encode($rawAnnouncements, JSON_UNESCAPED_UNICO
         border-radius: .5rem;
         background: #fff;
         cursor: pointer;
-        transition: box-shadow .2s, border-color .2s;
-        position: relative
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
     }
 
     .an-card:hover {
-        border-color: #b7c8dc;
-        box-shadow: 0 3px 10px rgba(15, 23, 42, .07)
+        border-color: #cbd5e1;
+        box-shadow: 0 12px 24px -6px rgba(15, 23, 42, 0.12), 0 8px 12px -8px rgba(15, 23, 42, 0.08);
+        transform: translateY(-3px);
     }
 
     .an-card-cover {
@@ -249,6 +251,41 @@ $jsonData = htmlspecialchars(json_encode($rawAnnouncements, JSON_UNESCAPED_UNICO
         display: block;
         background: #e2e8f0;
         border-radius: .5rem .5rem 0 0
+    }
+
+    .an-media-collage {
+        width: 100%;
+        height: 160px;
+        display: flex;
+        gap: 2px;
+        border-radius: .5rem .5rem 0 0;
+        overflow: hidden;
+        background: #0f172a;
+    }
+    .an-media-collage .an-media-item, .an-media-collage .an-media-main {
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+    }
+    .an-media-2 .an-media-item { flex: 1; height: 100%; }
+    .an-media-3 .an-media-main { flex: 2; height: 100%; }
+    .an-media-3 .an-media-side { flex: 1; display: flex; flex-direction: column; gap: 2px; height: 100%; }
+    .an-media-3 .an-media-side .an-media-item { flex: 1; position: relative; }
+    .an-media-more {
+        position: absolute; inset: 0; background: rgba(0,0,0,0.5);
+        color: white; font-size: 1.5rem; font-weight: bold;
+        display: flex; align-items: center; justify-content: center;
+    }
+
+    .an-doc-chips {
+        display: flex; flex-wrap: wrap; gap: 0.4rem; padding-top: 0.5rem;
+    }
+    .an-doc-chip {
+        display: inline-flex; align-items: center; gap: 0.3rem;
+        background: #f1f5f9; border: 1px solid #e2e8f0;
+        padding: 0.2rem 0.5rem; border-radius: 1rem;
+        font-size: 0.75rem; color: #475569; font-weight: 500;
+        max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
 
     .an-card-head {
@@ -641,11 +678,18 @@ $jsonData = htmlspecialchars(json_encode($rawAnnouncements, JSON_UNESCAPED_UNICO
         border-radius: .3rem;
         padding: .2rem .45rem;
         font-size: .76rem;
+        color: #334155;
         display: inline-flex;
         align-items: center;
         gap: .25rem;
-        color: #334155;
         border: 1px solid #e2e8f0
+    }
+
+    .an-file-chip-img {
+        width: 24px;
+        height: 24px;
+        border-radius: 2px;
+        object-fit: cover;
     }
 
     .an-file-chip button {
@@ -1391,12 +1435,43 @@ $jsonData = htmlspecialchars(json_encode($rawAnnouncements, JSON_UNESCAPED_UNICO
                         $ini = 'AD';
                     $ts = strtotime($a['created_at'] ?? 'now');
                     $rel = $toRel($ts);
-                    $coverUrl = $a['cover_file'] ? base_url('admin/anuncios/archivo/' . $a['cover_file']) : '';
+                    $mediaFiles = [];
+                    $docFiles = [];
+                    if (!empty($a['attachments'])) {
+                        foreach ($a['attachments'] as $att) {
+                            if (in_array($att['file_type'], ['image', 'video'])) {
+                                $mediaFiles[] = $att;
+                            } else {
+                                $docFiles[] = $att;
+                            }
+                        }
+                    }
                     ?>
                     <article class="an-card an-item" data-id="<?= esc((string) $a['id']) ?>" data-category="<?= esc($cat) ?>"
                         data-created="<?= esc((string) $ts) ?>">
-                        <?php if ($coverUrl): ?><img class="an-card-cover" src="<?= esc($coverUrl) ?>"
-                                alt="cover"><?php endif; ?>
+                        
+                        <?php if (count($mediaFiles) == 1): ?>
+                            <div class="an-media-collage">
+                                <div class="an-media-item" style="flex:1; background-image: url('<?= esc(base_url('admin/anuncios/archivo/' . $mediaFiles[0]['file_name'])) ?>')"></div>
+                            </div>
+                        <?php elseif (count($mediaFiles) == 2): ?>
+                            <div class="an-media-collage an-media-2">
+                                <div class="an-media-item" style="background-image: url('<?= esc(base_url('admin/anuncios/archivo/' . $mediaFiles[0]['file_name'])) ?>')"></div>
+                                <div class="an-media-item" style="background-image: url('<?= esc(base_url('admin/anuncios/archivo/' . $mediaFiles[1]['file_name'])) ?>')"></div>
+                            </div>
+                        <?php elseif (count($mediaFiles) >= 3): ?>
+                            <div class="an-media-collage an-media-3">
+                                <div class="an-media-main" style="background-image: url('<?= esc(base_url('admin/anuncios/archivo/' . $mediaFiles[0]['file_name'])) ?>')"></div>
+                                <div class="an-media-side">
+                                    <div class="an-media-item" style="background-image: url('<?= esc(base_url('admin/anuncios/archivo/' . $mediaFiles[1]['file_name'])) ?>')"></div>
+                                    <div class="an-media-item" style="background-image: url('<?= esc(base_url('admin/anuncios/archivo/' . $mediaFiles[2]['file_name'])) ?>')">
+                                        <?php if (count($mediaFiles) > 3): ?>
+                                            <div class="an-media-more">+<?= count($mediaFiles) - 3 ?></div>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endif; ?>
                         <div class="an-card-head">
                             <span class="an-avatar"><?= esc($ini) ?></span>
                             <div>
@@ -1422,11 +1497,18 @@ $jsonData = htmlspecialchars(json_encode($rawAnnouncements, JSON_UNESCAPED_UNICO
                             <p class="an-snippet">
                                 <?= esc(html_entity_decode(strip_tags($a['content'] ?? ''), ENT_QUOTES, 'UTF-8')) ?>
                             </p>
-                            <?php if (($a['attach_count'] ?? 0) > 0): ?>
-                                <div style="margin-top: 0.8rem; padding: 0.6rem 0.8rem; background: #f8fafc; border-radius: 0.4rem; font-size: 0.85rem; color: #475569; display: flex; align-items: center; gap: 0.5rem; border: 1px solid #e2e8f0; cursor: pointer;">
-                                    <i class="bi bi-paperclip" style="font-size: 1.1rem; color: #3b82f6;"></i>
-                                    <span style="font-weight: 500;">Contiene <?= esc((string) $a['attach_count']) ?> archivo(s) adjunto(s)</span>
-                                    <span style="margin-left: auto; color: #3b82f6; font-size: 0.75rem; font-weight: 600;">Ver comunicado &rarr;</span>
+                            <?php if (count($docFiles) > 0): ?>
+                                <div class="an-doc-chips">
+                                    <?php foreach ($docFiles as $doc): 
+                                        $isPdf = strtolower(pathinfo($doc['file_name'], PATHINFO_EXTENSION)) === 'pdf' || $doc['file_type'] === 'pdf';
+                                        $icon = $isPdf ? 'bi-file-earmark-pdf-fill' : 'bi-file-earmark-text-fill';
+                                        $color = $isPdf ? '#ef4444' : '#10b981';
+                                    ?>
+                                        <div class="an-doc-chip" title="<?= esc($doc['display_name'] ?: $doc['original_name']) ?>">
+                                            <i class="bi <?= $icon ?>" style="color: <?= $color ?>"></i>
+                                            <span><?= esc($doc['display_name'] ?: $doc['original_name']) ?></span>
+                                        </div>
+                                    <?php endforeach; ?>
                                 </div>
                             <?php endif; ?>
                         </div>
@@ -1612,7 +1694,12 @@ $jsonData = htmlspecialchars(json_encode($rawAnnouncements, JSON_UNESCAPED_UNICO
         var BASE = '<?= base_url("admin/anuncios") ?>';
 
         /* ─── State ─── */
-        var selectedCategory = 'general', pendingFiles = [], displayNames = {}, activeCategory = 'all', currentDetailId = null;
+        var pendingFiles = [];
+        var displayNames = {};
+        var existingFiles = [];
+        var deletedAttachments = [];
+        var activeCategory = 'all';
+        var selectedCategory = 'general';
 
         /* ─── DOM shortcuts ─── */
         var $ = function (s) { return document.getElementById(s) };
@@ -1622,13 +1709,19 @@ $jsonData = htmlspecialchars(json_encode($rawAnnouncements, JSON_UNESCAPED_UNICO
         /* ─── Modal open/close ─── */
         $('an-new-btn').addEventListener('click', function () {
             overlay.classList.add('show');
-            editor.innerHTML = ''; pendingFiles = []; displayNames = {}; selectedCategory = 'general';
             modal.dataset.editId = '';
-            document.querySelector('.an-modal-header h3').textContent = 'Nueva comunicaci\u00f3n';
-            document.querySelector('.an-modal-header p').textContent = 'Crea una comunicaci\u00f3n importante para los residentes de tu condominio.';
+            document.querySelector('.an-modal-header h3').textContent = 'Nueva comunicación';
+            document.querySelector('.an-modal-header p').textContent = 'Crea una comunicación importante para los residentes de tu condominio.';
             $('an-modal-submit').innerHTML = '<i class="bi bi-send"></i> Enviar';
+            editor.innerHTML = '';
+            selectedCategory = 'general';
             document.querySelectorAll('.an-cat-chip').forEach(function (c) { c.classList.toggle('active', c.dataset.cat === 'general') });
-            renderFileChips();
+            $('an-send-email').checked = true;
+            $('an-email-targets').style.display = 'flex';
+            $('an-email-note').style.display = 'block';
+            document.querySelector('input[name="email_target"][value="owners"]').checked = true;
+            existingFiles = []; deletedAttachments = [];
+            pendingFiles = []; displayNames = {}; renderFileChips();
         });
         $('an-modal-close').addEventListener('click', function () { overlay.classList.remove('show'); modal.classList.remove('expanded'); $('an-gear-btn').classList.remove('active') });
         $('an-modal-cancel').addEventListener('click', function () { overlay.classList.remove('show'); modal.classList.remove('expanded'); $('an-gear-btn').classList.remove('active') });
@@ -1697,15 +1790,52 @@ $jsonData = htmlspecialchars(json_encode($rawAnnouncements, JSON_UNESCAPED_UNICO
 
         function renderFileChips() {
             var wrap = $('an-file-chips'); wrap.innerHTML = '';
-            pendingFiles.forEach(function (f, i) {
-                var icon = 'bi-card-image';
-                if (f.type.startsWith('video/')) icon = 'bi-camera-video';
-                if (f.type === 'application/pdf') icon = 'bi-file-earmark-pdf';
+            
+            // Render existing files
+            existingFiles.forEach(function(f, i) {
+                var iconHtml = '';
+                if (f.file_type === 'image') {
+                    iconHtml = '<img src="' + BASE + '/archivo/' + f.file_name + '" class="an-file-chip-img" />';
+                } else {
+                    var icon = 'bi-file-earmark';
+                    if (f.file_type === 'video') icon = 'bi-camera-video';
+                    if (f.file_type === 'pdf' || f.file_type === 'document' || (f.original_name && f.original_name.toLowerCase().endsWith('.pdf'))) icon = 'bi-file-earmark-pdf';
+                    iconHtml = '<i class="bi ' + icon + '"></i> ';
+                }
                 var chip = document.createElement('span'); chip.className = 'an-file-chip';
-                chip.innerHTML = '<i class="bi ' + icon + '"></i> ' + (displayNames[i] || f.name) + ' <button data-idx="' + i + '">&times;</button>';
+                chip.style.backgroundColor = '#e0f2fe';
+                chip.innerHTML = iconHtml + (f.display_name || f.original_name) + ' <button data-exist-idx="' + i + '">&times;</button>';
                 wrap.appendChild(chip);
             });
-            wrap.querySelectorAll('button').forEach(function (b) {
+
+            // Render new files
+            pendingFiles.forEach(function (f, i) {
+                var iconHtml = '';
+                if (f.type.startsWith('image/')) {
+                    iconHtml = '<img src="' + URL.createObjectURL(f) + '" class="an-file-chip-img" />';
+                } else {
+                    var icon = 'bi-file-earmark';
+                    if (f.type.startsWith('video/')) icon = 'bi-camera-video';
+                    if (f.type === 'application/pdf') icon = 'bi-file-earmark-pdf';
+                    iconHtml = '<i class="bi ' + icon + '"></i> ';
+                }
+                var chip = document.createElement('span'); chip.className = 'an-file-chip';
+                chip.innerHTML = iconHtml + (displayNames[i] || f.name) + ' <span style="font-size:0.65rem;color:#64748b;margin-left:2px">(Nuevo)</span> <button data-idx="' + i + '">&times;</button>';
+                wrap.appendChild(chip);
+            });
+            
+            // Delete handlers for existing
+            wrap.querySelectorAll('button[data-exist-idx]').forEach(function (b) {
+                b.addEventListener('click', function () {
+                    var idx = +this.dataset.existIdx;
+                    deletedAttachments.push(existingFiles[idx].id);
+                    existingFiles.splice(idx, 1);
+                    renderFileChips();
+                });
+            });
+
+            // Delete handlers for new
+            wrap.querySelectorAll('button[data-idx]').forEach(function (b) {
                 b.addEventListener('click', function () {
                     var idx = +this.dataset.idx; pendingFiles.splice(idx, 1);
                     var newNames = {}; Object.keys(displayNames).forEach(function (k) {
@@ -1715,7 +1845,8 @@ $jsonData = htmlspecialchars(json_encode($rawAnnouncements, JSON_UNESCAPED_UNICO
                     displayNames = newNames; renderFileChips();
                 });
             });
-            $('an-file-limit').textContent = pendingFiles.length > 0 ? pendingFiles.length + '/5 archivos' : '';
+            var total = existingFiles.length + pendingFiles.length;
+            $('an-file-limit').textContent = total > 0 ? total + ' adjuntos' : '';
         }
 
         /* ─── Submit (create / edit) ─── */
@@ -1731,6 +1862,7 @@ $jsonData = htmlspecialchars(json_encode($rawAnnouncements, JSON_UNESCAPED_UNICO
             var names = [];
             pendingFiles.forEach(function (f, i) { fd.append('attachments[]', f); names.push(displayNames[i] || f.name.replace(/\.[^/.]+$/, '')) });
             fd.append('display_names', JSON.stringify(names));
+            deletedAttachments.forEach(function(id) { fd.append('deleted_attachments[]', id); });
 
             var editId = modal.dataset.editId;
             var url = editId ? BASE + '/actualizar/' + editId : BASE + '/crear';
@@ -1980,6 +2112,8 @@ $jsonData = htmlspecialchars(json_encode($rawAnnouncements, JSON_UNESCAPED_UNICO
                     var radio = document.querySelector('input[name="email_target"][value="' + editData.email_target + '"]');
                     if (radio) radio.checked = true;
                 }
+                existingFiles = editData.attachments || [];
+                deletedAttachments = [];
                 pendingFiles = []; displayNames = {}; renderFileChips();
             });
         }

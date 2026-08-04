@@ -41,10 +41,16 @@ class AnnouncementController extends BaseController
             $a['like_count']    = $likeModel->where('announcement_id', $a['id'])->countAllResults();
             $a['comment_count'] = $commentModel->where('announcement_id', $a['id'])->countAllResults();
             $a['attach_count']  = $attachModel->where('announcement_id', $a['id'])->countAllResults();
-            // First image for cover
-            $firstImg = $attachModel->where('announcement_id', $a['id'])
-                ->whereIn('file_type', ['image'])
-                ->orderBy('id', 'ASC')->first();
+            $a['attachments'] = $attachModel->where('announcement_id', $a['id'])->orderBy('id', 'ASC')->findAll();
+            
+            // First image for cover (legacy compatibility)
+            $firstImg = null;
+            foreach ($a['attachments'] as $att) {
+                if (in_array($att['file_type'], ['image'])) {
+                    $firstImg = $att;
+                    break;
+                }
+            }
             $a['cover_file'] = $firstImg ? $firstImg['file_name'] : null;
         }
 
@@ -227,6 +233,22 @@ class AnnouncementController extends BaseController
 
         // Handle new file uploads if any
         $this->handleUploads($id);
+
+        // Handle deleted existing attachments
+        $deletedAttachIds = $this->request->getPost('deleted_attachments');
+        if (!empty($deletedAttachIds) && is_array($deletedAttachIds)) {
+            $attachModel = new AnnouncementAttachmentModel();
+            foreach ($deletedAttachIds as $attId) {
+                $att = $attachModel->find($attId);
+                if ($att && $att['announcement_id'] == $id) {
+                    $path = WRITEPATH . 'uploads/announcements/' . $att['file_name'];
+                    if (is_file($path)) {
+                        @unlink($path);
+                    }
+                    $attachModel->delete($attId);
+                }
+            }
+        }
 
         return $this->response->setJSON(['status' => 200, 'message' => 'Comunicación actualizada']);
     }
