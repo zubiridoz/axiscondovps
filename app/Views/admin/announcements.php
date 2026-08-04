@@ -1007,6 +1007,29 @@ $jsonData = htmlspecialchars(json_encode($rawAnnouncements, JSON_UNESCAPED_UNICO
         background: rgba(255, 255, 255, .3)
     }
 
+    .an-lightbox-nav {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(255, 255, 255, .15);
+        border: 1px solid rgba(255, 255, 255, .25);
+        color: #fff;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        cursor: pointer;
+        z-index: 100000;
+        backdrop-filter: blur(4px);
+        transition: all 0.2s;
+    }
+    .an-lightbox-nav:hover { background: rgba(255, 255, 255, .3); }
+    .an-lightbox-prev { left: 1rem; }
+    .an-lightbox-next { right: 1rem; }
+
     /* ── Like & Comment Sections ── */
     .an-section {
         border: 1px solid #e2e8f0;
@@ -1399,6 +1422,13 @@ $jsonData = htmlspecialchars(json_encode($rawAnnouncements, JSON_UNESCAPED_UNICO
                             <p class="an-snippet">
                                 <?= esc(html_entity_decode(strip_tags($a['content'] ?? ''), ENT_QUOTES, 'UTF-8')) ?>
                             </p>
+                            <?php if (($a['attach_count'] ?? 0) > 0): ?>
+                                <div style="margin-top: 0.8rem; padding: 0.6rem 0.8rem; background: #f8fafc; border-radius: 0.4rem; font-size: 0.85rem; color: #475569; display: flex; align-items: center; gap: 0.5rem; border: 1px solid #e2e8f0; cursor: pointer;">
+                                    <i class="bi bi-paperclip" style="font-size: 1.1rem; color: #3b82f6;"></i>
+                                    <span style="font-weight: 500;">Contiene <?= esc((string) $a['attach_count']) ?> archivo(s) adjunto(s)</span>
+                                    <span style="margin-left: auto; color: #3b82f6; font-size: 0.75rem; font-weight: 600;">Ver comunicado &rarr;</span>
+                                </div>
+                            <?php endif; ?>
                         </div>
                         <div class="an-footer">
                             <span class="an-foot-item"><i class="bi bi-hand-thumbs-up"></i>
@@ -1529,8 +1559,10 @@ $jsonData = htmlspecialchars(json_encode($rawAnnouncements, JSON_UNESCAPED_UNICO
 
 <!-- ── Lightbox (image + video) ── -->
 <div class="an-lightbox" id="an-lightbox">
+    <button class="an-lightbox-nav an-lightbox-prev" id="an-lightbox-prev" style="display:none"><i class="bi bi-chevron-left"></i></button>
     <img src="" alt="preview" id="an-lightbox-img" style="display:none">
     <video src="" id="an-lightbox-vid" controls style="display:none"></video>
+    <button class="an-lightbox-nav an-lightbox-next" id="an-lightbox-next" style="display:none"><i class="bi bi-chevron-right"></i></button>
     <button class="an-lightbox-close" id="an-lightbox-close">&times;</button>
 </div>
 
@@ -1763,6 +1795,7 @@ $jsonData = htmlspecialchars(json_encode($rawAnnouncements, JSON_UNESCAPED_UNICO
 
                 // Attachments
                 var att = a.attachments || [];
+                window.lightboxMedia = [];
                 if (att.length) {
                     $('an-det-attach-wrap').style.display = '';
                     $('an-det-attach-count').textContent = att.length;
@@ -1770,16 +1803,20 @@ $jsonData = htmlspecialchars(json_encode($rawAnnouncements, JSON_UNESCAPED_UNICO
                     att.forEach(function (at) {
                         var url = BASE + '/archivo/' + at.file_name;
                         if (at.file_type === 'image') {
+                            window.lightboxMedia.push({url: url, type: 'image'});
+                            let idx = window.lightboxMedia.length - 1;
                             var div = document.createElement('div'); div.className = 'an-detail-thumb';
                             div.innerHTML = '<img src="' + url + '" alt="' + esc(at.display_name || at.original_name) + '">' + '<div class="att-overlay-top"><i class="bi bi-image"></i> Image</div>' + '<div class="att-overlay"><i class="bi bi-zoom-in"></i></div>';
-                            div.onclick = function (e) { e.stopPropagation(); openLightbox(url) }; grid.appendChild(div);
+                            div.onclick = function (e) { e.stopPropagation(); openLightboxIndex(idx) }; grid.appendChild(div);
                         } else if (at.file_type === 'video') {
+                            window.lightboxMedia.push({url: url, type: 'video'});
+                            let idx = window.lightboxMedia.length - 1;
                             var div = document.createElement('div'); div.className = 'an-detail-thumb';
                             div.innerHTML = '<video src="' + url + '" preload="metadata"></video>' + '<div class="att-play"><i class="bi bi-play-circle-fill"></i></div>' + '<div class="att-duration">0:00</div>';
                             var vid = div.querySelector('video');
                             vid.addEventListener('loadedmetadata', function () { var dur = Math.floor(vid.duration); var m = Math.floor(dur / 60); var s = dur % 60; div.querySelector('.att-duration').textContent = m + ':' + (s < 10 ? '0' : '') + s });
-                            (function (videoUrl) { div.onclick = function (e) { e.stopPropagation(); openLightboxVideo(videoUrl) }; })(url); grid.appendChild(div);
-                        } else if (at.file_type === 'pdf') {
+                            div.onclick = function (e) { e.stopPropagation(); openLightboxIndex(idx) }; grid.appendChild(div);
+                        } else if (at.file_type === 'pdf' || at.file_type === 'document' || url.toLowerCase().endsWith('.pdf')) {
                             var div = document.createElement('div'); div.className = 'an-detail-pdf';
                             div.innerHTML = '<span class="pdf-badge">PDF</span><i class="bi bi-file-earmark-text"></i><span>' + esc(at.display_name || at.original_name) + '</span>';
                             div.onclick = function (e) { e.stopPropagation(); window.open(url, '_blank') }; grid.appendChild(div);
@@ -1882,8 +1919,8 @@ $jsonData = htmlspecialchars(json_encode($rawAnnouncements, JSON_UNESCAPED_UNICO
         $('an-det-comment-input').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); submitComment() } });
 
         /* ─── Detail close ─── */
-        $('an-detail-close').addEventListener('click', function () { detailOverlay.classList.remove('show'); location.reload() });
-        detailOverlay.addEventListener('click', function (e) { if (e.target === detailOverlay) { detailOverlay.classList.remove('show'); location.reload() } });
+        $('an-detail-close').addEventListener('click', function () { detailOverlay.classList.remove('show'); });
+        detailOverlay.addEventListener('click', function (e) { if (e.target === detailOverlay) { detailOverlay.classList.remove('show'); } });
 
         /* ─── Card kebab menu toggle ─── */
         document.querySelectorAll('.an-card-kebab-btn').forEach(function (btn) {
@@ -1973,16 +2010,70 @@ $jsonData = htmlspecialchars(json_encode($rawAnnouncements, JSON_UNESCAPED_UNICO
             });
         }
 
-        /* ─── Lightbox (image) ─── */
+        /* ─── Lightbox Navigation ─── */
+        window.currentLightboxIdx = 0;
+        window.openLightboxIndex = function(idx) {
+            if (!window.lightboxMedia || !window.lightboxMedia[idx]) return;
+            window.currentLightboxIdx = idx;
+            var media = window.lightboxMedia[idx];
+            
+            if (media.type === 'image') {
+                $('an-lightbox-img').src = media.url; $('an-lightbox-img').style.display = 'block';
+                $('an-lightbox-vid').style.display = 'none'; $('an-lightbox-vid').pause();
+            } else if (media.type === 'video') {
+                $('an-lightbox-vid').src = media.url; $('an-lightbox-vid').style.display = 'block';
+                $('an-lightbox-img').style.display = 'none';
+                $('an-lightbox-vid').play();
+            }
+            
+            if (window.lightboxMedia.length > 1) {
+                $('an-lightbox-prev').style.display = 'flex';
+                $('an-lightbox-next').style.display = 'flex';
+            } else {
+                $('an-lightbox-prev').style.display = 'none';
+                $('an-lightbox-next').style.display = 'none';
+            }
+            $('an-lightbox').classList.add('show');
+        };
+
+        $('an-lightbox-prev').addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (!window.lightboxMedia || window.lightboxMedia.length <= 1) return;
+            var newIdx = window.currentLightboxIdx - 1;
+            if (newIdx < 0) newIdx = window.lightboxMedia.length - 1;
+            openLightboxIndex(newIdx);
+        });
+
+        $('an-lightbox-next').addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (!window.lightboxMedia || window.lightboxMedia.length <= 1) return;
+            var newIdx = window.currentLightboxIdx + 1;
+            if (newIdx >= window.lightboxMedia.length) newIdx = 0;
+            openLightboxIndex(newIdx);
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (!$('an-lightbox').classList.contains('show')) return;
+            if (e.key === 'ArrowLeft') {
+                $('an-lightbox-prev').click();
+            } else if (e.key === 'ArrowRight') {
+                $('an-lightbox-next').click();
+            } else if (e.key === 'Escape') {
+                closeLightbox();
+            }
+        });
+
+        /* ─── Lightbox (legacy overrides just in case) ─── */
         function openLightbox(url) {
             $('an-lightbox-img').src = url; $('an-lightbox-img').style.display = 'block';
             $('an-lightbox-vid').style.display = 'none'; $('an-lightbox-vid').pause();
+            $('an-lightbox-prev').style.display = 'none'; $('an-lightbox-next').style.display = 'none';
             $('an-lightbox').classList.add('show');
         }
-        /* ─── Lightbox (video) ─── */
         function openLightboxVideo(url) {
             $('an-lightbox-vid').src = url; $('an-lightbox-vid').style.display = 'block';
             $('an-lightbox-img').style.display = 'none';
+            $('an-lightbox-prev').style.display = 'none'; $('an-lightbox-next').style.display = 'none';
             $('an-lightbox').classList.add('show');
             $('an-lightbox-vid').play();
         }
