@@ -756,7 +756,8 @@
                         }
                         ?>
                         <li class="nav-item">
-                            <a href="<?= base_url('admin/finanzas/panel') ?>"
+                            <a href="<?= base_url('admin/finanzas/pagos-por-unidad') ?>"
+                                onclick="sessionStorage.removeItem('ppu_filterVouchers'); sessionStorage.removeItem('ppu_filterApproved'); sessionStorage.removeItem('ppu_filterApprovedLastMonth'); sessionStorage.removeItem('ppu_search'); sessionStorage.removeItem('ppu_estado');"
                                 class="nav-link d-flex align-items-center <?= strpos(uri_string(), 'finanzas') !== false ? 'active-main' : '' ?>"
                                 data-bs-target="#finanzasSub">
                                 <i class="bi bi-credit-card"></i> Finanzas
