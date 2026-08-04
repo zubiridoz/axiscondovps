@@ -937,6 +937,10 @@
                         <i class="bi bi-person me-1"></i> Inquilinos <span
                             class="count-badge"><?= $counts['tenant'] ?></span>
                     </button>
+                    <button class="nav-link" data-filter="online">
+                        <i class="bi bi-phone me-1"></i> Conectados <span
+                            class="count-badge"><?= $counts['online'] ?></span>
+                    </button>
                 </div>
 
 
@@ -962,6 +966,7 @@
                         <?php foreach ($residents as $res): ?>
                             <tr class="res-row" data-type="<?= $res['type'] ?>" data-user-id="<?= $res['user_id'] ?>"
                                 data-unit="<?= esc($res['unit_name'] ?? '') ?>"
+                                data-has-app="<?= $res['has_app'] ? 'true' : 'false' ?>"
                                 style="cursor: pointer;">
                                 <td>
                                     <div class="d-flex align-items-center">
@@ -1031,9 +1036,18 @@
                 const email = row.querySelector('.text-secondary').textContent.toLowerCase();
                 const unit = row.getAttribute('data-unit') ? row.getAttribute('data-unit').toLowerCase() : '';
                 const type = row.getAttribute('data-type');
+                const hasApp = row.getAttribute('data-has-app');
 
                 const matchesSearch = name.includes(searchTerm) || email.includes(searchTerm) || unit.includes(searchTerm);
-                const matchesFilter = currentFilter === 'all' || type === currentFilter;
+                
+                let matchesFilter = false;
+                if (currentFilter === 'all') {
+                    matchesFilter = true;
+                } else if (currentFilter === 'online') {
+                    matchesFilter = (hasApp === 'true');
+                } else {
+                    matchesFilter = (type === currentFilter);
+                }
 
                 if (matchesSearch && matchesFilter) {
                     row.classList.remove('d-none');

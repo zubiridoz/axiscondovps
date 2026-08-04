@@ -54,7 +54,8 @@ class ResidentController extends BaseController
         $counts = [
             'all' => 0,
             'owner' => 0,
-            'tenant' => 0
+            'tenant' => 0,
+            'online' => 0
         ];
 
         // Fetch all units to determine duplicate unit numbers
@@ -120,6 +121,9 @@ class ResidentController extends BaseController
             $counts['all']++;
             if (isset($counts[$type])) {
                 $counts[$type]++;
+            }
+            if ($gr['has_app']) {
+                $counts['online']++;
             }
         }
 
