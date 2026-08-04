@@ -1862,6 +1862,12 @@ $formatDateEs = function($dateStr) {
                     onmouseout="this.style.transform='translateY(0)'">
                     <i class="bi bi-x-circle"></i> Rechazar
                 </button>
+                <button type="button" id="btnRevertVoucher"
+                    style="padding:.55rem 1.1rem; border:none; border-radius:10px; background:linear-gradient(135deg, #f59e0b, #d97706); color:#fff; font-size:.84rem; font-weight:600; cursor:pointer; display:none; align-items:center; gap:.4rem; transition:all .2s; box-shadow:0 2px 8px rgba(245,158,11,.25);"
+                    onmouseover="this.style.transform='translateY(-1px)'"
+                    onmouseout="this.style.transform='translateY(0)'">
+                    <i class="bi bi-arrow-counterclockwise"></i> Revertir Pago
+                </button>
                 <button type="button" id="btnApproveVoucher"
                     style="padding:.55rem 1.25rem; border:none; border-radius:10px; background:linear-gradient(135deg, #10b981, #059669); color:#fff; font-size:.84rem; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:.4rem; transition:all .2s; box-shadow:0 2px 8px rgba(16,185,129,.25);"
                     onmouseover="this.style.transform='translateY(-1px)'"
@@ -2306,6 +2312,7 @@ $formatDateEs = function($dateStr) {
                 readOnly.style.display = 'none';
                 document.getElementById('btnApproveVoucher').style.display = 'flex';
                 document.getElementById('btnRejectVoucher').style.display = 'flex';
+                document.getElementById('btnRevertVoucher').style.display = 'none';
                 // Enable fields
                 document.getElementById('rvAmount').readOnly = false;
                 document.getElementById('rvMethod').disabled = false;
@@ -2317,6 +2324,11 @@ $formatDateEs = function($dateStr) {
                 readOnly.style.display = 'block';
                 document.getElementById('btnApproveVoucher').style.display = 'none';
                 document.getElementById('btnRejectVoucher').style.display = 'none';
+                if (isApproved) {
+                    document.getElementById('btnRevertVoucher').style.display = 'flex';
+                } else {
+                    document.getElementById('btnRevertVoucher').style.display = 'none';
+                }
 
                 const methodNames = { transfer: 'Transferencia Bancaria', cash: 'Efectivo', check: 'Cheque', stripe: 'Stripe' };
                 const notes = d.notes ? `<div style="margin-top:.75rem; padding-top:.75rem; border-top:1px solid #e2e8f0;"><strong style="font-size:.76rem; text-transform:uppercase; letter-spacing:.5px; color:#94a3b8;">Notas</strong><p style="margin:.35rem 0 0; color:#334155;">${d.notes}</p></div>` : '';
@@ -2460,6 +2472,72 @@ $formatDateEs = function($dateStr) {
                 Swal.fire('Error', 'Problema de conexión.', 'error');
             });
     }
+
+    document.getElementById('btnRevertVoucher').addEventListener('click', function() {
+        const paymentId = document.getElementById('rvPaymentId').value;
+        
+        closeReviewModal();
+        
+        Swal.fire({
+            title: 'Revertir Pago Aprobado',
+            text: 'Ingresa el motivo del rechazo para informar al residente:',
+            input: 'textarea',
+            inputPlaceholder: 'Ej. El comprobante está borroso o el monto no coincide...',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, Revertir Pago',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#d97706',
+            cancelButtonColor: '#64748b',
+            inputValidator: (value) => {
+                if (!value || value.trim() === '') {
+                    return 'Debes ingresar un motivo para el rechazo.'
+                }
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const notes = result.value;
+                
+                Swal.fire({
+                    title: 'Revertiendo...',
+                    text: 'Procesando reversión de pago',
+                    allowOutsideClick: false,
+                    didOpen: () => Swal.showLoading()
+                });
+                
+                fetch('<?= base_url("admin/finanzas/comprobante/revert") ?>', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        '<?= csrf_token() ?>': '<?= csrf_hash() ?>'
+                    },
+                    body: new URLSearchParams({
+                        payment_id: paymentId,
+                        admin_notes: notes,
+                        '<?= csrf_token() ?>': '<?= csrf_hash() ?>'
+                    })
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        Swal.fire({
+                            title: '¡Revertido!',
+                            text: data.message,
+                            icon: 'success',
+                            confirmButtonColor: '#1D4C9D'
+                        }).then(() => window.location.reload());
+                    } else {
+                        Swal.fire('Error', data.message || 'Error al revertir.', 'error');
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    Swal.fire('Error', 'Hubo un problema de conexión.', 'error');
+                });
+            }
+        });
+    });
 
     // Delete voucher
     document.querySelectorAll('.delete-voucher-btn').forEach(btn => {

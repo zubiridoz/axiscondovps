@@ -72,7 +72,6 @@ class AdminFinanceApiController extends ResourceController
             ->where('type', 'charge')
             ->where('status !=', 'cancelled')
             ->where('deleted_at IS NULL')
-            ->where('extraordinary_fee_id IS NULL')
             ->get()->getRowArray();
         $totalCharges = (float) ($chargesRow['amount'] ?? 0);
 
@@ -82,7 +81,6 @@ class AdminFinanceApiController extends ResourceController
             ->where('type', 'credit')
             ->where('status !=', 'cancelled')
             ->where('deleted_at IS NULL')
-            ->where('extraordinary_fee_id IS NULL')
             ->get()->getRowArray();
         $totalCredits = (float) ($creditsRow['amount'] ?? 0);
 
@@ -141,7 +139,6 @@ class AdminFinanceApiController extends ResourceController
             ->where('status !=', 'cancelled')
             ->where('due_date <', $today)
             ->where('deleted_at IS NULL')
-            ->where('extraordinary_fee_id IS NULL')
             ->get()->getRowArray();
         $totalOverdueCharges = (float) ($overdueChargesRow['amount'] ?? 0);
         $debtVencida = $initialBalance + $totalOverdueCharges - $totalCredits;

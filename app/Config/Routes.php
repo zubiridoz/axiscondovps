@@ -212,6 +212,7 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin', 'filter' => ['a
         $routes->post('mora/aplicar', 'FinanceController::applyMoraCharge');
         $routes->get('archivo/financial/(.*)', '\App\Controllers\MediaController::image/financial/$1');
         $routes->post('comprobante/review', 'FinanceController::reviewPayment');
+        $routes->post('comprobante/revert', 'FinanceController::revertPayment');
         $routes->post('comprobante/delete', 'FinanceController::deletePaymentVoucher');
         $routes->get('archivo/payments/(.*)', '\App\Controllers\MediaController::image/payments/$1');
 

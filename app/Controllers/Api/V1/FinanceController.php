@@ -61,7 +61,6 @@ class FinanceController extends ResourceController
                 ->where('type', 'charge')
                 ->where('status !=', 'cancelled')
                 ->where('deleted_at IS NULL')
-                ->where('extraordinary_fee_id IS NULL')
                 ->get()->getRowArray();
             $totalCharges = (float) ($chargesRow['amount'] ?? 0);
 
@@ -71,7 +70,6 @@ class FinanceController extends ResourceController
                 ->where('type', 'credit')
                 ->where('status !=', 'cancelled')
                 ->where('deleted_at IS NULL')
-                ->where('extraordinary_fee_id IS NULL')
                 ->get()->getRowArray();
             $totalCredits = (float) ($creditsRow['amount'] ?? 0);
 

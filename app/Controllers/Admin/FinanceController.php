@@ -2011,6 +2011,26 @@ class FinanceController extends BaseController
         // Cargos pendientes (para el dropdown del modal de revisión)
         $pendingCharges = array_filter($transactions, fn($t) => $t['type'] === 'charge' && in_array($t['status'], ['pending', 'partial']));
 
+        // Inyectar el Saldo Inicial como un cargo pendiente artificial si aún hay adeudo
+        if ($initialBalance > 0.01 && $saldoPendiente > 0.01) {
+            $remainingInitBal = min($initialBalance, $saldoPendiente);
+            if ($remainingInitBal > 0.01) {
+                array_unshift($pendingRows, [
+                    'id' => 'init_balance',
+                    'type' => 'charge',
+                    'amount' => $initialBalance,
+                    'amount_paid' => $initialBalance - $remainingInitBal,
+                    'status' => ($remainingInitBal >= $initialBalance - 0.01) ? 'pending' : 'partial',
+                    'due_date' => $unit['created_at'] ?? date('Y-m-d'),
+                    'issue_date' => $unit['created_at'] ?? date('Y-m-d'),
+                    'created_at' => $unit['created_at'] ?? date('Y-m-d H:i:s'),
+                    'description' => 'Saldo Inicial (Adeudo pre-sistema)',
+                    'category_name' => 'Inicial',
+                    'category_type' => 'expense'
+                ]);
+            }
+        }
+
         // Cuotas Extraordinarias Pendientes
         $pendingExtCharges = $db->table('financial_transactions ft')
             ->select('ft.id, ft.amount, ft.description, ft.status, ef.title')
@@ -2324,19 +2344,17 @@ class FinanceController extends BaseController
             return;
 
 
-        // 1. Resetear todos los cargos de la unidad (excluyendo cuotas extraordinarias)
+        // 1. Resetear todos los cargos de la unidad
         $db->table('financial_transactions')
             ->where('unit_id', $unitId)
             ->where('type', 'charge')
-            ->where('extraordinary_fee_id', null)
             ->update(['amount_paid' => 0, 'status' => 'pending']);
 
-        // 2. Obtener todos los abonos (pagos) de la unidad, ordenados por fecha (excluyendo pagos de extraordinarias)
+        // 2. Obtener todos los abonos (pagos) de la unidad, ordenados por fecha
         $payments = $db->table('financial_transactions')
             ->where('unit_id', $unitId)
             ->where('type', 'credit')
             ->where('status', 'paid')
-            ->where('extraordinary_fee_id', null)
             ->where('deleted_at', null)
             ->orderBy('due_date', 'ASC')
             ->orderBy('created_at', 'ASC')
@@ -2350,7 +2368,6 @@ class FinanceController extends BaseController
             $pendingCharges = $db->table('financial_transactions')
                 ->where('unit_id', $unitId)
                 ->where('type', 'charge')
-                ->where('extraordinary_fee_id', null)
                 ->whereIn('status', ['pending', 'partial'])
                 ->where('deleted_at', null)
                 ->orderBy('due_date', 'ASC')
@@ -5128,6 +5145,125 @@ class FinanceController extends BaseController
         }
 
         return $this->response->setJSON(['status' => 'error', 'message' => 'Acción no válida.']);
+    }
+
+    /**
+     * POST admin/finanzas/comprobante/revert
+     * Revertir un pago que ya fue aprobado previamente.
+     */
+    public function revertPayment()
+    {
+        if (!$this->request->isAJAX()) {
+            return $this->response->setStatusCode(400)->setJSON(['error' => 'Invalid request']);
+        }
+
+        $paymentId = (int) $this->request->getPost('payment_id');
+        $adminNotes = $this->request->getPost('admin_notes') ?: 'Revertido por la administración';
+
+        $condoModel = new CondominiumModel();
+        $demoCondo = $condoModel->first();
+        if (!$demoCondo) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'Condominio no encontrado.']);
+        }
+
+        $db = \Config\Database::connect();
+        
+        // 1. Iniciar transacción
+        $db->transStart();
+
+        // 2. Obtener el payment
+        $payment = $db->table('payments')
+            ->where('id', $paymentId)
+            ->where('condominium_id', $demoCondo['id'])
+            ->where('deleted_at IS NULL')
+            ->get()->getRowArray();
+
+        if (!$payment) {
+            $db->transComplete();
+            return $this->response->setJSON([
+                'status' => 'error', 
+                'message' => 'El comprobante no existe o ya fue eliminado (ej. desde el estado de cuenta).'
+            ]);
+        }
+
+        if ($payment['status'] !== 'approved') {
+            $db->transComplete();
+            return $this->response->setJSON(['status' => 'error', 'message' => 'Solo se pueden revertir comprobantes en estado aprobado.']);
+        }
+
+        $unitId = (int) $payment['unit_id'];
+        $transactionId = $payment['transaction_id']; // El ID del crédito
+
+        // 3. Obtener la transacción de crédito
+        $creditTransaction = null;
+        if ($transactionId) {
+            $creditTransaction = $db->table('financial_transactions')
+                ->where('id', $transactionId)
+                ->where('unit_id', $unitId)
+                ->where('deleted_at IS NULL')
+                ->get()->getRowArray();
+        }
+
+        // Validación de Inconsistencia (Edge Case)
+        if (!$creditTransaction) {
+            $db->transComplete();
+            return $this->response->setJSON([
+                'status' => 'error', 
+                'message' => 'Inconsistencia de datos: La transacción financiera asociada no existe o ya fue borrada. No es posible revertir de forma segura.'
+            ]);
+        }
+
+        // 4. Soft-delete de la transacción de crédito
+        $db->table('financial_transactions')
+            ->where('id', $transactionId)
+            ->update([
+                'deleted_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s')
+            ]);
+
+        // 5. Marcar comprobante como rechazado
+        $db->table('payments')->where('id', $paymentId)->update([
+            'status' => 'rejected',
+            'notes' => $adminNotes,
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        // 6. Recalcular saldos de la unidad mediante Motor de Consistencia
+        $this->syncUnitFinancialState($unitId);
+
+        // 7. Confirmar transacción
+        $db->transComplete();
+
+        if ($db->transStatus() === false) {
+            return $this->response->setJSON(['status' => 'error', 'message' => 'Hubo un error al procesar la reversión en la base de datos.']);
+        }
+
+        // 8. Notificar al residente
+        $resident = $db->table('residents r')
+            ->select('r.user_id')
+            ->where('r.unit_id', $unitId)
+            ->where('r.condominium_id', $demoCondo['id'])
+            ->get()->getRowArray();
+
+        if ($resident && !empty($resident['user_id'])) {
+            $rejectTitle = 'Reversión de pago';
+            $rejectBody = 'Tu pago previamente aprobado ha sido revertido y rechazado. Motivo: ' . $adminNotes;
+            $rejectData = ['payment_id' => $paymentId, 'tipo' => 'pago_revertido'];
+
+            \App\Models\Tenant\NotificationModel::notify(
+                $demoCondo['id'],
+                (int) $resident['user_id'],
+                'payment_rejected',
+                $rejectTitle,
+                $rejectBody,
+                $rejectData
+            );
+        }
+
+        return $this->response->setJSON([
+            'status' => 'success',
+            'message' => 'El pago fue revertido exitosamente. Los saldos se han actualizado.'
+        ]);
     }
 
     /**
