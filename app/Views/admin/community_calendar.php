@@ -1372,8 +1372,15 @@ $eventsJsonRaw = json_encode($rawEvents, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED
             if (remindersState.length) fd.append('reminders', JSON.stringify(remindersState));
             selectedRecipients.forEach(function (r) { fd.append('recipients[]', r.id) });
 
+            var btn = $('cc-modal-submit');
+            var originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Guardando...';
+
             var url = editingEventId ? BASE + '/actualizar/' + editingEventId : BASE + '/crear';
             fetch(url, { method: 'POST', body: fd }).then(function (r) { return r.json() }).then(function (d) {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
                 if (d.status === 201 || d.status === 200) {
                     closeModal();
                     Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: d.message, showConfirmButton: false, timer: 2500 });
@@ -1381,7 +1388,11 @@ $eventsJsonRaw = json_encode($rawEvents, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED
                 } else {
                     Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: d.error || 'Error', showConfirmButton: false, timer: 3000 });
                 }
-            }).catch(function () { Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: 'Error de conexión', showConfirmButton: false, timer: 3000 }) });
+            }).catch(function () { 
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: 'Error de conexión', showConfirmButton: false, timer: 3000 }) 
+            });
         });
 
         /* ───── Edit ───── */

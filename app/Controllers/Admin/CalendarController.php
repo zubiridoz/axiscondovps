@@ -98,17 +98,20 @@ class CalendarController extends BaseController
         // Process reminders
         $this->saveReminders($eventId);
 
-        // 🔔 Notificación push + in-app a todos los residentes (solo eventos públicos)
-        $isInternal = (int) ($this->request->getPost('is_internal') ?? 0);
-        if (!$isInternal) {
-            $this->dispatchCalendarPush($eventId, $title, $eventData['start_datetime']);
-        }
-
-        return $this->response->setJSON([
+        $response = $this->response->setJSON([
             'status'  => 201,
             'message' => 'Evento creado exitosamente',
             'id'      => $eventId
         ]);
+
+        // 🔔 Notificación push + in-app a todos los residentes (solo eventos públicos)
+        $isInternal = (int) ($this->request->getPost('is_internal') ?? 0);
+        if (!$isInternal) {
+            // Now run the slow push logic
+            $this->dispatchCalendarPush($eventId, $title, $eventData['start_datetime']);
+        }
+
+        return $response;
     }
 
     /**

@@ -218,6 +218,79 @@ $jsonData = htmlspecialchars(json_encode($rawAnnouncements, JSON_UNESCAPED_UNICO
         background: #fff
     }
 
+    /* ── Stories ── */
+    .an-stories-tray {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: rgba(248, 250, 252, 0.9);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        display: flex;
+        gap: 1rem;
+        overflow-x: auto;
+        padding: 0.8rem 0.5rem 1.2rem 0.5rem;
+        margin-bottom: 1rem;
+        margin-top: -0.5rem;
+        border-bottom: 1px solid #e2e8f0;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    .an-stories-tray::-webkit-scrollbar {
+        display: none;
+    }
+    .an-story-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.4rem;
+        cursor: pointer;
+        min-width: 65px;
+        transition: transform 0.2s;
+    }
+    .an-story-item:hover {
+        transform: scale(1.05);
+    }
+    .an-story-ring {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+        padding: 2.5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .an-story-avatar {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background-color: #fff;
+        border: 2px solid #fff;
+        background-size: cover;
+        background-position: center;
+    }
+    .an-story-avatar.text-avatar {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #334155;
+        font-weight: 700;
+        font-size: 1.1rem;
+        background: #e2e8f0;
+    }
+    .an-story-title {
+        font-size: 0.7rem;
+        color: #475569;
+        text-align: center;
+        width: 65px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-weight: 500;
+    }
+
     /* ── Feed ── */
     .an-main {
         min-width: 0
@@ -1422,7 +1495,44 @@ $jsonData = htmlspecialchars(json_encode($rawAnnouncements, JSON_UNESCAPED_UNICO
             <div class="an-empty">
                 <div><i class="bi bi-megaphone"></i>No hay comunicaciones publicadas todavía.</div>
             </div>
-        <?php else: ?>
+        <?php else: 
+            $recentLimit = strtotime('-48 hours');
+            $recentStories = array_filter($rawAnnouncements, function($a) use ($recentLimit) {
+                return strtotime($a['created_at']) >= $recentLimit;
+            });
+            if (!empty($recentStories)):
+        ?>
+            <div class="an-stories-tray">
+                <?php foreach($recentStories as $story): 
+                    $fn = trim(($story['first_name'] ?? '') . ' ' . ($story['last_name'] ?? ''));
+                    if ($fn === '') $fn = 'Administrador';
+                    $titleShort = mb_substr(strip_tags($story['title'] ?? $story['content'] ?? ''), 0, 15) . '...';
+                    $ini = strtoupper(mb_substr($story['first_name'] ?? '', 0, 1) . mb_substr($story['last_name'] ?? '', 0, 1));
+                    if ($ini === '') $ini = 'AD';
+                    
+                    $coverUrl = '';
+                    if (!empty($story['attachments'])) {
+                        foreach ($story['attachments'] as $att) {
+                            if ($att['file_type'] === 'image') {
+                                $coverUrl = base_url('admin/anuncios/archivo/' . $att['file_name']);
+                                break;
+                            }
+                        }
+                    }
+                ?>
+                <div class="an-story-item" onclick="openDetail(<?= esc((string) $story['id']) ?>)" title="<?= esc($fn) ?>">
+                    <div class="an-story-ring">
+                        <?php if ($coverUrl): ?>
+                            <div class="an-story-avatar" style="background-image: url('<?= esc($coverUrl) ?>')"></div>
+                        <?php else: ?>
+                            <div class="an-story-avatar text-avatar"><?= esc($ini) ?></div>
+                        <?php endif; ?>
+                    </div>
+                    <div class="an-story-title"><?= esc($titleShort) ?></div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
             <div class="an-feed" id="an-feed">
                 <?php foreach ($rawAnnouncements as $a):
                     $cat = $a['category'] ?? 'general';
@@ -1911,7 +2021,7 @@ $jsonData = htmlspecialchars(json_encode($rawAnnouncements, JSON_UNESCAPED_UNICO
             c.addEventListener('click', function () { openDetail(+c.dataset.id) });
         });
 
-        function openDetail(id) {
+        window.openDetail = function(id) {
             currentDetailId = id;
             fetch(BASE + '/detalle/' + id).then(function (r) { return r.json() }).then(function (d) {
                 if (d.status !== 200) return; var a = d.data;
