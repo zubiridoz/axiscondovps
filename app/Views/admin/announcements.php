@@ -2044,6 +2044,12 @@ $jsonData = htmlspecialchars(json_encode($rawAnnouncements, JSON_UNESCAPED_UNICO
                     var grid = $('an-det-attach-grid'); grid.innerHTML = '';
                     att.forEach(function (at) {
                         var url = BASE + '/archivo/' + at.file_name;
+                        // Fix for backwards compatibility: old word docs were saved as 'image'
+                        var lowerUrl = url.toLowerCase();
+                        if (at.file_type === 'image' && !lowerUrl.endsWith('.jpg') && !lowerUrl.endsWith('.jpeg') && !lowerUrl.endsWith('.png') && !lowerUrl.endsWith('.gif') && !lowerUrl.endsWith('.webp')) {
+                            at.file_type = 'document';
+                        }
+                        
                         if (at.file_type === 'image') {
                             window.lightboxMedia.push({url: url, type: 'image'});
                             let idx = window.lightboxMedia.length - 1;
@@ -2058,9 +2064,11 @@ $jsonData = htmlspecialchars(json_encode($rawAnnouncements, JSON_UNESCAPED_UNICO
                             var vid = div.querySelector('video');
                             vid.addEventListener('loadedmetadata', function () { var dur = Math.floor(vid.duration); var m = Math.floor(dur / 60); var s = dur % 60; div.querySelector('.att-duration').textContent = m + ':' + (s < 10 ? '0' : '') + s });
                             div.onclick = function (e) { e.stopPropagation(); openLightboxIndex(idx) }; grid.appendChild(div);
-                        } else if (at.file_type === 'pdf' || at.file_type === 'document' || url.toLowerCase().endsWith('.pdf')) {
+                        } else if (at.file_type === 'pdf' || at.file_type === 'document' || url.toLowerCase().endsWith('.pdf') || url.toLowerCase().endsWith('.docx') || url.toLowerCase().endsWith('.doc')) {
+                            var isDoc = at.file_type === 'document' || url.toLowerCase().endsWith('.doc') || url.toLowerCase().endsWith('.docx');
+                            var badgeText = isDoc ? 'DOC' : 'PDF';
                             var div = document.createElement('div'); div.className = 'an-detail-pdf';
-                            div.innerHTML = '<span class="pdf-badge">PDF</span><i class="bi bi-file-earmark-text"></i><span>' + esc(at.display_name || at.original_name) + '</span>';
+                            div.innerHTML = '<span class="pdf-badge">' + badgeText + '</span><i class="bi bi-file-earmark-text"></i><span>' + esc(at.display_name || at.original_name) + '</span>';
                             div.onclick = function (e) { e.stopPropagation(); window.open(url, '_blank') }; grid.appendChild(div);
                         }
                     });

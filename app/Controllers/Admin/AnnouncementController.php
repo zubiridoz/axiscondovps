@@ -108,102 +108,21 @@ class AnnouncementController extends BaseController
      */
     private function dispatchAnnouncementPush(int $announcementId, string $content, string $category): void
     {
-        log_message('info', '[PUSH] ========== DISPATCH START ==========');
-        log_message('info', "[PUSH] Announcement #{$announcementId}, category={$category}");
-
         try {
             $condominiumId = \App\Services\TenantService::getInstance()->getTenantId();
-            log_message('info', "[PUSH] Condominium ID: {$condominiumId}");
+            
+            // Codificamos el contenido en base64 para evitar problemas en la terminal
+            $encodedContent = base64_encode($content);
+            $sparkPath = FCPATH . '../spark';
+            $excludeUserId = session()->get('user_id') ?? 4; // Excluir al admin actual
+            
+            // Ejecutar en segundo plano
+            $cmd = "php $sparkPath push:announcement $announcementId $condominiumId $excludeUserId \"$category\" $encodedContent > /dev/null 2>&1 &";
+            exec($cmd);
 
-            $db = \Config\Database::connect();
-
-            // Obtener todos los user_id de residentes de manera única (para evitar duplicados si tienen múltiples unidades)
-            $residents = $db->table('residents')
-                ->select('user_id')
-                ->distinct()
-                ->where('condominium_id', $condominiumId)
-                ->where('user_id IS NOT NULL')
-                ->get()->getResultArray();
-
-            log_message('info', '[PUSH] Residents found: ' . count($residents));
-
-            if (empty($residents)) {
-                log_message('warning', '[PUSH] No residents in condominium — aborting');
-                return;
-            }
-
-            // Obtener nombre del condominio para el título
-            $condoRow = $db->table('condominiums')->select('name')->where('id', $condominiumId)->get()->getRowArray();
-            $condoName = $condoRow['name'] ?? 'Mi Condominio';
-
-            // Título según categoría + nombre del condominio
-            $categoryLabels = [
-                'general'       => ['📢', 'Nuevo Aviso'],
-                'mantenimiento' => ['🔧', 'Aviso de Mantenimiento'],
-                'urgente'       => ['🚨', 'Aviso Urgente'],
-                'evento'        => ['📅', 'Nuevo Evento'],
-            ];
-            $catInfo = $categoryLabels[$category] ?? $categoryLabels['general'];
-            $pushTitle = "{$catInfo[0]} {$catInfo[1]} · {$condoName}";
-            $pushBody  = mb_substr(html_entity_decode(strip_tags($content), ENT_QUOTES | ENT_HTML5, 'UTF-8'), 0, 200);
-
-            log_message('info', "[PUSH] Title: {$pushTitle}");
-            log_message('info', "[PUSH] Body: {$pushBody}");
-
-            // Insertar notificaciones en DB para pantalla "Avisos"
-            $now = date('Y-m-d H:i:s');
-            $notifType = ($category === 'urgente') ? 'urgent' : 'announcement';
-            $insertedCount = 0;
-
-            foreach ($residents as $r) {
-                $inserted = $db->table('notifications')->insert([
-                    'condominium_id' => $condominiumId,
-                    'user_id'        => $r['user_id'],
-                    'type'           => $notifType,
-                    'title'          => $pushTitle,
-                    'body'           => $pushBody,
-                    'data'           => json_encode([
-                        'announcement_id' => $announcementId,
-                        'category'        => $category,
-                    ]),
-                    'read_at'    => null,
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ]);
-                if ($inserted) $insertedCount++;
-            }
-
-            log_message('info', "[PUSH] ✅ Notifications inserted in DB: {$insertedCount}/" . count($residents));
-
-            // Verificar que hay tokens FCM antes de enviar
-            $tokenCount = $db->table('device_push_subscriptions')
-                ->where('condominium_id', $condominiumId)
-                ->where('fcm_token IS NOT NULL')
-                ->where('fcm_token !=', '')
-                ->countAllResults();
-
-            log_message('info', "[PUSH] FCM tokens available: {$tokenCount}");
-
-            if ($tokenCount === 0) {
-                log_message('warning', '[PUSH] ⚠️ No FCM tokens found — push NOT sent (but DB notifications saved)');
-                return;
-            }
-
-            // Enviar push FCM
-            $pushService = new \App\Services\Notifications\PushNotificationService();
-            $result = $pushService->sendToCondominium($condominiumId, $pushTitle, $pushBody, [
-                'type'            => 'announcement',
-                'announcement_id' => (string) $announcementId,
-                'category'        => $category,
-                'click_action'    => 'FLUTTER_NOTIFICATION_CLICK',
-            ]);
-
-            log_message('info', '[PUSH] FCM send result: ' . ($result ? 'SUCCESS' : 'FAILED'));
-            log_message('info', '[PUSH] ========== DISPATCH END ==========');
-
+            log_message('info', "[PUSH] Disparado en segundo plano (Web Admin): $cmd");
         } catch (\Throwable $e) {
-            log_message('error', '[PUSH] ❌ Exception: ' . $e->getMessage());
-            log_message('error', '[PUSH] Stack: ' . $e->getTraceAsString());
+            log_message('error', '[PUSH] Exception dispatching background task from Web: ' . $e->getMessage());
         }
     }
 
@@ -530,8 +449,9 @@ class AnnouncementController extends BaseController
             $size = $file->getSize();
 
             // Determine type
-            $fileType = 'image';
-            if (str_starts_with($mime, 'video/')) $fileType = 'video';
+            $fileType = 'document';
+            if (str_starts_with($mime, 'image/')) $fileType = 'image';
+            elseif (str_starts_with($mime, 'video/')) $fileType = 'video';
             elseif ($mime === 'application/pdf') $fileType = 'pdf';
 
             $newName = uniqid('ann_') . '_' . time() . '.' . $ext;

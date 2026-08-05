@@ -147,7 +147,11 @@ class AnnouncementController extends ResourceController
         $attachModel = new AnnouncementAttachmentModel();
         $attachmentsRaw = $attachModel->whereIn('announcement_id', $ids)->findAll();
         $attachmentsMapped = [];
-        foreach ($attachmentsRaw as $att) {
+        foreach ($attachmentsRaw as &$att) {
+            $lowerName = strtolower($att['file_name'] ?? '');
+            if ($att['file_type'] === 'image' && !str_ends_with($lowerName, '.jpg') && !str_ends_with($lowerName, '.jpeg') && !str_ends_with($lowerName, '.png') && !str_ends_with($lowerName, '.gif') && !str_ends_with($lowerName, '.webp')) {
+                $att['file_type'] = 'document';
+            }
             $attachmentsMapped[$att['announcement_id']][] = $att;
         }
 
@@ -201,9 +205,21 @@ class AnnouncementController extends ResourceController
             $a['user_id'] = (int)($a['created_by'] ?? 0); // Alias para que Flutter identifique al autor
             $a['attachments'] = $attachmentsMapped[$aId] ?? [];
             
-            // Agregar URLs completas a los attachments
+            // Extraer documentos como texto para evitar imágenes rotas en la app
+            $validAttachments = [];
+            $docLinks = "";
             foreach ($a['attachments'] as &$att) {
                 $att['url'] = $this->getAttachmentUrl($att);
+                if ($att['file_type'] === 'document') {
+                    $docName = $att['original_name'] ?? 'Documento adjunto';
+                    $docLinks .= "\n\n📎 $docName:\n" . $att['url'];
+                } else {
+                    $validAttachments[] = $att;
+                }
+            }
+            $a['attachments'] = $validAttachments;
+            if ($docLinks !== "") {
+                $a['content'] = ($a['content'] ?? '') . $docLinks;
             }
             
             $a['like_count'] = (int)($likesCountMapped[$aId] ?? 0);
@@ -270,9 +286,26 @@ class AnnouncementController extends ResourceController
         $attachModel = new AnnouncementAttachmentModel();
         $ann['attachments'] = $attachModel->where('announcement_id', $id)->orderBy('id', 'ASC')->findAll();
         
-        // Agregar URLs completas a los attachments
+        // Extraer documentos como texto para evitar imágenes rotas en la app
+        $validAttachments = [];
+        $docLinks = "";
         foreach ($ann['attachments'] as &$att) {
+            $lowerName = strtolower($att['file_name'] ?? '');
+            if ($att['file_type'] === 'image' && !str_ends_with($lowerName, '.jpg') && !str_ends_with($lowerName, '.jpeg') && !str_ends_with($lowerName, '.png') && !str_ends_with($lowerName, '.gif') && !str_ends_with($lowerName, '.webp')) {
+                $att['file_type'] = 'document';
+            }
             $att['url'] = $this->getAttachmentUrl($att);
+
+            if ($att['file_type'] === 'document') {
+                $docName = $att['original_name'] ?? 'Documento adjunto';
+                $docLinks .= "\n\n📎 $docName:\n" . $att['url'];
+            } else {
+                $validAttachments[] = $att;
+            }
+        }
+        $ann['attachments'] = $validAttachments;
+        if ($docLinks !== "") {
+            $ann['content'] = ($ann['content'] ?? '') . $docLinks;
         }
 
         $likeModel = new AnnouncementLikeModel();
@@ -962,105 +995,20 @@ class AnnouncementController extends ResourceController
      */
     private function dispatchAnnouncementPush(int $announcementId, string $content, string $category, int $excludeUserId = 0): void
     {
-        log_message('info', '[PUSH-API] ========== DISPATCH START ==========');
-        log_message('info', "[PUSH-API] Announcement #{$announcementId}, category={$category}");
-
         try {
             $condominiumId = \App\Services\TenantService::getInstance()->getTenantId();
-            log_message('info', "[PUSH-API] Condominium ID: {$condominiumId}");
+            
+            // Codificamos el contenido en base64 para evitar problemas con comillas y caracteres especiales en la terminal
+            $encodedContent = base64_encode($content);
+            $sparkPath = FCPATH . '../spark';
+            
+            // Ejecutar en segundo plano
+            $cmd = "php $sparkPath push:announcement $announcementId $condominiumId $excludeUserId \"$category\" $encodedContent > /dev/null 2>&1 &";
+            exec($cmd);
 
-            $db = \Config\Database::connect();
-
-            // Obtener todos los user_id de residentes de manera única
-            $residents = $db->table('residents')
-                ->select('user_id')
-                ->distinct()
-                ->where('condominium_id', $condominiumId)
-                ->where('user_id IS NOT NULL')
-                ->get()->getResultArray();
-
-            log_message('info', '[PUSH-API] Residents found: ' . count($residents));
-
-            if (empty($residents)) {
-                log_message('warning', '[PUSH-API] No residents in condominium - aborting');
-                return;
-            }
-
-            // Obtener nombre del condominio para el título
-            $condoRow = $db->table('condominiums')->select('name')->where('id', $condominiumId)->get()->getRowArray();
-            $condoName = $condoRow['name'] ?? 'Mi Condominio';
-
-            // Título según categoría + nombre del condominio
-            $categoryLabels = [
-                'general'       => ["\xF0\x9F\x93\xA2", 'Nuevo Aviso'],
-                'mantenimiento' => ["\xF0\x9F\x94\xA7", 'Aviso de Mantenimiento'],
-                'urgente'       => ["\xF0\x9F\x9A\xA8", 'Aviso Urgente'],
-                'evento'        => ["\xF0\x9F\x93\x85", 'Nuevo Evento'],
-            ];
-            $catInfo = $categoryLabels[$category] ?? $categoryLabels['general'];
-            $pushTitle = "{$catInfo[0]} {$catInfo[1]} - {$condoName}";
-            $pushBody  = mb_substr(html_entity_decode(strip_tags($content), ENT_QUOTES | ENT_HTML5, 'UTF-8'), 0, 200);
-
-            log_message('info', "[PUSH-API] Title: {$pushTitle}");
-            log_message('info', "[PUSH-API] Body: {$pushBody}");
-
-            // Insertar notificaciones en DB para pantalla "Avisos"
-            $now = date('Y-m-d H:i:s');
-            $notifType = ($category === 'urgente') ? 'urgent' : 'announcement';
-            $insertedCount = 0;
-
-            foreach ($residents as $r) {
-                // No notificar al propio autor de la publicación
-                if ((int)$r['user_id'] === $excludeUserId) continue;
-
-                $inserted = $db->table('notifications')->insert([
-                    'condominium_id' => $condominiumId,
-                    'user_id'        => $r['user_id'],
-                    'type'           => $notifType,
-                    'title'          => $pushTitle,
-                    'body'           => $pushBody,
-                    'data'           => json_encode([
-                        'announcement_id' => $announcementId,
-                        'category'        => $category,
-                    ]),
-                    'read_at'    => null,
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ]);
-                if ($inserted) $insertedCount++;
-            }
-
-            log_message('info', "[PUSH-API] Notifications inserted in DB: {$insertedCount}/" . count($residents));
-
-            // Verificar que hay tokens FCM antes de enviar
-            $tokenCount = $db->table('device_push_subscriptions')
-                ->where('condominium_id', $condominiumId)
-                ->where('fcm_token IS NOT NULL')
-                ->where('fcm_token !=', '')
-                ->countAllResults();
-
-            log_message('info', "[PUSH-API] FCM tokens available: {$tokenCount}");
-
-            if ($tokenCount === 0) {
-                log_message('warning', '[PUSH-API] No FCM tokens found - push NOT sent (but DB notifications saved)');
-                return;
-            }
-
-            // Enviar push FCM
-            $pushService = new \App\Services\Notifications\PushNotificationService();
-            $result = $pushService->sendToCondominium($condominiumId, $pushTitle, $pushBody, [
-                'type'            => 'announcement',
-                'announcement_id' => (string) $announcementId,
-                'category'        => $category,
-                'click_action'    => 'FLUTTER_NOTIFICATION_CLICK',
-            ]);
-
-            log_message('info', '[PUSH-API] FCM send result: ' . ($result ? 'SUCCESS' : 'FAILED'));
-            log_message('info', '[PUSH-API] ========== DISPATCH END ==========');
-
+            log_message('info', "[PUSH-API] Disparado en segundo plano: $cmd");
         } catch (\Throwable $e) {
-            log_message('error', '[PUSH-API] Exception: ' . $e->getMessage());
-            log_message('error', '[PUSH-API] Stack: ' . $e->getTraceAsString());
+            log_message('error', '[PUSH-API] Exception dispatching background task: ' . $e->getMessage());
         }
     }
 }
