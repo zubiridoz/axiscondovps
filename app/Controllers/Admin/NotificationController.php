@@ -123,8 +123,11 @@ class NotificationController extends BaseController
                     $actionUrl = base_url('admin/tickets');
                 } elseif ($n['type'] === 'calendar_event_new' || $n['type'] === 'calendar_event') {
                     $actionUrl = base_url('admin/calendario');
-                } elseif ($n['type'] === 'announcement_comment' || $n['type'] === 'announcement') {
+                } elseif ($n['type'] === 'announcement_comment' || $n['type'] === 'announcement' || $n['type'] === 'urgent') {
                     $actionUrl = base_url('admin/anuncios');
+                    if (isset($dataPayload['announcement_id'])) {
+                        $actionUrl .= '?open=' . $dataPayload['announcement_id'];
+                    }
                 }
             }
             if ($n['type'] === 'payment_status' && $actionUrl && strpos($actionUrl, 'pagos-por-unidad') !== false && strpos($actionUrl, '#') === false) {

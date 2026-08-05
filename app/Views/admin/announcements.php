@@ -2332,6 +2332,13 @@ $jsonData = htmlspecialchars(json_encode($rawAnnouncements, JSON_UNESCAPED_UNICO
         /* ─── Helpers ─── */
         function esc(s) { var d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML }
         function timeAgo(dt) { var d = Math.max(0, Math.floor((Date.now() - dt.getTime()) / 1000)); if (d < 60) return 'hace unos segundos'; if (d < 3600) return 'hace ' + Math.floor(d / 60) + ' min'; if (d < 86400) return 'hace ' + Math.floor(d / 3600) + ' h'; return 'hace ' + Math.floor(d / 86400) + ' d' }
+        
+        /* ─── Open from URL params ─── */
+        var urlParams = new URLSearchParams(window.location.search);
+        var openId = urlParams.get('open');
+        if (openId && !isNaN(parseInt(openId))) {
+            openDetail(parseInt(openId));
+        }
     })();
 </script>
 <?= $this->endSection() ?>
