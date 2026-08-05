@@ -171,64 +171,100 @@
         background: #1e293b;
     }
 
-    .btn-filter-vouchers {
-        height: 38px;
-        padding: 0 1.25rem;
-        border: 2px solid #f59e0b;
-        background-color: #fffbeb;
-        color: #d97706;
-        border-radius: 20px;
-        font-size: .85rem;
+    .btn-filter-pill {
+        height: 36px;
+        padding: 0 1.1rem;
+        border-radius: 6px;
+        font-size: 0.85rem;
         font-weight: 600;
         cursor: pointer;
         display: inline-flex;
         align-items: center;
         gap: 0.5rem;
-        transition: all 0.2s ease;
-        box-shadow: 0 2px 4px rgba(245, 158, 11, 0.15);
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         margin-left: 0.5rem;
+        border: 1px solid transparent;
     }
     
-    .btn-filter-vouchers:hover {
-        background-color: #fef3c7;
+    .btn-filter-pill:hover {
         transform: translateY(-1px);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
     }
     
-    .btn-filter-vouchers.active {
-        background-color: #f59e0b;
-        color: white;
-        border-color: #d97706;
-        box-shadow: 0 4px 8px rgba(245, 158, 11, 0.3);
+    .btn-filter-pill .pill-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        transition: all 0.2s ease;
     }
 
-    .btn-filter-vouchers-success {
-        height: 38px;
-        padding: 0 1.25rem;
-        border: 2px solid #10b981;
+    /* Pending variant (Amber) */
+    .btn-filter-pill.variant-pending {
+        background-color: #fffbeb;
+        border-color: #fcd34d;
+        color: #d97706;
+    }
+    .btn-filter-pill.variant-pending .pill-dot {
+        background-color: #f59e0b;
+    }
+    .btn-filter-pill.variant-pending:hover {
+        background-color: #fef3c7;
+        border-color: #f59e0b;
+    }
+    .btn-filter-pill.variant-pending.active {
+        background-color: #f59e0b;
+        border-color: #d97706;
+        color: #ffffff;
+        box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3);
+    }
+    .btn-filter-pill.variant-pending.active .pill-dot {
+        background-color: #ffffff;
+    }
+
+    /* Success variant (Emerald) */
+    .btn-filter-pill.variant-success {
         background-color: #ecfdf5;
+        border-color: #6ee7b7;
         color: #059669;
-        border-radius: 20px;
-        font-size: .85rem;
-        font-weight: 600;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        transition: all 0.2s ease;
-        box-shadow: 0 2px 4px rgba(16, 185, 129, 0.15);
-        margin-left: 0.5rem;
     }
-    
-    .btn-filter-vouchers-success:hover {
-        background-color: #d1fae5;
-        transform: translateY(-1px);
-    }
-    
-    .btn-filter-vouchers-success.active {
+    .btn-filter-pill.variant-success .pill-dot {
         background-color: #10b981;
-        color: white;
+    }
+    .btn-filter-pill.variant-success:hover {
+        background-color: #d1fae5;
+        border-color: #10b981;
+    }
+    .btn-filter-pill.variant-success.active {
+        background-color: #10b981;
         border-color: #059669;
-        box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+        color: #ffffff;
+        box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+    }
+    .btn-filter-pill.variant-success.active .pill-dot {
+        background-color: #ffffff;
+    }
+
+    /* Neutral variant (Slate) */
+    .btn-filter-pill.variant-neutral {
+        background-color: #f8fafc;
+        border-color: #cbd5e1;
+        color: #64748b;
+    }
+    .btn-filter-pill.variant-neutral .pill-dot {
+        background-color: #94a3b8;
+    }
+    .btn-filter-pill.variant-neutral:hover {
+        background-color: #f1f5f9;
+        border-color: #94a3b8;
+    }
+    .btn-filter-pill.variant-neutral.active {
+        background-color: #64748b;
+        border-color: #475569;
+        color: #ffffff;
+        box-shadow: 0 4px 10px rgba(100, 116, 139, 0.3);
+    }
+    .btn-filter-pill.variant-neutral.active .pill-dot {
+        background-color: #ffffff;
     }
 
     .ppu-content-box {
@@ -966,15 +1002,17 @@
                 <option value="Al corriente">Al corriente</option>
                 <option value="Moroso">Moroso</option>
             </select>
-            <button type="button" id="btnFilterVouchers" class="btn-filter-vouchers" title="Ver unidades con comprobantes que requieren revisión">
-                <i class="bi bi-receipt"></i> Por Aprobar
-            </button>
-            <?php if (($condo['payment_approval_mode'] ?? 'manual') === 'automatic'): ?>
-                <button type="button" id="btnFilterApprovedVouchers" class="btn-filter-vouchers-success" title="Ver unidades con pagos aprobados automáticamente este mes">
-                    <i class="bi bi-robot"></i> Auto-Aprobados (Este Mes)
+            <?php if (($condo['payment_approval_mode'] ?? 'manual') === 'manual'): ?>
+                <button type="button" id="btnFilterVouchers" class="btn-filter-pill variant-pending" title="Ver unidades con comprobantes que requieren revisión">
+                    <span class="pill-dot"></span> Por Aprobar
                 </button>
-                <button type="button" id="btnFilterApprovedVouchersLastMonth" class="btn-filter-vouchers-success" style="background-color: #f1f5f9; color: #64748b; border-color: #cbd5e1;" title="Ver unidades con pagos aprobados automáticamente el mes anterior">
-                    <i class="bi bi-robot"></i> Auto-Aprobados (Mes Anterior)
+            <?php endif; ?>
+            <?php if (($condo['payment_approval_mode'] ?? 'manual') === 'automatic'): ?>
+                <button type="button" id="btnFilterApprovedVouchers" class="btn-filter-pill variant-success" title="Ver unidades con pagos aprobados automáticamente este mes">
+                    <span class="pill-dot"></span> Auto-Aprobados (Este Mes)
+                </button>
+                <button type="button" id="btnFilterApprovedVouchersLastMonth" class="btn-filter-pill variant-neutral" title="Ver unidades con pagos aprobados automáticamente el mes anterior">
+                    <span class="pill-dot"></span> Auto-Aprobados (Mes Anterior)
                 </button>
             <?php endif; ?>
             <span class="filter-count" id="countLabel"><?= count($records) ?> unidades</span>
