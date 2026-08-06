@@ -1016,6 +1016,7 @@
                 </button>
             <?php endif; ?>
             <span class="filter-count" id="countLabel"><?= count($records) ?> unidades</span>
+            <span id="sortIndicator" style="display: none; font-size: 0.8rem; color: #64748b; margin-left: 8px;"><i class="bi bi-sort-down"></i> Más recientes arriba</span>
         </div>
 
     </div>
@@ -1040,10 +1041,13 @@
                     <?php if (!empty($records)): ?>
                         <?php foreach ($records as $rec): ?>
                             <tr onclick="window.location.href='<?= base_url('admin/finanzas/pagos-por-unidad/' . $rec['hash_id']) ?>'"
+                                data-id="<?= $rec['id'] ?>"
                                 data-search="<?= esc(strtolower($rec['unidad_label'])) ?>" data-estado="<?= esc($rec['estado']) ?>"
                                 data-pending-vouchers="<?= ($rec['pending_vouchers'] ?? 0) > 0 ? 'yes' : 'no' ?>"
                                 data-approved-vouchers="<?= ($rec['approved_vouchers'] ?? 0) > 0 ? 'yes' : 'no' ?>"
-                                data-approved-vouchers-last-month="<?= ($rec['approved_vouchers_last_month'] ?? 0) > 0 ? 'yes' : 'no' ?>">
+                                data-approved-vouchers-last-month="<?= ($rec['approved_vouchers_last_month'] ?? 0) > 0 ? 'yes' : 'no' ?>"
+                                data-approved-date="<?= !empty($rec['approved_vouchers_date']) ? strtotime($rec['approved_vouchers_date']) : 0 ?>"
+                                data-approved-last-month-date="<?= !empty($rec['approved_vouchers_last_month_date']) ? strtotime($rec['approved_vouchers_last_month_date']) : 0 ?>">
                                 <td onclick="event.stopPropagation()"><input type="checkbox"></td>
                                 <td>
                                     <a class="unit-link"
@@ -1313,7 +1317,36 @@
         const search = searchInput.value.toLowerCase();
         const estado = filterEstado.value;
         let visible = 0;
-        document.querySelectorAll('#unidadesTable tbody tr').forEach(row => {
+        
+        const tbody = document.querySelector('#unidadesTable tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        
+        if (filterApprovedVouchersActive) {
+            rows.sort((a, b) => {
+                const dateA = parseInt(a.dataset.approvedDate || '0');
+                const dateB = parseInt(b.dataset.approvedDate || '0');
+                return dateB - dateA;
+            });
+        } else if (filterApprovedLastMonthActive) {
+            rows.sort((a, b) => {
+                const dateA = parseInt(a.dataset.approvedLastMonthDate || '0');
+                const dateB = parseInt(b.dataset.approvedLastMonthDate || '0');
+                return dateB - dateA;
+            });
+        } else {
+            rows.sort((a, b) => parseInt(a.dataset.id || '0') - parseInt(b.dataset.id || '0'));
+        }
+
+        const sortIndicator = document.getElementById('sortIndicator');
+        if (filterApprovedVouchersActive || filterApprovedLastMonthActive) {
+            if (sortIndicator) sortIndicator.style.display = 'inline-block';
+        } else {
+            if (sortIndicator) sortIndicator.style.display = 'none';
+        }
+
+        rows.forEach(row => tbody.appendChild(row));
+
+        rows.forEach(row => {
             const matchSearch = !search || (row.dataset.search && row.dataset.search.includes(search));
             const matchEstado = !estado || row.dataset.estado === estado;
             const matchVouchers = !filterVouchersActive || row.dataset.pendingVouchers === 'yes';

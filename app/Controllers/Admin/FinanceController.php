@@ -1822,13 +1822,14 @@ class FinanceController extends BaseController
                     $estado = 'Al corriente';
                 }
             }
+            $meses_es = ['Jan'=>'Ene', 'Feb'=>'Feb', 'Mar'=>'Mar', 'Apr'=>'Abr', 'May'=>'May', 'Jun'=>'Jun', 'Jul'=>'Jul', 'Aug'=>'Ago', 'Sep'=>'Sep', 'Oct'=>'Oct', 'Nov'=>'Nov', 'Dec'=>'Dic'];
             $records[] = [
                 'id' => $u['id'],
                 'hash_id' => $u['hash_id'] ?? $u['id'],
                 'unidad' => $u['unit_number'],
                 'unidad_label' => $displayLabel,
                 'cuota' => (float) $u['maintenance_fee'],
-                'vencimiento' => date('j M', strtotime($dueDateStr)),
+                'vencimiento' => date('j', strtotime($dueDateStr)) . ' ' . $meses_es[date('M', strtotime($dueDateStr))],
                 'estado' => $estado,
                 'saldo' => $saldo,
             ];
@@ -1850,7 +1851,7 @@ class FinanceController extends BaseController
         // Count approved vouchers in current month (ONLY AUTO-APPROVED)
         $startOfMonth = date('Y-m-01 00:00:00');
         $approvedVouchers = $db->table('payments')
-            ->select('unit_id, COUNT(*) as cnt')
+            ->select('unit_id, COUNT(*) as cnt, MAX(created_at) as latest_date')
             ->where('condominium_id', $demoCondo['id'])
             ->where('status', 'approved')
             ->where('created_at >=', $startOfMonth)
@@ -1859,15 +1860,17 @@ class FinanceController extends BaseController
             ->groupBy('unit_id')
             ->get()->getResultArray();
         $approvedByUnit = [];
+        $approvedDateByUnit = [];
         foreach ($approvedVouchers as $av) {
             $approvedByUnit[(int) $av['unit_id']] = (int) $av['cnt'];
+            $approvedDateByUnit[(int) $av['unit_id']] = $av['latest_date'];
         }
 
         // Count approved vouchers in LAST month (ONLY AUTO-APPROVED)
         $startOfLastMonth = date('Y-m-01 00:00:00', strtotime('first day of last month'));
         $endOfLastMonth = date('Y-m-t 23:59:59', strtotime('last day of last month'));
         $approvedVouchersLastMonth = $db->table('payments')
-            ->select('unit_id, COUNT(*) as cnt')
+            ->select('unit_id, COUNT(*) as cnt, MAX(created_at) as latest_date')
             ->where('condominium_id', $demoCondo['id'])
             ->where('status', 'approved')
             ->where('created_at >=', $startOfLastMonth)
@@ -1877,15 +1880,19 @@ class FinanceController extends BaseController
             ->groupBy('unit_id')
             ->get()->getResultArray();
         $approvedByUnitLastMonth = [];
+        $approvedDateByUnitLastMonth = [];
         foreach ($approvedVouchersLastMonth as $av) {
             $approvedByUnitLastMonth[(int) $av['unit_id']] = (int) $av['cnt'];
+            $approvedDateByUnitLastMonth[(int) $av['unit_id']] = $av['latest_date'];
         }
 
         // Merge counts into records
         foreach ($records as &$rec) {
             $rec['pending_vouchers'] = $pendingByUnit[$rec['id']] ?? 0;
             $rec['approved_vouchers'] = $approvedByUnit[$rec['id']] ?? 0;
+            $rec['approved_vouchers_date'] = $approvedDateByUnit[$rec['id']] ?? null;
             $rec['approved_vouchers_last_month'] = $approvedByUnitLastMonth[$rec['id']] ?? 0;
+            $rec['approved_vouchers_last_month_date'] = $approvedDateByUnitLastMonth[$rec['id']] ?? null;
         }
         unset($rec);
 
