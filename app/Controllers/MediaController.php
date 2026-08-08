@@ -98,7 +98,8 @@ class MediaController extends Controller
                 "webp" => "image/webp", 
                 "svg" => "image/svg+xml",
                 "heic" => "image/heic",
-                "heif" => "image/heif"
+                "heif" => "image/heif",
+                "pdf" => "application/pdf"
             ];
             if (array_key_exists($ext, $valid_exts)) {
                 $mime = $valid_exts[$ext];

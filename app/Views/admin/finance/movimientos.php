@@ -1857,7 +1857,7 @@
                                 </div>
                                 <span class="pd-filename">${filename}</span>
                             `;
-                            thumb.addEventListener('click', () => window.open(attUrl, '_blank'));
+                            thumb.addEventListener('click', () => openLightboxPdf(attUrl));
                         } else {
                             thumb.innerHTML = `<img src="${attUrl}" alt="Comprobante" /><span class="pd-filename">${filename}</span>`;
                             thumb.addEventListener('click', () => openLightboxImg(attUrl));
@@ -2189,6 +2189,22 @@
         document.getElementById('lightboxImg').src = '';
         document.getElementById('lightboxPdf').src = '';
     }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const lbOverlay = document.getElementById('lightboxOverlay');
+            if (lbOverlay && lbOverlay.style.display === 'flex') {
+                closeLightbox();
+                return;
+            }
+
+            const payOverlay = document.getElementById('paymentDetailOverlay');
+            if (payOverlay && payOverlay.style.display === 'flex') {
+                if (typeof closePaymentDetail === 'function') closePaymentDetail();
+                return;
+            }
+        }
+    });
 
     function descargarReporte() {
         let month = document.getElementById('monthPicker').value;

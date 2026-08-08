@@ -1296,12 +1296,12 @@
                     iconColor = 'text-info bg-info-subtle';
                 }
 
-                let wrapperStart = n.action_url ? `<a href="${n.action_url}" class="text-decoration-none notification-link" style="display: block; transition: background-color 0.2s;">` : `<div style="display: block;">`;
+                let wrapperStart = n.action_url ? `<a href="${n.action_url}" data-id="${n.id}" class="text-decoration-none notification-link" style="display: block; transition: background-color 0.2s;">` : `<div data-id="${n.id}" class="notification-link" style="display: block;">`;
                 let wrapperEnd = n.action_url ? `</a>` : `</div>`;
 
                 let itemClasses = "notification-item d-flex p-3 border-bottom";
-                if (!n.read_at) {
-                    itemClasses += " bg-light-blue";
+                if (!n.read) {
+                    itemClasses += " bg-primary bg-opacity-10";
                 }
 
                 return `
@@ -1352,10 +1352,24 @@
             loadGlobalNotifications();
             setInterval(loadGlobalNotifications, 30000);
 
-            // Cerrar modal si el link pertenece a la misma página
+            // Marcar notificación como leída y cerrar modal si es la misma página
             document.addEventListener('click', function (e) {
                 const link = e.target.closest('.notification-link');
                 if (link) {
+                    const id = link.getAttribute('data-id');
+                    if (id) {
+                        fetch('<?= base_url("admin/notifications/mark-read") ?>/' + id, {
+                            method: 'POST',
+                            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                        }).catch(err => console.error(err));
+                        
+                        // Actualizar estado localmente para la próxima vez que se abra
+                        const notif = globalNotifications.find(n => n.id == id);
+                        if (notif) {
+                            notif.read = true;
+                        }
+                    }
+
                     const url = link.getAttribute('href');
                     if (url) {
                         const currentUrlNoHash = window.location.href.split('#')[0];

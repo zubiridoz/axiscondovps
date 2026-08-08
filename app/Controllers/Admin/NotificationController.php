@@ -121,6 +121,11 @@ class NotificationController extends BaseController
                     $actionUrl = base_url('admin/amenidades/reservas');
                 } elseif ($n['type'] === 'ticket') {
                     $actionUrl = base_url('admin/tickets');
+                    if (isset($dataPayload['ticket_hash'])) {
+                        $actionUrl .= '/' . $dataPayload['ticket_hash'];
+                    } elseif (isset($dataPayload['ticket_id'])) {
+                        $actionUrl .= '/' . $dataPayload['ticket_id'];
+                    }
                 } elseif ($n['type'] === 'calendar_event_new' || $n['type'] === 'calendar_event') {
                     $actionUrl = base_url('admin/calendario');
                 } elseif ($n['type'] === 'announcement_comment' || $n['type'] === 'announcement' || $n['type'] === 'urgent') {
@@ -128,6 +133,8 @@ class NotificationController extends BaseController
                     if (isset($dataPayload['announcement_id'])) {
                         $actionUrl .= '?open=' . $dataPayload['announcement_id'];
                     }
+                } elseif ($n['type'] === 'resident_joined') {
+                    $actionUrl = base_url('admin/residentes');
                 }
             }
             if ($n['type'] === 'payment_status' && $actionUrl && strpos($actionUrl, 'pagos-por-unidad') !== false && strpos($actionUrl, '#') === false) {
@@ -162,6 +169,24 @@ class NotificationController extends BaseController
         if ($auth) {
             $db = \Config\Database::connect();
             $db->table('notifications')
+                ->where('condominium_id', $auth['condo_id'])
+                ->where('user_id', $auth['user_id'])
+                ->where('read_at IS NULL')
+                ->update(['read_at' => date('Y-m-d H:i:s')]);
+        }
+
+        return $this->response->setJSON(['status' => 'success']);
+    }
+
+    public function markRead($id)
+    {
+        if (!$this->request->isAJAX()) return $this->response->setStatusCode(400);
+
+        $auth = $this->getCommonData();
+        if ($auth) {
+            $db = \Config\Database::connect();
+            $db->table('notifications')
+                ->where('id', $id)
                 ->where('condominium_id', $auth['condo_id'])
                 ->where('user_id', $auth['user_id'])
                 ->where('read_at IS NULL')

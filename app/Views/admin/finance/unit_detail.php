@@ -2353,14 +2353,19 @@ $formatDateEs = function($dateStr) {
             const isPdf = (_proofPath || '').toLowerCase().endsWith('.pdf');
 
             if (isPdf) {
-                previewArea.innerHTML = `<div style="text-align:center; padding:2rem;">
-                    <div style="width:64px; height:64px; background:#fef2f2; border-radius:16px; display:flex; align-items:center; justify-content:center; margin:0 auto .75rem;">
-                        <i class="bi bi-file-earmark-pdf-fill" style="font-size:2rem; color:#ef4444;"></i>
+                previewArea.innerHTML = `<div style="text-align:center; padding:2rem; background:#f8fafc; border-radius:12px; border:1px dashed #cbd5e1; margin-bottom:1rem;">
+                    <div style="width:72px; height:72px; background:#fef2f2; border-radius:18px; display:flex; align-items:center; justify-content:center; margin:0 auto 1rem;">
+                        <i class="bi bi-file-earmark-pdf-fill" style="font-size:2.5rem; color:#ef4444;"></i>
                     </div>
-                    <p style="margin:0 0 .5rem; font-weight:600; color:#1e293b;">Documento PDF</p>
-                    <a href="${proofUrl}" target="_blank" style="color:#1D4C9D; font-size:.84rem; text-decoration:none; font-weight:500; display:inline-flex; align-items:center; gap:.3rem;">
-                        <i class="bi bi-box-arrow-up-right"></i> Abrir en nueva pestaña
-                    </a>
+                    <p style="margin:0 0 .75rem; font-weight:600; color:#1e293b; font-size:1.1rem;">Comprobante en formato PDF</p>
+                    <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+                        <button type="button" onclick="openLightboxPdf('${proofUrl}')" style="background:#1D4C9D; color:#fff; border:none; padding:8px 16px; border-radius:8px; font-weight:600; font-size:.9rem; display:inline-flex; align-items:center; gap:6px; cursor:pointer; transition:background .2s;" onmouseover="this.style.background='#153a7a'" onmouseout="this.style.background='#1D4C9D'">
+                            <i class="bi bi-arrows-fullscreen"></i> Ver documento completo
+                        </button>
+                        <a href="${proofUrl}" target="_blank" style="background:#e2e8f0; color:#334155; border:none; padding:8px 16px; border-radius:8px; font-weight:600; font-size:.9rem; text-decoration:none; display:inline-flex; align-items:center; gap:6px; transition:background .2s;" onmouseover="this.style.background='#cbd5e1'" onmouseout="this.style.background='#e2e8f0'">
+                            <i class="bi bi-box-arrow-up-right"></i> Abrir en otra pestaña
+                        </a>
+                    </div>
                 </div>`;
             } else if (d.proof) {
                 previewArea.innerHTML = `<img src="${proofUrl}" alt="Comprobante" style="max-width:100%; max-height:200px; border-radius:10px; cursor:pointer; object-fit:contain; display:block; margin:auto;" onclick="openLightbox('${proofUrl}')" title="Clic para ampliar">`;
@@ -2401,6 +2406,54 @@ $formatDateEs = function($dateStr) {
         const lb = document.getElementById('imgLightbox');
         if (lb) { lb.style.opacity = '0'; lb.querySelector('img').style.transform = 'scale(.95)'; setTimeout(() => { lb.style.display = 'none'; }, 250); }
     }
+
+    function openLightboxPdf(pdfUrl) {
+        event.stopPropagation();
+        let lb = document.getElementById('pdfLightbox');
+        if (!lb) {
+            lb = document.createElement('div');
+            lb.id = 'pdfLightbox';
+            lb.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(15, 23, 42, .9);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .25s;';
+            lb.innerHTML = '<iframe style="width:90vw;height:95vh;border-radius:12px;box-shadow:0 10px 50px rgba(0,0,0,.6);border:none;background:#f8fafc;transform:scale(.95);transition:transform .25s;"></iframe><button style="position:absolute;top:20px;right:24px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;width:44px;height:44px;border-radius:12px;font-size:1.4rem;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);transition:background .2s;"><i class="bi bi-x-lg"></i></button>';
+            lb.onclick = function (e) { if(e.target === lb || e.target.closest('button')) closeLightboxPdf(); };
+            document.body.appendChild(lb);
+        }
+        lb.querySelector('iframe').src = pdfUrl;
+        lb.style.display = 'flex';
+        requestAnimationFrame(() => { lb.style.opacity = '1'; lb.querySelector('iframe').style.transform = 'scale(1)'; });
+    }
+    
+    function closeLightboxPdf() {
+        const lb = document.getElementById('pdfLightbox');
+        if (lb) { lb.style.opacity = '0'; lb.querySelector('iframe').style.transform = 'scale(.95)'; setTimeout(() => { lb.style.display = 'none'; lb.querySelector('iframe').src = ''; }, 250); }
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const lbImg = document.getElementById('imgLightbox');
+            const lbPdf = document.getElementById('pdfLightbox');
+            if (lbImg && lbImg.style.display === 'flex') {
+                closeLightbox();
+                return;
+            }
+            if (lbPdf && lbPdf.style.display === 'flex') {
+                if (typeof closeLightboxPdf === 'function') closeLightboxPdf();
+                return;
+            }
+
+            const revModal = document.getElementById('reviewVoucherModal');
+            if (revModal && revModal.classList.contains('open')) {
+                if (typeof closeReviewModal === 'function') closeReviewModal();
+                return;
+            }
+
+            const payOverlay = document.getElementById('paymentDetailOverlay');
+            if (payOverlay && payOverlay.style.display === 'flex') {
+                if (typeof closePaymentDetail === 'function') closePaymentDetail();
+                return;
+            }
+        }
+    });
 
     document.getElementById('btnApproveVoucher').addEventListener('click', function () {
         submitVoucherReview('approve');

@@ -92,6 +92,7 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin', 'filter' => ['a
     // Notifications Endpoints
     $routes->get('notifications', 'NotificationController::getLatest');
     $routes->post('notifications/mark-all-read', 'NotificationController::markAllRead');
+    $routes->post('notifications/mark-read/(:num)', 'NotificationController::markRead/$1');
     
     // Módulo Residentes Invitaciones HTTP endpoints
     $routes->post('residentes/invite', 'ResidentInvitationsController::invite');
