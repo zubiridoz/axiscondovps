@@ -132,6 +132,8 @@ foreach ($allParcels as $parcel) {
         'picked_up_name' => trim((string) ($parcel['picked_up_name'] ?? '')),
         'delivered_at' => $deliveredRaw,
         'resident_names' => trim((string) ($parcel['resident_names'] ?? 'Sin asignar')),
+        'last_reminder_at' => $parcel['last_reminder_at'] ?? null,
+        'reminder_count' => (int) ($parcel['reminder_count'] ?? 0),
         'search' => strtolower(implode(' ', [
             $parcel['unit_number'] ?? '',
             $parcel['courier'] ?? '',
@@ -199,6 +201,42 @@ $pageRows = array_slice($activeRows, $offset, $perPage);
         border-color: rgba(255, 255, 255, 0.28);
         color: #fff;
     }
+
+    /* Bulk Action Bar */
+    .bulk-action-bar {
+        position: fixed;
+        bottom: -100px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 90%;
+        max-width: 600px;
+        background: #ffffff;
+        border: 1px solid rgba(0,0,0,0.08);
+        border-radius: 100px;
+        padding: 12px 24px;
+        z-index: 1050;
+        transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        opacity: 0;
+        visibility: hidden;
+    }
+    .bulk-action-bar.show {
+        bottom: 40px;
+        opacity: 1;
+        visibility: visible;
+    }
+    .bulk-count-badge {
+        background: #0f172a;
+        color: #fff;
+        font-weight: 700;
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+    }
+
 
     .parcel-history-back {
         width: 28px;
@@ -1289,7 +1327,7 @@ $pageRows = array_slice($activeRows, $offset, $perPage);
                     <table class="table parcel-table mb-0">
                         <thead>
                             <tr>
-                                <th><input type="checkbox" class="form-check-input" disabled></th>
+                                <th><input type="checkbox" class="form-check-input" id="bulk-select-all"></th>
                                 <th>Estado</th>
                                 <th>Unidad <i class="bi bi-arrow-down-up small"></i></th>
                                 <th>Transportista <i class="bi bi-arrow-down-up small"></i></th>
@@ -1303,7 +1341,7 @@ $pageRows = array_slice($activeRows, $offset, $perPage);
                                 <tr class="parcel-row" data-id="<?= $row['id'] ?>" data-search="<?= esc($row['search']) ?>"
                                     data-unit="<?= esc($row['unit_number']) ?>" data-courier="<?= esc($row['courier']) ?>"
                                     data-timeago="<?= esc($row['time_ago']) ?>">
-                                    <td><input type="checkbox" class="form-check-input"></td>
+                                    <td><input type="checkbox" class="form-check-input bulk-select-item" value="<?= $row['id'] ?>"></td>
                                     <td>
                                         <span class="badge border rounded-pill px-2 py-1 <?= esc($row['status']['class']) ?>">
                                             <i
@@ -1317,7 +1355,15 @@ $pageRows = array_slice($activeRows, $offset, $perPage);
                                             <?= esc($row['courier']) ?>
                                         </div>
                                     </td>
-                                    <td><?= esc($row['time_ago']) ?></td>
+                                    <td>
+                                        <?= esc($row['time_ago']) ?>
+                                        <?php if (!empty($row['last_reminder_at'])): ?>
+                                            <div style="font-size: 0.75rem; color: #d97706; margin-top: 4px; display: flex; align-items: center; gap: 4px;">
+                                                <i class="bi bi-bell-fill"></i> 
+                                                <span><?= $row['reminder_count'] > 1 ? $row['reminder_count'] . ' envíos' : 'Enviado' ?> (<?= $timeAgo($row['last_reminder_at']) ?>)</span>
+                                            </div>
+                                        <?php endif; ?>
+                                    </td>
                                     <td><span class="text-primary fw-semibold"><?= $row['quantity'] ?></span></td>
                                     <td>
                                         <div class="parcel-actions-dropdown dropdown">
@@ -1337,7 +1383,7 @@ $pageRows = array_slice($activeRows, $offset, $perPage);
                                                     <hr class="dropdown-divider">
                                                 </li>
                                                 <li><a class="dropdown-item" href="javascript:;"
-                                                        onclick="sendReminder(<?= $row['id'] ?>)"><i
+                                                        onclick="openReminderConfirm(<?= $row['id'] ?>, '<?= esc($row['unit_number']) ?>')"><i
                                                             class="bi bi-bell me-2 text-warning"></i>Enviar Recordatorio al
                                                         Residente</a></li>
                                             </ul>
@@ -1458,6 +1504,49 @@ $pageRows = array_slice($activeRows, $offset, $perPage);
                     <button type="button" class="btn-confirm" id="btnConfirmDeliver">Marcar como entregado</button>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Confirm Reminder -->
+<div class="modal fade confirm-deliver-modal" id="confirmReminderModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="confirm-deliver-title" style="color:#d97706;">
+                    <span class="warning-icon" style="background:#fef3c7; color:#d97706;"><i class="bi bi-bell-fill"></i></span>
+                    Enviar Recordatorio
+                </div>
+                <p class="confirm-deliver-desc">
+                    Se enviará una notificación push al celular de todos los residentes de la unidad para recordarles que recojan su paquete.
+                </p>
+                <div class="confirm-deliver-info">
+                    <div class="info-row"><i class="bi bi-geo-alt"></i> Unidad destinataria: <strong id="confirmReminderUnit">—</strong></div>
+                </div>
+                <div class="confirm-deliver-actions" style="margin-top: 1.5rem;">
+                    <button type="button" class="btn-cancel" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn-confirm" style="background:#d97706;" id="btnConfirmReminder">Sí, enviar recordatorio</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Container -->
+<div id="toastContainer" style="position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;"></div>
+
+<!-- Floating Bulk Action Bar -->
+<div id="bulkActionBar" class="bulk-action-bar shadow-lg">
+    <div class="d-flex align-items-center justify-content-between w-100">
+        <div class="d-flex align-items-center gap-3">
+            <span class="bulk-count-badge" id="bulkCountBadge">0</span>
+            <span class="bulk-action-text fw-semibold">Paquetes seleccionados</span>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3 fw-semibold" id="btnCancelBulk">Cancelar</button>
+            <button type="button" class="btn btn-warning btn-sm rounded-pill px-4 fw-bold shadow-sm d-flex align-items-center gap-2" id="btnSendBulkReminder" style="background:#d97706; color:white; border:none;">
+                <i class="bi bi-bell-fill"></i> Enviar Recordatorios
+            </button>
         </div>
     </div>
 </div>
@@ -1763,8 +1852,90 @@ $pageRows = array_slice($activeRows, $offset, $perPage);
             });
     });
 
-    function sendReminder(id) {
-        alert('Funcionalidad de notificación próximamente. Se enviará un recordatorio push al residente.');
+    let currentReminderId = null;
+
+    function openReminderConfirm(id, unitNumber) {
+        currentReminderId = id;
+        document.getElementById('confirmReminderUnit').textContent = unitNumber;
+        var myModal = new bootstrap.Modal(document.getElementById('confirmReminderModal'));
+        myModal.show();
+    }
+
+    if (document.getElementById('btnConfirmReminder')) {
+        document.getElementById('btnConfirmReminder').addEventListener('click', function() {
+            if (!currentReminderId) return;
+
+            var btn = this;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Enviando...';
+
+            fetch('<?= base_url('admin/paqueteria/enviar-recordatorio') ?>/' + currentReminderId, {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(res => res.json())
+            .then(res => {
+                btn.disabled = false;
+                btn.innerHTML = 'Sí, enviar recordatorio';
+                bootstrap.Modal.getInstance(document.getElementById('confirmReminderModal')).hide();
+                
+                if (res.status === 200) {
+                    showToast('Recordatorio enviado exitosamente al residente.', 'success');
+                } else {
+                    showToast(res.error || 'Error al enviar recordatorio', 'error');
+                }
+            })
+            .catch(err => {
+                btn.disabled = false;
+                btn.innerHTML = 'Sí, enviar recordatorio';
+                bootstrap.Modal.getInstance(document.getElementById('confirmReminderModal')).hide();
+                showToast('Error de conexión', 'error');
+                console.error(err);
+            });
+        });
+    }
+
+    function showToast(message, type = 'success') {
+        const container = document.getElementById('toastContainer');
+        if (!container) return;
+
+        const toast = document.createElement('div');
+        toast.style.background = type === 'success' ? '#10b981' : '#ef4444';
+        toast.style.color = '#fff';
+        toast.style.padding = '12px 20px';
+        toast.style.borderRadius = '8px';
+        toast.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)';
+        toast.style.fontSize = '14px';
+        toast.style.fontWeight = '500';
+        toast.style.display = 'flex';
+        toast.style.alignItems = 'center';
+        toast.style.gap = '10px';
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-20px)';
+        toast.style.transition = 'all 0.3s ease';
+
+        const icon = document.createElement('i');
+        icon.className = type === 'success' ? 'bi bi-check-circle-fill' : 'bi bi-exclamation-triangle-fill';
+        toast.appendChild(icon);
+
+        const text = document.createElement('span');
+        text.textContent = message;
+        toast.appendChild(text);
+
+        container.appendChild(toast);
+
+        // Animate in
+        requestAnimationFrame(() => {
+            toast.style.opacity = '1';
+            toast.style.transform = 'translateY(0)';
+        });
+
+        // Remove after 3 seconds
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(-20px)';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
     }
 
     function formatDateFull(dateStr) {
@@ -1799,5 +1970,111 @@ $pageRows = array_slice($activeRows, $offset, $perPage);
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && lbOverlay && lbOverlay.classList.contains('active')) closeLightbox();
     });
+    // Bulk Select Logic
+    const bulkSelectAll = document.getElementById('bulk-select-all');
+    const bulkItems = document.querySelectorAll('.bulk-select-item');
+    const bulkActionBar = document.getElementById('bulkActionBar');
+    const bulkCountBadge = document.getElementById('bulkCountBadge');
+    const btnCancelBulk = document.getElementById('btnCancelBulk');
+    const btnSendBulkReminder = document.getElementById('btnSendBulkReminder');
+
+    function updateBulkActionBar() {
+        const selected = document.querySelectorAll('.bulk-select-item:checked');
+        const count = selected.length;
+        if (count > 0) {
+            if(bulkCountBadge) bulkCountBadge.textContent = count;
+            if(bulkActionBar) bulkActionBar.classList.add('show');
+        } else {
+            if(bulkActionBar) bulkActionBar.classList.remove('show');
+        }
+        if (bulkSelectAll) {
+            bulkSelectAll.checked = count === bulkItems.length && bulkItems.length > 0;
+            bulkSelectAll.indeterminate = count > 0 && count < bulkItems.length;
+        }
+    }
+
+    if (bulkSelectAll) {
+        bulkSelectAll.addEventListener('change', (e) => {
+            bulkItems.forEach(item => {
+                const row = item.closest('tr');
+                if (row && row.style.display !== 'none') {
+                    item.checked = e.target.checked;
+                }
+            });
+            updateBulkActionBar();
+        });
+    }
+
+    bulkItems.forEach(item => {
+        item.addEventListener('change', updateBulkActionBar);
+    });
+
+    if (btnCancelBulk) {
+        btnCancelBulk.addEventListener('click', () => {
+            bulkItems.forEach(item => item.checked = false);
+            updateBulkActionBar();
+        });
+    }
+
+    if (btnSendBulkReminder) {
+        btnSendBulkReminder.addEventListener('click', () => {
+            const selected = document.querySelectorAll('.bulk-select-item:checked');
+            if (selected.length === 0) return;
+            
+            const ids = Array.from(selected).map(item => item.value);
+
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: '¿Enviar Recordatorios?',
+                    text: `Estás a punto de notificar a los residentes de ${ids.length} paquetes.`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d97706',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Sí, enviar a todos',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        processBulkReminders(ids);
+                    }
+                });
+            } else {
+                if(confirm(`Estás a punto de enviar recordatorios para ${ids.length} paquetes. ¿Continuar?`)) {
+                    processBulkReminders(ids);
+                }
+            }
+        });
+    }
+
+    function processBulkReminders(ids) {
+        const originalText = btnSendBulkReminder.innerHTML;
+        btnSendBulkReminder.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Enviando...';
+        btnSendBulkReminder.disabled = true;
+
+        fetch('<?= base_url('admin/paqueteria/enviar-recordatorio-masivo') ?>', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ ids: ids })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 200) {
+                showToast(data.message || `Se enviaron ${data.sent} recordatorios con éxito.`, 'success');
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                showToast(data.error || 'Error al enviar recordatorios masivos', 'error');
+            }
+        })
+        .catch(err => {
+            showToast('Error de conexión', 'error');
+        })
+        .finally(() => {
+            btnSendBulkReminder.innerHTML = originalText;
+            btnSendBulkReminder.disabled = false;
+        });
+    }
 </script>
 <?= $this->endSection() ?>

@@ -26,7 +26,9 @@ class ParcelModel extends BaseTenantModel
         'picked_up_by',
         'picked_up_name',
         'signature_url',
-        'delivery_pin'
+        'delivery_pin',
+        'last_reminder_at',
+        'reminder_count'
     ];
 
     // Dates

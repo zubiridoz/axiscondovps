@@ -50,10 +50,8 @@ class ParcelNotificationService
         $title = 'Tu paquete ha llegado';
         $body = "Paquete recibido en {$deviceName} vía {$courier} - Tienes {$quantity} {$parcelType} recibido(s)";
 
-        // 🔐 Incluir PIN de entrega en el body de la notificación
-        if (!empty($deliveryPin)) {
-            $body .= "\n🔐 PIN de entrega: {$deliveryPin}";
-        }
+        // 🔐 Se removió el PIN del $body general para no enviarlo en Push, 
+        // ahora se inserta dinámicamente solo para In-App en sendToUnitResidents.
 
         $data = [
             'tipo' => 'paquete_entrada',
@@ -111,6 +109,42 @@ class ParcelNotificationService
     }
 
     /**
+     * Notifica a los residentes como recordatorio de un paquete pendiente.
+     */
+    public static function notifyReminder(
+        int $unitId,
+        int $condominiumId,
+        string $parcelType,
+        string $courier,
+        ?int $parcelId = null,
+        ?string $deliveryPin = null
+    ): void {
+        if (empty($unitId) || empty($condominiumId)) {
+            log_message('warning', '[PARCEL_NOTIFY] Datos insuficientes para recordatorio');
+            return;
+        }
+
+        $title = 'Recordatorio: Tienes un paquete esperando';
+        $body = "No olvides recoger tu {$parcelType} (de {$courier}) que está esperando en recepción.";
+
+        $data = [
+            'tipo' => 'paquete_entrada', // Workaround: Usamos paquete_entrada para que Flutter muestre la caja del PIN
+            'condominio_id' => $condominiumId,
+            'parcel_id' => $parcelId ?? 0,
+            'unit_id' => $unitId,
+        ];
+
+        if (!empty($deliveryPin)) {
+            $data['delivery_pin'] = $deliveryPin;
+        }
+
+        log_message('info', "[PARCEL_NOTIFY] Sending REMINDER notification — unit_id={$unitId}, condominium_id={$condominiumId}, type={$parcelType}");
+
+        // Enviamos 'parcel_arrival' para que la app móvil pinte el UI del recuadro amarillo
+        self::sendToUnitResidents($unitId, $condominiumId, $title, $body, $data, 'parcel_arrival');
+    }
+
+    /**
      * Envía push + notificación in-app a TODOS los residentes activos de la unidad.
      */
     private static function sendToUnitResidents(int $unitId, int $condominiumId, string $title, string $body, array $data, string $notificationType): void
@@ -136,10 +170,19 @@ class ParcelNotificationService
 
             foreach ($residents as $resident) {
                 $userId = (int) $resident['user_id'];
+                
+                // 🔐 El texto push viaja limpio por privacidad.
+                $pushBody = $body;
+                
+                // 🔐 El texto in-app (BD) incluye el PIN si existe, para mostrarse en el módulo Avisos.
+                $inAppBody = $body;
+                if (!empty($data['delivery_pin'])) {
+                    $inAppBody .= "\n\n🔐 PIN de entrega: " . $data['delivery_pin'];
+                }
 
                 // Push FCM — fail-safe
                 try {
-                    $pushService->sendToUser($userId, $title, $body, $data);
+                    $pushService->sendToUser($userId, $title, $pushBody, $data);
                     log_message('info', "[PARCEL_NOTIFY][PUSH_OK] user_id={$userId}");
                 } catch (\Throwable $e) {
                     log_message('error', "[PARCEL_NOTIFY][PUSH_FAIL] user_id={$userId} — " . $e->getMessage());
@@ -152,7 +195,7 @@ class ParcelNotificationService
                         $userId,
                         $notificationType,
                         $title,
-                        $body,
+                        $inAppBody,
                         $data,
                         false // Evita doble notificación push (ya se envió arriba)
                     );

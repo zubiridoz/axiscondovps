@@ -142,6 +142,97 @@ class ParcelController extends BaseController
     }
 
     /**
+     * POST /admin/paqueteria/enviar-recordatorio/:id
+     * Envía un recordatorio push al residente
+     */
+    public function sendReminder($id = null)
+    {
+        if (!$id) return $this->response->setJSON(['status' => 400, 'error' => 'ID no proporcionado']);
+
+        $this->ensureTenant();
+        $parcelModel = new ParcelModel();
+        $parcel = $parcelModel->find($id);
+
+        if (!$parcel) {
+            return $this->response->setJSON(['status' => 404, 'error' => 'Paquete no encontrado']);
+        }
+
+        if (in_array($parcel['status'], ['delivered', 'delivered_to_resident'])) {
+            return $this->response->setJSON(['status' => 400, 'error' => 'El paquete ya fue entregado']);
+        }
+
+        $tenantId = \App\Services\TenantService::getInstance()->getTenantId();
+        
+        \App\Services\ParcelNotificationService::notifyReminder(
+            $parcel['unit_id'],
+            $tenantId,
+            $parcel['parcel_type'] ?? 'Paquete',
+            $parcel['courier'] ?? 'Mensajería',
+            $parcel['id'],
+            $parcel['delivery_pin'] ?? null
+        );
+
+        // Actualizar en base de datos
+        $parcelModel->update($id, [
+            'last_reminder_at' => date('Y-m-d H:i:s'),
+            'reminder_count' => (int)($parcel['reminder_count'] ?? 0) + 1
+        ]);
+
+        return $this->response->setJSON(['status' => 200, 'message' => 'Recordatorio enviado con éxito']);
+    }
+
+    /**
+     * POST /admin/paqueteria/enviar-recordatorio-masivo
+     * Envía recordatorios push a múltiples paquetes a la vez
+     */
+    public function sendBulkReminders()
+    {
+        $this->ensureTenant();
+        $tenantId = \App\Services\TenantService::getInstance()->getTenantId();
+        
+        $json = $this->request->getJSON(true);
+        $ids = $json['ids'] ?? [];
+
+        if (empty($ids) || !is_array($ids)) {
+            return $this->response->setJSON(['status' => 400, 'error' => 'No se proporcionaron IDs válidos']);
+        }
+
+        $parcelModel = new ParcelModel();
+        $sentCount = 0;
+
+        foreach ($ids as $id) {
+            $parcel = $parcelModel->where('id', $id)
+                                  ->where('condominium_id', $tenantId)
+                                  ->first();
+            
+            if (!$parcel) continue;
+            if (in_array($parcel['status'], ['delivered', 'delivered_to_resident'])) continue;
+
+            \App\Services\ParcelNotificationService::notifyReminder(
+                $parcel['unit_id'],
+                $tenantId,
+                $parcel['parcel_type'] ?? 'Paquete',
+                $parcel['courier'] ?? 'Mensajería',
+                $parcel['id'],
+                $parcel['delivery_pin'] ?? null
+            );
+
+            $parcelModel->update($id, [
+                'last_reminder_at' => date('Y-m-d H:i:s'),
+                'reminder_count' => (int)($parcel['reminder_count'] ?? 0) + 1
+            ]);
+            
+            $sentCount++;
+        }
+
+        return $this->response->setJSON([
+            'status' => 200, 
+            'sent' => $sentCount,
+            'message' => "Se enviaron {$sentCount} recordatorios masivos."
+        ]);
+    }
+
+    /**
      * POST /admin/paqueteria/marcar-entregado/:id
      * Marca un paquete como entregado desde el admin panel
      */

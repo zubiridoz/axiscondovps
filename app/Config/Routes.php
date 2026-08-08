@@ -237,6 +237,8 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin', 'filter' => ['a
     $routes->get('paqueteria', 'ParcelController::indexView');
     $routes->get('paqueteria/detalle/(:num)', 'ParcelController::detail/$1');
     $routes->post('paqueteria/marcar-entregado/(:num)', 'ParcelController::markAsDelivered/$1');
+    $routes->post('paqueteria/enviar-recordatorio/(:num)', 'ParcelController::sendReminder/$1');
+    $routes->post('paqueteria/enviar-recordatorio-masivo', 'ParcelController::sendBulkReminders');
     $routes->get('paqueteria/comprobante/(:num)', 'ParcelController::downloadReceipt/$1');
     $routes->get('seguridad', 'AccessLogController::indexView');
     $routes->post('seguridad/generar-qr', 'AccessLogController::storeQr');
