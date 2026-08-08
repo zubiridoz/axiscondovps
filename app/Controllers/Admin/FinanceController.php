@@ -1947,7 +1947,7 @@ class FinanceController extends BaseController
             ->where('ft.condominium_id', $demoCondo['id'])
             ->where('ft.status !=', 'cancelled')
             ->where('ft.deleted_at IS NULL')
-            ->orderBy('ft.due_date', 'ASC')
+            ->orderBy('COALESCE(ft.issue_date, ft.created_at)', 'ASC', false)
             ->orderBy('ft.created_at', 'ASC')
             ->get()->getResultArray();
 
@@ -2493,7 +2493,7 @@ class FinanceController extends BaseController
             ->where('ft.condominium_id', $demoCondo['id'])
             ->where('ft.status !=', 'cancelled')
             ->where('ft.deleted_at IS NULL')
-            ->orderBy('ft.due_date', 'ASC')
+            ->orderBy('COALESCE(ft.issue_date, ft.created_at)', 'ASC', false)
             ->orderBy('ft.created_at', 'ASC')
             ->get()->getResultArray();
 
@@ -3499,7 +3499,7 @@ class FinanceController extends BaseController
             ->where('ft.condominium_id', $demoCondo['id'])
             ->where('ft.status !=', 'cancelled')
             ->where('ft.deleted_at IS NULL')
-            ->orderBy('ft.due_date', 'ASC')
+            ->orderBy('COALESCE(ft.issue_date, ft.created_at)', 'ASC', false)
             ->orderBy('ft.created_at', 'ASC')
             ->get()->getResultArray();
 
@@ -3677,7 +3677,7 @@ class FinanceController extends BaseController
 
         $pdf->SetFont('helvetica', '', 9);
         $pdf->SetTextColor(100, 116, 139);
-        $pdf->Cell(55, 6, 'Cuota HOA', 0, 0, 'L');
+        $pdf->Cell(55, 6, 'Cuota Mantenimiento', 0, 0, 'L');
         $pdf->SetTextColor(15, 23, 42);
         $pdf->SetFont('helvetica', 'B', 9);
         $pdf->Cell(120.6, 6, 'MX$' . number_format($unit['maintenance_fee'], 2), 0, 1, 'L');
