@@ -586,15 +586,16 @@
         border: none;
         border-radius: 12px;
         padding: 12px 16px;
-        background: linear-gradient(135deg, #1f2937, #111827);
+        background: #1D4C9D;
         color: #ffffff;
         font-size: 0.92rem;
         font-weight: 600;
         letter-spacing: 0.01em;
+        transition: background 0.2s ease;
     }
 
     .access-primary-btn:hover {
-        background: linear-gradient(135deg, #111827, #0f172a);
+        background: #153975;
     }
 
     @media (max-width: 991.98px) {
@@ -1599,7 +1600,7 @@
                                     <th class="border-0 py-3">Estado <i class="bi bi-arrow-up-down ms-1"
                                             style="font-size:0.7rem;"></i></th>
                                     <th class="border-0 py-3">Vehículo</th>
-                                    <th class="border-0 py-3">Placa</th>
+                                    <th class="border-0 py-3">Registro</th>
                                     <th class="border-0 py-3 rounded-end">Unidad <i class="bi bi-arrow-up-down ms-1"
                                             style="font-size:0.7rem;"></i></th>
                                 </tr>
@@ -1675,8 +1676,16 @@
                                                 <?php endif; ?>
                                             </div>
                                         </td>
-                                        <td class="text-secondary">
-                                            <?= !empty($al['plate_number']) ? esc($al['plate_number']) : '-' ?>
+                                        <td>
+                                            <?php if (!empty($al['qr_code_id'])): ?>
+                                                <div class="d-flex align-items-center gap-1 text-primary fw-medium" style="font-size: 0.8rem;">
+                                                    <i class="bi bi-qr-code-scan"></i> Invitación QR
+                                                </div>
+                                            <?php else: ?>
+                                                <div class="d-flex align-items-center gap-1 text-secondary" style="font-size: 0.8rem;">
+                                                    <i class="bi bi-keyboard"></i> Manual
+                                                </div>
+                                            <?php endif; ?>
                                         </td>
                                         <td>
                                             <span class="fw-bold text-dark"><?= esc($al['unit_number'] ?? 'N/A') ?></span>

@@ -33,18 +33,18 @@ class SecurityController extends ResourceController
         $token = $json ? $json->token : $this->request->getPost('token');
 
         if (empty($token)) {
-            return $this->respondError('Scan vacío. Faltan datos.');
+            return $this->respondError('LECTURA FALLIDA: El código QR está dañado o es ilegible.');
         }
 
         $qrModel = new QrCodeModel();
         $qr = $qrModel->where('token', $token)->first();
 
         if (!$qr) {
-            return $this->respondError('QR INHÁBIL: No pertenece a este condominio o es inventado', 404);
+            return $this->respondError('QR INVÁLIDO: El código no pertenece a este condominio o no está registrado en el sistema.', 404);
         }
 
         if ($qr['status'] === 'revoked') {
-             return $this->respondError('QR DENEGADO: Este código fue revocado permanentemente.', 403);
+             return $this->respondError('ACCESO DENEGADO: Este pase ha sido cancelado por el residente.', 403);
         }
 
         if ($qr['status'] === 'used') {
@@ -80,7 +80,7 @@ class SecurityController extends ResourceController
             }
             if ($todayStr > $entryDateStr) {
                 $isExpired = true;
-                $expiredMsg = 'QR EXPIRADO: La fecha de acceso de este pase ya pasó.';
+                $expiredMsg = 'QR EXPIRADO: El periodo de validez de este pase ha vencido.';
             }
         } else {
             // "QR temporal" o "Pase de Fiesta"
@@ -90,7 +90,7 @@ class SecurityController extends ResourceController
             }
             if ($now > $validUntil) {
                 $isExpired = true;
-                $expiredMsg = 'QR EXPIRADO: El periodo de acceso de este pase ha finalizado.';
+                $expiredMsg = 'QR EXPIRADO: El periodo de validez de este pase ha vencido.';
             }
         }
 
