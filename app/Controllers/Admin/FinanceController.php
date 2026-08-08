@@ -3450,7 +3450,7 @@ class FinanceController extends BaseController
 
         // ── OUTPUT ──
         $fileName = 'Recibo de Pago - ' . $unit['unit_number'] . ' - ' . $receiptNum . '.pdf';
-        $pdf->Output($fileName, 'D');
+        $pdf->Output($fileName, 'I');
         exit;
     }
 
@@ -3877,7 +3877,12 @@ class FinanceController extends BaseController
             $pdf->Cell($colW[0], 7, '  ' . $dateStr, 0, 0, 'C', $isZebra);
             $pdf->Cell($colW[1], 7, '  ' . $dueDateStr, 0, 0, 'C', $isZebra);
 
-            $desc = mb_strtoupper(mb_substr($row['description'] ?? ($row['category_name'] ?? '—'), 0, 60));
+            $descText = $row['description'] ?? ($row['category_name'] ?? '—');
+            if ($row['type'] === 'credit' || $row['type'] === 'payment') {
+                $receiptNum = strtoupper(substr(md5($row['id'] . $row['created_at']), 0, 8));
+                $descText .= " (#REC-{$receiptNum})";
+            }
+            $desc = mb_strtoupper(mb_substr($descText, 0, 80));
             $pdf->SetFont('helvetica', '', 6);
             $pdf->Cell($colW[2], 7, '  ' . $desc, 0, 0, 'L', $isZebra, '', 1);
             $pdf->SetFont('helvetica', 'B', 7);
@@ -4071,15 +4076,7 @@ class FinanceController extends BaseController
         if (ob_get_length())
             ob_end_clean();
 
-        header('Content-Description: File Transfer');
-        header('Content-Type: application/pdf');
-        header('Content-Disposition: attachment; filename="' . $fileName . '"');
-        header('Content-Transfer-Encoding: binary');
-        header('Expires: 0');
-        header('Cache-Control: must-revalidate');
-        header('Pragma: public');
-
-        $pdf->Output($fileName, 'D');
+        $pdf->Output($fileName, 'I');
         exit;
     }
 
