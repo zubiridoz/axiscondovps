@@ -1081,7 +1081,7 @@
 
 
 <!-- Modal: Detalles de Pago -->
-<div id="paymentDetailOverlay"
+<div id="paymentDetailOverlay" onclick="if(event.target === this) closePaymentDetail()"
     style="display:none; position:fixed; inset:0; z-index:9998; background:rgba(0,0,0,.45); justify-content:center; align-items:center;">
     <div
         style="background:#fff; border-radius:12px; width:560px; max-width:95vw; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,.2); padding:1.75rem;">
