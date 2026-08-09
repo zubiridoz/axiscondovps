@@ -1062,7 +1062,7 @@ $formatDateEs = function($dateStr) {
                             <?php foreach ($paymentHistory as $ph): ?>
                                 <tr>
                                     <td style="color: var(--ud-info);"><?= $formatDateEs(!empty($ph['issue_date']) ? $ph['issue_date'] : $ph['created_at']) ?></td>
-                                    <td style="font-family: 'SF Mono', ui-monospace, monospace; font-size: 0.85rem; font-weight: 600; color: #64748B;">#REC-<?= strtoupper(substr(md5($ph['id'] . ($ph['issue_date'] ?? $ph['created_at'])), 0, 8)) ?></td>
+                                    <td style="font-family: 'SF Mono', ui-monospace, monospace; font-size: 0.85rem; font-weight: 600; color: #64748B;">#REC-<?= strtoupper(substr(md5($ph['id'] . $ph['created_at']), 0, 8)) ?></td>
                                     <td><strong><?= strtoupper(esc($ph['description'])) ?></strong></td>
                                     <td>MX$<?= number_format((float) $ph['amount'], 2) ?></td>
                                     <td><span class="badge-paid"><i class="bi bi-check-circle-fill"></i> Completado</span></td>

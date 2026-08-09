@@ -3842,7 +3842,18 @@ class FinanceController extends BaseController
         }
 
         foreach ($statementRows as $idx => $row) {
-            if ($pdf->GetY() > 230) {
+            $descText = $row['description'] ?? ($row['category_name'] ?? '—');
+            if ($row['type'] === 'credit' || $row['type'] === 'payment') {
+                $receiptNum = strtoupper(substr(md5($row['id'] . $row['created_at']), 0, 8));
+                $descText .= " (#REC-{$receiptNum})";
+            }
+            $desc = mb_strtoupper($descText);
+
+            $pdf->SetFont('helvetica', '', 6);
+            $numLines = $pdf->getNumLines('  ' . $desc, $colW[2]);
+            $rowHeight = max(7, $numLines * 3.5);
+
+            if ($pdf->GetY() + $rowHeight > 240) {
                 $pdf->AddPage();
                 $pdf->SetFillColor(29, 76, 157);
                 $pdf->SetTextColor(255, 255, 255);
@@ -3874,38 +3885,34 @@ class FinanceController extends BaseController
                 $pdf->SetFillColor(248, 250, 252);
             }
 
-            $pdf->Cell($colW[0], 7, '  ' . $dateStr, 0, 0, 'C', $isZebra);
-            $pdf->Cell($colW[1], 7, '  ' . $dueDateStr, 0, 0, 'C', $isZebra);
-
-            $descText = $row['description'] ?? ($row['category_name'] ?? '—');
-            if ($row['type'] === 'credit' || $row['type'] === 'payment') {
-                $receiptNum = strtoupper(substr(md5($row['id'] . $row['created_at']), 0, 8));
-                $descText .= " (#REC-{$receiptNum})";
-            }
-            $desc = mb_strtoupper(mb_substr($descText, 0, 80));
-            $pdf->SetFont('helvetica', '', 6);
-            $pdf->Cell($colW[2], 7, '  ' . $desc, 0, 0, 'L', $isZebra, '', 1);
             $pdf->SetFont('helvetica', 'B', 7);
+            $pdf->MultiCell($colW[0], $rowHeight, '  ' . $dateStr, 0, 'C', $isZebra, 0, '', '', true, 0, false, true, $rowHeight, 'M');
+            $pdf->MultiCell($colW[1], $rowHeight, '  ' . $dueDateStr, 0, 'C', $isZebra, 0, '', '', true, 0, false, true, $rowHeight, 'M');
 
+            $pdf->SetFont('helvetica', '', 6);
+            $pdf->MultiCell($colW[2], $rowHeight, '  ' . $desc, 0, 'L', $isZebra, 0, '', '', true, 0, false, true, $rowHeight, 'M');
+
+            $pdf->SetFont('helvetica', 'B', 7);
             $pdf->SetTextColor(50, 50, 50);
             $strCharge = ($row['type'] === 'charge') ? 'MX$' . number_format((float) $row['amount'], 2) : '';
-            $pdf->Cell($colW[3], 7, $strCharge . '  ', 0, 0, 'R', $isZebra);
+            $pdf->MultiCell($colW[3], $rowHeight, $strCharge . '  ', 0, 'R', $isZebra, 0, '', '', true, 0, false, true, $rowHeight, 'M');
 
             $strPay = ($row['type'] !== 'charge') ? 'MX$' . number_format((float) $row['amount'], 2) : '';
-            $pdf->Cell($colW[4], 7, $strPay . '  ', 0, 0, 'R', $isZebra);
+            $pdf->MultiCell($colW[4], $rowHeight, $strPay . '  ', 0, 'R', $isZebra, 0, '', '', true, 0, false, true, $rowHeight, 'M');
 
             // Saldo formatting (negative red if owed)
             $rb = (float) $row['running_balance'];
             if ($rb > 0.01) {
                 $pdf->SetTextColor(220, 38, 38);
-                $pdf->Cell($colW[5], 7, '-MX$' . number_format($rb, 2) . '  ', 0, 1, 'R', $isZebra);
+                $strRb = '-MX$' . number_format($rb, 2);
             } else if ($rb < -0.01) {
                 $pdf->SetTextColor(5, 150, 105);
-                $pdf->Cell($colW[5], 7, 'MX$' . number_format(abs($rb), 2) . '  ', 0, 1, 'R', $isZebra);
+                $strRb = 'MX$' . number_format(abs($rb), 2);
             } else {
                 $pdf->SetTextColor(50, 50, 50);
-                $pdf->Cell($colW[5], 7, 'MX$0.00  ', 0, 1, 'R', $isZebra);
+                $strRb = 'MX$0.00';
             }
+            $pdf->MultiCell($colW[5], $rowHeight, $strRb . '  ', 0, 'R', $isZebra, 1, '', '', true, 0, false, true, $rowHeight, 'M');
         }
 
         if (empty($statementRows)) {
@@ -3948,16 +3955,20 @@ class FinanceController extends BaseController
                 $acumulado = 0;
                 $pIdx = 0;
                 foreach ($pendingCharges as $pc) {
-                    if ($pdf->GetY() > 230) {
-                        $pdf->AddPage();
-                    }
-
                     $montoPend = (float) $pc['amount'] - (float) ($pc['amount_paid'] ?? 0);
                     $acumulado += $montoPend;
 
                     $dateRaw = $pc['due_date'] ?? (!empty($pc['issue_date']) ? $pc['issue_date'] : $pc['created_at']);
                     $dateStr = date('d', strtotime($dateRaw)) . ' de ' . strtolower($mesesES[date('F', strtotime($dateRaw))] ?? date('M', strtotime($dateRaw))) . ' de ' . date('Y', strtotime($dateRaw));
-                    $desc = mb_strtoupper(mb_substr($pc['description'] ?? ($pc['category_name'] ?? '—'), 0, 60));
+                    $desc = mb_strtoupper($pc['description'] ?? ($pc['category_name'] ?? '—'));
+
+                    $pdf->SetFont('helvetica', '', 6);
+                    $numLines = $pdf->getNumLines('  ' . $desc, $colP[1]);
+                    $rowHeight = max(7, $numLines * 3.5);
+
+                    if ($pdf->GetY() + $rowHeight > 240) {
+                        $pdf->AddPage();
+                    }
 
                     $isZebraP = ($pIdx % 2 === 1);
                     if ($isZebraP) {
@@ -3965,13 +3976,13 @@ class FinanceController extends BaseController
                     }
 
                     $pdf->SetFont('helvetica', '', 7);
-                    $pdf->Cell($colP[0], 7, '  ' . $dateStr, 0, 0, 'L', $isZebraP);
+                    $pdf->MultiCell($colP[0], $rowHeight, '  ' . $dateStr, 0, 'L', $isZebraP, 0, '', '', true, 0, false, true, $rowHeight, 'M');
                     $pdf->SetFont('helvetica', '', 6);
-                    $pdf->Cell($colP[1], 7, '  ' . $desc, 0, 0, 'L', $isZebraP, '', 1);
+                    $pdf->MultiCell($colP[1], $rowHeight, '  ' . $desc, 0, 'L', $isZebraP, 0, '', '', true, 0, false, true, $rowHeight, 'M');
                     $pdf->SetFont('helvetica', 'B', 7);
                     $pdf->SetTextColor(220, 38, 38);
-                    $pdf->Cell($colP[2], 7, 'MX$' . number_format($montoPend, 2) . '  ', 0, 0, 'R', $isZebraP);
-                    $pdf->Cell($colP[3], 7, 'MX$' . number_format($acumulado, 2) . '  ', 0, 1, 'R', $isZebraP);
+                    $pdf->MultiCell($colP[2], $rowHeight, 'MX$' . number_format($montoPend, 2) . '  ', 0, 'R', $isZebraP, 0, '', '', true, 0, false, true, $rowHeight, 'M');
+                    $pdf->MultiCell($colP[3], $rowHeight, 'MX$' . number_format($acumulado, 2) . '  ', 0, 'R', $isZebraP, 1, '', '', true, 0, false, true, $rowHeight, 'M');
                     $pdf->SetTextColor(50, 50, 50);
                     $pIdx++;
                 }
