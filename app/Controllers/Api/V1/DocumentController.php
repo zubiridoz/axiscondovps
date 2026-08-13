@@ -37,6 +37,7 @@ class DocumentController extends ResourceController
         
         $folderId = $this->request->getGet('folder_id'); // nullable
         $search = $this->request->getGet('search');
+        $categoryFilter = $this->request->getGet('category');
         
         $ctx = \App\Services\ResidentContextService::getInstance();
         $resident = $ctx->getResidentRecord();
@@ -86,10 +87,18 @@ class DocumentController extends ResourceController
         if (!empty($search)) {
             $query->like('name', $search);
         } else {
+            if (!empty($categoryFilter)) {
+                $query->where('category', $categoryFilter);
+            }
             if ($folderId) {
                 $query->where('parent_id', $folderId);
             } else {
-                $query->where('parent_id IS NULL');
+                // Si estamos filtrando por categoría, quizás no queramos limitarnos al root folder
+                // Pero mantendremos el comportamiento de que si no hay folderId y no hay filtro de categoría, 
+                // muestre la raíz.
+                if (empty($categoryFilter)) {
+                    $query->where('parent_id IS NULL');
+                }
             }
         }
         
@@ -105,9 +114,20 @@ class DocumentController extends ResourceController
             }
         }
 
+        $categories = [
+            'Financiero',
+            'Legal y Contratos',
+            'Reglas y Regulaciones',
+            'Recibos',
+            'Mantenimiento',
+            'Actas de Reuniones',
+            'General'
+        ];
+
         return $this->respondSuccess([
             'is_admin' => $isAdmin,
             'documents' => $documents,
+            'categories' => $categories,
             'current_folder_id' => $folderId,
             'debug' => [
                 'tenant_id' => $tenantId,
@@ -230,6 +250,7 @@ class DocumentController extends ResourceController
             'parent_id' => $this->request->getPost('parent_id') ?: null,
             'type' => 'folder',
             'name' => trim((string)$name),
+            'category' => $this->request->getPost('category') ?: 'General',
             'access_level' => 'Todos',
             'uploaded_by' => $userId
         ];

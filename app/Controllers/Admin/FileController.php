@@ -17,6 +17,7 @@ class FileController extends BaseController
         $folderHash = $this->request->getVar('folder');
         $filter = $this->request->getVar('filter');
         $accessFilter = $this->request->getVar('access');
+        $categoryFilter = $this->request->getVar('category');
         $view = $this->request->getVar('view'); // 'analytics'
         
         $folderId = null;
@@ -54,6 +55,8 @@ class FileController extends BaseController
             if (isset($accessMap[$accessFilter])) {
                 $query->where('access_level', $accessMap[$accessFilter]);
             }
+        } elseif ($categoryFilter) {
+            $query->where('category', $categoryFilter);
         } else {
             if ($folderId) {
                 $query->where('parent_id', $folderId);
@@ -71,15 +74,27 @@ class FileController extends BaseController
         }
         
         // Si hay filtros globales, anulamos currentFolder para no mostrar breadcrumbs de una carpeta específica
-        if ($filter || $accessFilter) {
+        if ($filter || $accessFilter || $categoryFilter) {
             $currentFolder = null;
         }
+
+        $allCategories = [
+            'Financiero',
+            'Legal y Contratos',
+            'Reglas y Regulaciones',
+            'Recibos',
+            'Mantenimiento',
+            'Actas de Reuniones',
+            'General'
+        ];
 
         return view('admin/documents', [
             'documents' => $documents,
             'currentFolder' => $currentFolder,
             'filter' => $filter,
             'accessFilter' => $accessFilter,
+            'categoryFilter' => $categoryFilter,
+            'allCategories' => $allCategories,
             'totalStorageBytes' => $totalStorageBytes
         ]);
     }
@@ -101,6 +116,7 @@ class FileController extends BaseController
             'parent_id' => $this->request->getPost('parent_id') ?: null,
             'type' => 'folder',
             'name' => trim((string)$name),
+            'category' => $this->request->getPost('category') ?: 'General',
             'access_level' => 'Solo Admins',
             'uploaded_by' => session()->get('user_id') ?? null
         ];
@@ -295,7 +311,8 @@ class FileController extends BaseController
         $this->bootstrapTenant();
         $tenantId = \App\Services\TenantService::getInstance()->getTenantId();
         
-        $newName = $this->request->getPost('name');
+        $newName = trim((string)$this->request->getPost('name'));
+        $newCategory = $this->request->getPost('category');
         if (empty($newName)) {
             return $this->response->setJSON(['status' => 400, 'error' => 'Nombre requerido']);
         }
@@ -306,9 +323,14 @@ class FileController extends BaseController
             return $this->response->setJSON(['status' => 404, 'error' => 'No encontrado']);
         }
 
-        $documentModel->update($id, ['name' => trim((string)$newName)]);
+        $updateData = ['name' => $newName];
+        if ($newCategory !== null) {
+            $updateData['category'] = $newCategory;
+        }
+
+        $documentModel->update($id, $updateData);
         
-        return $this->response->setJSON(['status' => 200, 'message' => 'Renombrado con exito']);
+        return $this->response->setJSON(['status' => 200, 'message' => 'Actualizado con éxito']);
     }
 
     public function deleteDocument($id)
@@ -460,11 +482,22 @@ class FileController extends BaseController
             ->limit(10)
             ->get()->getResultArray();
         
+        $allCategories = [
+            'Financiero',
+            'Legal y Contratos',
+            'Reglas y Regulaciones',
+            'Recibos',
+            'Mantenimiento',
+            'Actas de Reuniones',
+            'General'
+        ];
+        
         return view('admin/documents', [
             'documents' => [],
             'currentFolder' => null,
             'filter' => null,
             'accessFilter' => null,
+            'allCategories' => $allCategories,
             'totalStorageBytes' => $totalStorageBytes,
             'analyticsView' => true,
             'analytics' => [

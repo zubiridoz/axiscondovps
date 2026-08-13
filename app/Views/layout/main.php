@@ -430,6 +430,58 @@
         .sidebar-toggle:hover {
             background: #f1f5f9;
         }
+
+        /* Dropdown UI Improvements (Professional Look) */
+        .dropdown-menu {
+            border-radius: 0.6rem !important;
+            padding: 0.5rem !important;
+            box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.1) !important;
+            border: 1px solid #e2e8f0 !important;
+        }
+        
+        .dropdown-item {
+            border-radius: 0.4rem;
+            padding: 0.55rem 0.8rem !important;
+            color: #334155 !important;
+            font-weight: 500;
+            transition: all 0.15s ease;
+            margin-bottom: 2px;
+        }
+        
+        .dropdown-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .dropdown-item:hover, .dropdown-item:focus, .dropdown-item:active {
+            background-color: #f1f5f9 !important;
+            color: #0f172a !important;
+        }
+
+        .dropdown-item i {
+            color: #64748b !important;
+            transition: color 0.15s ease;
+        }
+
+        .dropdown-item:hover i, .dropdown-item:focus i, .dropdown-item:active i {
+            color: #3b82f6 !important;
+        }
+
+        .dropdown-item.text-danger {
+            color: #ef4444 !important;
+        }
+
+        .dropdown-item.text-danger i {
+            color: #ef4444 !important;
+        }
+
+        .dropdown-item.text-danger:hover, .dropdown-item.text-danger:focus, .dropdown-item.text-danger:active {
+            background-color: #fef2f2 !important;
+            color: #dc2626 !important;
+        }
+        
+        .dropdown-item.text-danger:hover i, .dropdown-item.text-danger:focus i, .dropdown-item.text-danger:active i {
+            color: #dc2626 !important;
+        }
     </style>
     <?= $this->renderSection('styles') ?>
 </head>

@@ -582,6 +582,14 @@ $documents = is_array($documents ?? null) ? $documents : [];
                 class="docs-link d-inline-block text-decoration-none <?= $af === 'todos' ? 'active' : '' ?>"><i
                     class="bi bi-people"></i> Todos</a>
 
+            <div class="docs-group-title">Categorías</div>
+            <div class="docs-divider"></div>
+            <?php foreach ($allCategories ?? [] as $cat): ?>
+                <a href="?category=<?= urlencode($cat) ?>"
+                    class="docs-link d-inline-block text-decoration-none <?= ($categoryFilter ?? '') === $cat ? 'active' : '' ?>"><i
+                        class="bi bi-tag"></i> <?= esc($cat) ?></a>
+            <?php endforeach; ?>
+
             <div class="docs-group-title">Perspectivas</div>
             <div class="docs-divider"></div>
             <a href="?view=analytics"
@@ -986,7 +994,7 @@ $documents = is_array($documents ?? null) ? $documents : [];
                                                             class="bi bi-box-arrow-in-right text-secondary me-2"
                                                             style="font-size: 1.1rem; vertical-align: middle;"></i> Mover</a></li>
                                                 <li><a class="dropdown-item py-2" href="#"
-                                                        onclick="openRenameModal(<?= $doc['id'] ?>, '<?= esc(addslashes($name)) ?>')"><i
+                                                        onclick="openRenameModal(<?= $doc['id'] ?>, '<?= esc(addslashes($name)) ?>', '<?= esc(addslashes($doc['category'] ?? 'General')) ?>')"><i
                                                             class="bi bi-pencil text-secondary me-2"
                                                             style="font-size: 1.1rem; vertical-align: middle;"></i> Renombrar</a></li>
                                                 <li>
@@ -1007,6 +1015,27 @@ $documents = is_array($documents ?? null) ? $documents : [];
                                         </div>
                                         <div class="text-muted small"><?= isset($doc['element_count']) ? $doc['element_count'] : 0 ?>
                                             elementos</div>
+                                        <?php
+                                        $fcatColor = '';
+                                        $fcatIcon = '';
+                                        $fcat = $doc['category'] ?? '';
+                                        if (!empty($fcat) && $fcat !== 'General') {
+                                            if ($fcat === 'Financiero') { $fcatColor = 'bg-success text-success bg-opacity-10'; $fcatIcon = 'bi-cash-stack'; }
+                                            elseif ($fcat === 'Legal y Contratos') { $fcatColor = 'bg-primary text-primary bg-opacity-10'; $fcatIcon = 'bi-file-earmark-ruled'; }
+                                            elseif ($fcat === 'Reglas y Regulaciones') { $fcatColor = 'bg-info text-info bg-opacity-10'; $fcatIcon = 'bi-journal-text'; }
+                                            elseif ($fcat === 'Recibos') { $fcatColor = 'bg-warning text-warning bg-opacity-25'; $fcatIcon = 'bi-receipt'; }
+                                            elseif ($fcat === 'Mantenimiento') { $fcatColor = 'bg-danger text-danger bg-opacity-10'; $fcatIcon = 'bi-tools'; }
+                                            elseif ($fcat === 'Actas de Reuniones') { $fcatColor = 'bg-dark text-dark bg-opacity-10'; $fcatIcon = 'bi-people-fill'; }
+                                            else { $fcatColor = 'bg-secondary text-secondary bg-opacity-10'; $fcatIcon = 'bi-tag-fill'; }
+                                        }
+                                        ?>
+                                        <?php if (!empty($fcatColor)): ?>
+                                        <div class="mt-2">
+                                            <span class="badge rounded-pill <?= $fcatColor ?> px-2 py-1 fw-semibold" style="font-size: 0.65rem;">
+                                                <i class="bi <?= $fcatIcon ?> me-1"></i> <?= esc($fcat) ?>
+                                            </span>
+                                        </div>
+                                        <?php endif; ?>
                                     </article>
                                 <?php endforeach; ?>
                             </div>
@@ -1049,6 +1078,23 @@ $documents = is_array($documents ?? null) ? $documents : [];
                                                     <i class="bi <?= $badgeIcon ?> me-1"></i>
                                                     <?= esc($doc['access_level'] === 'Solo Admins' ? 'Admin' : ($doc['access_level'] === 'Propietarios' ? 'Admins y Prop.' : $doc['access_level'])) ?>
                                                 </span>
+                                                <?php
+                                                $catColor = 'bg-secondary text-secondary bg-opacity-10';
+                                                $catIcon = 'bi-tag-fill';
+                                                $cat = $doc['category'] ?? 'General';
+                                                if ($cat === 'Financiero') { $catColor = 'bg-success text-success bg-opacity-10'; $catIcon = 'bi-cash-stack'; }
+                                                elseif ($cat === 'Legal y Contratos') { $catColor = 'bg-primary text-primary bg-opacity-10'; $catIcon = 'bi-file-earmark-ruled'; }
+                                                elseif ($cat === 'Reglas y Regulaciones') { $catColor = 'bg-info text-info bg-opacity-10'; $catIcon = 'bi-journal-text'; }
+                                                elseif ($cat === 'Recibos') { $catColor = 'bg-warning text-warning bg-opacity-25'; $catIcon = 'bi-receipt'; }
+                                                elseif ($cat === 'Mantenimiento') { $catColor = 'bg-danger text-danger bg-opacity-10'; $catIcon = 'bi-tools'; }
+                                                elseif ($cat === 'Actas de Reuniones') { $catColor = 'bg-dark text-dark bg-opacity-10'; $catIcon = 'bi-people-fill'; }
+                                                elseif ($cat === 'General') { $catColor = 'bg-secondary text-secondary bg-opacity-10'; $catIcon = 'bi-file-earmark-text'; }
+                                                ?>
+                                                <span class="badge rounded-pill <?= $catColor ?> px-2 py-1 fw-semibold"
+                                                    style="font-size: 0.70rem;">
+                                                    <i class="bi <?= $catIcon ?> me-1"></i>
+                                                    <?= esc($cat) ?>
+                                                </span>
                                             </div>
                                             <div class="dropdown">
                                                 <button class="btn btn-sm text-secondary border-0" data-bs-toggle="dropdown"><i
@@ -1079,9 +1125,9 @@ $documents = is_array($documents ?? null) ? $documents : [];
                                                                 class="bi bi-box-arrow-in-right text-secondary me-2"
                                                                 style="font-size: 1.1rem; vertical-align: middle;"></i> Mover</a></li>
                                                     <li><a class="dropdown-item py-2" href="#"
-                                                            onclick="openRenameModal(<?= $doc['id'] ?>, '<?= esc(addslashes($name)) ?>')"><i
+                                                            onclick="openRenameModal(<?= $doc['id'] ?>, '<?= esc(addslashes($name)) ?>', '<?= esc(addslashes($doc['category'] ?? 'General')) ?>')"><i
                                                                 class="bi bi-pencil text-secondary me-2"
-                                                                style="font-size: 1.1rem; vertical-align: middle;"></i> Renombrar</a>
+                                                                style="font-size: 1.1rem; vertical-align: middle;"></i> Renombrar / Editar</a>
                                                     </li>
                                                     <li>
                                                         <hr class="dropdown-divider">
@@ -1146,7 +1192,14 @@ $documents = is_array($documents ?? null) ? $documents : [];
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td class="text-muted"><?= date('M j, Y', strtotime($doc['created_at'])) ?></td>
+                                                <td class="text-muted">
+                                                    <?php if (!empty($doc['category']) && $doc['category'] !== 'General'): ?>
+                                                        <span class="badge rounded-pill bg-secondary text-secondary bg-opacity-10 px-2 py-1 fw-semibold" style="font-size: 0.65rem;">
+                                                            <?= esc($doc['category']) ?>
+                                                        </span><br>
+                                                    <?php endif; ?>
+                                                    <?= date('M j, Y', strtotime($doc['created_at'])) ?>
+                                                </td>
                                                 <td class="text-end">
                                                     <div class="dropdown">
                                                         <button class="btn btn-sm text-secondary border-0" data-bs-toggle="dropdown"
@@ -1163,8 +1216,8 @@ $documents = is_array($documents ?? null) ? $documents : [];
                                                                         class="bi bi-box-arrow-in-right text-secondary me-2"></i>
                                                                     Mover</a></li>
                                                             <li><a class="dropdown-item py-2" href="#"
-                                                                    onclick="openRenameModal(<?= $doc['id'] ?>, '<?= esc(addslashes($name)) ?>')"><i
-                                                                        class="bi bi-pencil text-secondary me-2"></i> Renombrar</a></li>
+                                                                    onclick="openRenameModal(<?= $doc['id'] ?>, '<?= esc(addslashes($name)) ?>', '<?= esc(addslashes($doc['category'] ?? 'General')) ?>')"><i
+                                                                        class="bi bi-pencil text-secondary me-2"></i> Renombrar / Editar</a></li>
                                                             <li>
                                                                 <hr class="dropdown-divider">
                                                             </li>
@@ -1231,7 +1284,25 @@ $documents = is_array($documents ?? null) ? $documents : [];
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td class="text-muted"><?= esc($doc['category'] ?? 'General') ?></td>
+                                                <td>
+                                                <?php
+                                                $catColor = 'bg-secondary text-secondary bg-opacity-10';
+                                                $catIcon = 'bi-tag-fill';
+                                                $cat = $doc['category'] ?? 'General';
+                                                if ($cat === 'Financiero') { $catColor = 'bg-success text-success bg-opacity-10'; $catIcon = 'bi-cash-stack'; }
+                                                elseif ($cat === 'Legal y Contratos') { $catColor = 'bg-primary text-primary bg-opacity-10'; $catIcon = 'bi-file-earmark-ruled'; }
+                                                elseif ($cat === 'Reglas y Regulaciones') { $catColor = 'bg-info text-info bg-opacity-10'; $catIcon = 'bi-journal-text'; }
+                                                elseif ($cat === 'Recibos') { $catColor = 'bg-warning text-warning bg-opacity-25'; $catIcon = 'bi-receipt'; }
+                                                elseif ($cat === 'Mantenimiento') { $catColor = 'bg-danger text-danger bg-opacity-10'; $catIcon = 'bi-tools'; }
+                                                elseif ($cat === 'Actas de Reuniones') { $catColor = 'bg-dark text-dark bg-opacity-10'; $catIcon = 'bi-people-fill'; }
+                                                elseif ($cat === 'General') { $catColor = 'bg-secondary text-secondary bg-opacity-10'; $catIcon = 'bi-file-earmark-text'; }
+                                                ?>
+                                                <span class="badge rounded-pill <?= $catColor ?> px-2 py-1 fw-semibold"
+                                                    style="font-size: 0.70rem;">
+                                                    <i class="bi <?= $catIcon ?> me-1"></i>
+                                                    <?= esc($cat) ?>
+                                                </span>
+                                                </td>
                                                 <td><span class="list-badge <?= $badgeCls ?>"><i class="bi <?= $badgeIcon ?>"></i>
                                                         <?= $badgeLabel ?></span></td>
                                                 <td class="text-muted"><?= $size ?></td>
@@ -1261,8 +1332,8 @@ $documents = is_array($documents ?? null) ? $documents : [];
                                                                         class="bi bi-box-arrow-in-right text-secondary me-2"></i>
                                                                     Mover</a></li>
                                                             <li><a class="dropdown-item py-2" href="#"
-                                                                    onclick="openRenameModal(<?= $doc['id'] ?>, '<?= esc(addslashes($name)) ?>')"><i
-                                                                        class="bi bi-pencil text-secondary me-2"></i> Renombrar</a></li>
+                                                                    onclick="openRenameModal(<?= $doc['id'] ?>, '<?= esc(addslashes($name)) ?>', '<?= esc(addslashes($doc['category'] ?? 'General')) ?>')"><i
+                                                                        class="bi bi-pencil text-secondary me-2"></i> Renombrar / Editar</a></li>
                                                             <li>
                                                                 <hr class="dropdown-divider">
                                                             </li>
@@ -1316,13 +1387,9 @@ $documents = is_array($documents ?? null) ? $documents : [];
                         <div class="flex-grow-1">
                             <select class="form-select form-select-sm" id="bulk-category" onchange="applyBulk()">
                                 <option value="">Categoría...</option>
-                                <option value="Financiero">Financiero</option>
-                                <option value="Legal y Contratos">Legal y Contratos</option>
-                                <option value="Reglas y Regulaciones">Reglas y Regulaciones</option>
-                                <option value="Recibos">Recibos</option>
-                                <option value="Mantenimiento">Mantenimiento</option>
-                                <option value="Actas de Reuniones">Actas de Reuniones</option>
-                                <option value="General">General</option>
+                                <?php foreach ($allCategories ?? [] as $cat): ?>
+                                    <option value="<?= esc($cat) ?>"><?= esc($cat) ?></option>
+                                <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="flex-grow-1">
@@ -1559,7 +1626,7 @@ $documents = is_array($documents ?? null) ? $documents : [];
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg" style="border-radius:12px;">
             <div class="modal-header border-0 pb-2">
-                <h5 class="modal-title fw-bold text-dark">Renombrar Archivo</h5>
+                <h5 class="modal-title fw-bold text-dark">Editar Nombre / Categoría</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body px-4 pt-0">
@@ -1580,6 +1647,17 @@ $documents = is_array($documents ?? null) ? $documents : [];
                 <div class="mb-3">
                     <label class="fw-bold text-dark mb-1 d-block" style="font-size:0.95rem;">Nuevo Nombre</label>
                     <input type="text" class="form-control" id="renameNewName" placeholder="Escriba el nuevo nombre">
+                </div>
+                <div class="mb-3">
+                    <label class="fw-bold text-dark mb-1 d-block" style="font-size:0.95rem;">Categoría</label>
+                    <select class="form-select" id="renameNewCategory">
+                        <option value="General">General</option>
+                        <?php foreach ($allCategories ?? [] as $cat): ?>
+                            <?php if ($cat !== 'General'): ?>
+                                <option value="<?= esc($cat) ?>"><?= esc($cat) ?></option>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
+                    </select>
                 </div>
                 <!-- Hidden DOC ID for saving -->
                 <input type="hidden" id="renameDocId" value="">
@@ -1617,13 +1695,9 @@ $documents = is_array($documents ?? null) ? $documents : [];
             <div class="col-6">
                 <label class="form-label small text-muted fw-semibold text-nowrap">Seleccionar Categoría</label>
                 <select class="form-select form-select-sm item-cat">
-                    <option value="Financiero">Financiero</option>
-                    <option value="Legal y Contratos">Legal y Contratos</option>
-                    <option value="Reglas y Regulaciones">Reglas y Regulaciones</option>
-                    <option value="Recibos">Recibos</option>
-                    <option value="Mantenimiento">Mantenimiento</option>
-                    <option value="Actas de Reuniones">Actas de Reuniones</option>
-                    <option value="General" selected>General</option>
+                    <?php foreach ($allCategories ?? [] as $cat): ?>
+                        <option value="<?= esc($cat) ?>" <?= $cat === 'General' ? 'selected' : '' ?>><?= esc($cat) ?></option>
+                    <?php endforeach; ?>
                 </select>
             </div>
             <div class="col-6">
@@ -1659,18 +1733,38 @@ $documents = is_array($documents ?? null) ? $documents : [];
         if (typeof Swal !== 'undefined') {
             Swal.fire({
                 title: 'Nueva Carpeta',
-                input: 'text',
-                inputPlaceholder: 'Nombre de la carpeta',
+                html: `
+                    <input id="swal-input-folder-name" class="swal2-input" placeholder="Nombre de la carpeta">
+                    <select id="swal-input-folder-cat" class="swal2-select" style="display: flex; margin: 1em auto; font-size: 1rem;">
+                        <option value="General">Categoría (Opcional)...</option>
+                        <?php foreach ($allCategories ?? [] as $cat): ?>
+                            <?php if ($cat !== 'General'): ?>
+                                <option value="<?= esc($cat) ?>"><?= esc($cat) ?></option>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
+                    </select>
+                `,
+                focusConfirm: false,
                 showCancelButton: true,
                 confirmButtonText: 'Crear',
                 cancelButtonText: 'Cancelar',
-                inputValidator: (value) => {
-                    if (!value || !value.trim()) return 'El nombre no puede estar vacío';
+                preConfirm: () => {
+                    const name = document.getElementById('swal-input-folder-name').value;
+                    const cat = document.getElementById('swal-input-folder-cat').value;
+                    if (!name || !name.trim()) {
+                        Swal.showValidationMessage('El nombre no puede estar vacío');
+                        return false;
+                    }
+                    return { name: name.trim(), category: cat };
                 }
             }).then((result) => {
                 if (result.isConfirmed) {
                     const fd = new FormData();
-                    fd.append('name', result.value);
+                    fd.append('name', result.value.name);
+                    fd.append('category', result.value.category);
+                    <?php if ($currentFolder): ?>
+                        fd.append('parent_id', '<?= $currentFolder['id'] ?>');
+                    <?php endif; ?>
                     fetch('<?= base_url("admin/documentos/folder") ?>', {
                         method: 'POST', body: fd, headers: { 'X-Requested-With': 'XMLHttpRequest' }
                     }).then(r => r.json()).then(res => {
@@ -2112,27 +2206,35 @@ $documents = is_array($documents ?? null) ? $documents : [];
     }
 
     // Rename Logic
-    function openRenameModal(id, name) {
+    function openRenameModal(id, name, category) {
         document.getElementById('renameDocId').value = id;
         document.getElementById('renameCurrentName').textContent = name;
         document.getElementById('renameNewName').value = name;
+        
+        let catSelect = document.getElementById('renameNewCategory');
+        if (catSelect) {
+            catSelect.value = category || 'General';
+        }
+        
         renameModal.show();
     }
 
     function performRename() {
         const docId = document.getElementById('renameDocId').value;
         const newName = document.getElementById('renameNewName').value;
+        const newCategory = document.getElementById('renameNewCategory') ? document.getElementById('renameNewCategory').value : 'General';
         if (!newName.trim()) return;
 
         const fd = new FormData();
         fd.append('name', newName);
+        fd.append('category', newCategory);
 
         fetch(`<?= base_url("admin/documentos/rename/") ?>${docId}`, { method: 'POST', body: fd })
             .then(r => r.json())
             .then(data => {
                 if (data.status === 200) {
                     renameModal.hide();
-                    Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Renombrado con éxito', showConfirmButton: false, timer: 1500, timerProgressBar: true });
+                    Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: data.message || 'Actualizado con éxito', showConfirmButton: false, timer: 1500, timerProgressBar: true });
                     setTimeout(() => window.location.reload(), 1500);
                 } else {
                     alert(data.error);
