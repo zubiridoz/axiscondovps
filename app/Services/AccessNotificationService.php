@@ -29,7 +29,7 @@ class AccessNotificationService
      * @param int    $condominiumId  ID del condominio (tenant)
      * @param int|null $visitaId     ID del QR Code (qr_code_id) para trazabilidad
      */
-    public static function notifyEntry(int $unitId, string $visitorName, int $condominiumId, ?int $visitaId = null): void
+    public static function notifyEntry(int $unitId, string $visitorName, int $condominiumId, ?int $visitaId = null, bool $isManual = false): void
     {
         // ✅ Ajuste #5: Validación de datos
         if (empty($unitId) || empty($condominiumId)) {
@@ -40,8 +40,12 @@ class AccessNotificationService
         // ✅ Ajuste #3: Consultar nombre del condominio UNA sola vez
         $condoName = self::getCondominiumName($condominiumId);
 
-        $title = 'Tu visita ha llegado';
-        $body = "Entrada - {$visitorName} acaba de registrar su acceso mediante un código QR autorizado.";
+        $title = 'Nueva Visita';
+        if ($isManual) {
+            $body = "Se ha registrado el acceso de {$visitorName} en caseta.";
+        } else {
+            $body = "{$visitorName} ha ingresado mediante un código QR autorizado.";
+        }
 
         // ✅ Ajuste #6: Payload consistente con int, no string
         $data = [
@@ -65,7 +69,7 @@ class AccessNotificationService
      * @param int    $condominiumId  ID del condominio (tenant)
      * @param int|null $visitaId     ID del QR Code (qr_code_id) para trazabilidad
      */
-    public static function notifyExit(int $unitId, string $visitorName, int $condominiumId, ?int $visitaId = null): void
+    public static function notifyExit(int $unitId, string $visitorName, int $condominiumId, ?int $visitaId = null, bool $isManual = false): void
     {
         // ✅ Ajuste #5: Validación de datos
         if (empty($unitId) || empty($condominiumId)) {
@@ -76,8 +80,12 @@ class AccessNotificationService
         // ✅ Ajuste #3: Consultar nombre del condominio UNA sola vez
         $condoName = self::getCondominiumName($condominiumId);
 
-        $title = 'Tu visita ha salido';
-        $body = "Salida - {$visitorName} acaba de registrar su salida mediante un código QR autorizado.";
+        $title = 'Salida de Visita';
+        if ($isManual) {
+            $body = "Se ha registrado la salida de {$visitorName} en caseta.";
+        } else {
+            $body = "{$visitorName} ha registrado su salida mediante un código QR.";
+        }
 
         // ✅ Ajuste #6: Payload consistente con int, no string
         $data = [

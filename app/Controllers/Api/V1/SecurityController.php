@@ -43,6 +43,12 @@ class SecurityController extends ResourceController
             return $this->respondError('QR INVÁLIDO: El código no pertenece a este condominio o no está registrado en el sistema.', 404);
         }
 
+        // Compatibilidad con la app Flutter (que espera visitor_type para saber qué fotos pedir)
+        $qr['visitor_type'] = (isset($qr['vehicle_type']) && $qr['vehicle_type'] === 'pedestrian') ? 'pedestrian' : 'vehicle';
+        if (isset($qr['visit_type']) && strtolower(trim($qr['visit_type'])) === 'proveedor') {
+            $qr['visitor_type'] = 'provider';
+        }
+
         if ($qr['status'] === 'revoked') {
              return $this->respondError('ACCESO DENEGADO: Este pase ha sido cancelado por el residente.', 403);
         }
@@ -147,6 +153,8 @@ class SecurityController extends ResourceController
                     'action'        => 'exit',
                     'active_entry'  => $activeEntry,
                     'qr_data'       => $qr,
+                    'visitor_type'  => $qr['visitor_type'] ?? 'pedestrian',
+                    'vehicle_type'  => $qr['vehicle_type'] ?? 'pedestrian',
                     'unit_number'   => $unit['unit_number'] ?? 'N/A',
                     'section_name'  => $unit['section_name'] ?? '',
                     'floor'         => $unit['floor'] ?? '',
@@ -177,6 +185,8 @@ class SecurityController extends ResourceController
                     'action'        => 'exit',
                     'active_entry'  => $activeEntry,
                     'qr_data'       => $qr,
+                    'visitor_type'  => $qr['visitor_type'] ?? 'pedestrian',
+                    'vehicle_type'  => $qr['vehicle_type'] ?? 'pedestrian',
                     'unit_number'   => $unit['unit_number'] ?? 'N/A',
                     'section_name'  => $unit['section_name'] ?? '',
                     'floor'         => $unit['floor'] ?? '',
@@ -193,6 +203,8 @@ class SecurityController extends ResourceController
             'message'       => 'ACCESO CONCEDIDO',
             'action'        => 'entry',
             'qr_data'       => $qr,
+            'visitor_type'  => $qr['visitor_type'] ?? 'pedestrian',
+            'vehicle_type'  => $qr['vehicle_type'] ?? 'pedestrian',
             'unit_number'   => $unit['unit_number'] ?? 'N/A',
             'section_name'  => $unit['section_name'] ?? '',
             'floor'         => $unit['floor'] ?? '',
@@ -295,8 +307,9 @@ class SecurityController extends ResourceController
             $tenantId = \App\Services\TenantService::getInstance()->getTenantId();
             // ✅ Ajuste #1: Usar qr_code_id como visita_id para trazabilidad
             $visitaId = !empty($qrId) ? (int)$qrId : null;
+            $isManual = empty($qrId);
             \App\Services\AccessNotificationService::notifyEntry(
-                (int)$unitId, $visitorName ?? 'Visitante', (int)$tenantId, $visitaId
+                (int)$unitId, $visitorName ?? 'Visitante', (int)$tenantId, $visitaId, $isManual
             );
         }
 
@@ -379,8 +392,9 @@ class SecurityController extends ResourceController
             $tenantId = \App\Services\TenantService::getInstance()->getTenantId();
             // ✅ Ajuste #1: Usar qr_code_id como visita_id (consistente con entrada)
             $visitaId = !empty($entryLog['qr_code_id']) ? (int)$entryLog['qr_code_id'] : (int)$entryLog['id'];
+            $isManual = empty($entryLog['qr_code_id']);
             \App\Services\AccessNotificationService::notifyExit(
-                (int)$entryLog['unit_id'], $entryLog['visitor_name'] ?? 'Visitante', (int)$tenantId, $visitaId
+                (int)$entryLog['unit_id'], $entryLog['visitor_name'] ?? 'Visitante', (int)$tenantId, $visitaId, $isManual
             );
         }
 
@@ -661,6 +675,12 @@ class SecurityController extends ResourceController
                 continue;
             }
 
+            // Determinar visitor_type correcto a partir del QR
+            $offlineVisitorType = (isset($qr['vehicle_type']) && $qr['vehicle_type'] === 'pedestrian') ? 'pedestrian' : 'vehicle';
+            if (isset($qr['visit_type']) && strtolower(trim($qr['visit_type'])) === 'proveedor') {
+                $offlineVisitorType = 'provider';
+            }
+
             // Registrar access_log
             $db->table('access_logs')->insert([
                 'type'         => 'entry',
@@ -668,7 +688,7 @@ class SecurityController extends ResourceController
                 'qr_code_id'   => $qr['id'],
                 'unit_id'      => $qr['unit_id'],
                 'visitor_name' => $qr['visitor_name'] ?? 'Visitante',
-                'visitor_type' => 'pedestrian',
+                'visitor_type' => $offlineVisitorType,
                 'visit_type'   => $qr['visit_type'] ?? 'Visita',
                 'gate_number'  => 'Caseta Principal',
                 'notes'        => 'Registrado offline — sincronizado',

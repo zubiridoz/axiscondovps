@@ -102,6 +102,8 @@ class PushNotificationService
 
         $allSuccess = true;
         $endpoint = "https://fcm.googleapis.com/v1/projects/{$this->projectId}/messages:send";
+        $mh = curl_multi_init();
+        $chList = [];
 
         foreach ($tokens as $i => $token) {
             $payload = [
@@ -141,40 +143,49 @@ class PushNotificationService
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_SSL_VERIFYPEER => false,
                 CURLOPT_POSTFIELDS     => json_encode($payload),
-                CURLOPT_TIMEOUT        => 15,
+                CURLOPT_TIMEOUT        => 5, // Reduced timeout since it's parallel
             ]);
 
-            $result   = curl_exec($ch);
+            curl_multi_add_handle($mh, $ch);
+            $chList[$i] = $ch;
+        }
+
+        // Ejecutar en paralelo
+        do {
+            $status = curl_multi_exec($mh, $active);
+            if ($active) {
+                curl_multi_select($mh);
+            }
+        } while ($active && $status == CURLM_OK);
+
+        foreach ($chList as $i => $ch) {
+            $result   = curl_multi_getcontent($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             $curlErr  = curl_error($ch);
-            curl_close($ch);
 
             log_message('info', "[FCM] Token #{$i} → HTTP {$httpCode}");
-            log_message('info', "[FCM] Token #{$i} → Response: " . substr($result, 0, 500));
 
             if ($curlErr) {
                 log_message('error', "[FCM] Token #{$i} → cURL error: {$curlErr}");
                 $allSuccess = false;
-                continue;
-            }
-
-            if ($httpCode !== 200) {
-                $allSuccess = false;
-                $decoded = json_decode($result, true);
-                $errorCode = $decoded['error']['details'][0]['errorCode'] ?? ($decoded['error']['status'] ?? 'UNKNOWN');
-
-                log_message('error', "[FCM] Token #{$i} FAILED ({$httpCode}): {$errorCode}");
-
-                // Limpiar tokens inválidos
-                if (in_array($errorCode, ['UNREGISTERED', 'INVALID_ARGUMENT', 'NOT_FOUND'])) {
+            } elseif ($httpCode !== 200) {
+                log_message('error', "[FCM] Token #{$i} → Error Response: " . substr((string)$result, 0, 300));
+                
+                $resData = json_decode((string)$result, true);
+                if (isset($resData['error']['status']) && in_array($resData['error']['status'], ['UNREGISTERED', 'INVALID_ARGUMENT'])) {
                     $db = \Config\Database::connect();
-                    $db->table('device_push_subscriptions')->where('fcm_token', $token)->delete();
-                    log_message('info', "[FCM] Removed stale token: " . substr($token, 0, 30));
+                    $db->table('device_push_subscriptions')->where('fcm_token', $tokens[$i])->delete();
+                    log_message('info', "[FCM] Removed stale token: " . substr($tokens[$i], 0, 30));
                 }
             } else {
                 log_message('info', "[FCM] Token #{$i} ✅ SENT OK");
             }
+            
+            curl_multi_remove_handle($mh, $ch);
+            curl_close($ch);
         }
+        
+        curl_multi_close($mh);
 
         return $allSuccess;
     }
@@ -185,6 +196,12 @@ class PushNotificationService
     private function getAccessToken(): ?string
     {
         if ($this->accessToken) return $this->accessToken;
+
+        $cachedToken = cache('fcm_access_token');
+        if ($cachedToken) {
+            $this->accessToken = $cachedToken;
+            return $cachedToken;
+        }
 
         if (!file_exists($this->serviceAccountPath)) {
             log_message('error', '[FCM] ❌ Service account NOT FOUND: ' . $this->serviceAccountPath);
@@ -263,7 +280,8 @@ class PushNotificationService
         $this->accessToken = $tokenData['access_token'] ?? null;
 
         if ($this->accessToken) {
-            log_message('info', '[FCM] ✅ OAuth2 access token obtained');
+            cache()->save('fcm_access_token', $this->accessToken, 3000); // 50 mins
+            log_message('info', '[FCM] ✅ OAuth2 access token obtained and cached');
         } else {
             log_message('error', '[FCM] ❌ No access_token in response');
         }

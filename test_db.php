@@ -1,13 +1,8 @@
 <?php
-define('ENVIRONMENT', 'development');
-require 'app/Config/Paths.php';
-$paths = new Config\Paths();
-require rtrim($paths->systemDirectory, '\\/ ') . '/bootstrap.php';
-$db = \Config\Database::connect();
-$bookings = $db->table('bookings')->where('short_hash', '1f6f45')->get()->getResultArray();
-foreach ($bookings as $b) {
-    print_r($b);
-    $id = $b['id'];
-    $txs = $db->table('financial_transactions')->where('source', 'booking_'.$id)->get()->getResultArray();
-    print_r($txs);
+$env = parse_ini_file('.env');
+$conn = new mysqli($env['database.default.hostname'], $env['database.default.username'], $env['database.default.password'], $env['database.default.database']);
+if ($conn->connect_error) die("Connection failed: " . $conn->connect_error);
+$res = $conn->query("SELECT id, vehicle_type, visit_type FROM qr_codes ORDER BY id DESC LIMIT 5");
+while($row = $res->fetch_assoc()) {
+    print_r($row);
 }
