@@ -173,6 +173,7 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin', 'filter' => ['a
     $routes->post('documentos/upload', 'FileController::uploadFiles');
     $routes->post('documentos/update-access/(:num)', 'FileController::updateAccess/$1');
     $routes->get('documentos/download/(:num)', 'FileController::downloadFile/$1');
+    $routes->get('documentos/preview/(:num)', 'FileController::previewFile/$1');
     $routes->post('documentos/toggle-star/(:num)', 'FileController::toggleStar/$1');
     $routes->post('documentos/move/(:num)', 'FileController::moveDocument/$1');
     $routes->post('documentos/rename/(:num)', 'FileController::renameDocument/$1');

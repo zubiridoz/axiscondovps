@@ -1452,21 +1452,28 @@ $documents = is_array($documents ?? null) ? $documents : [];
 
 <!-- Modal Vista Previa de Archivo -->
 <div class="modal fade" id="fileDetailModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
-        <div class="modal-content border-0 shadow-lg" style="border-radius:12px;">
-            <div class="modal-header border-0 pb-0">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content border-0 shadow-lg" style="border-radius:16px;">
+            <div class="modal-header border-0 pb-0 px-4 pt-4">
+                <h4 class="modal-title fw-bold text-dark text-truncate" id="detailModalName" style="max-width: 90%;">Documento</h4>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body px-4 pb-4 text-center">
-                <i class="bi bi-file-earmark-pdf-fill fs-1 text-danger mb-2 d-inline-block"></i>
-                <h6 class="fw-bold text-dark text-truncate mb-1" id="detailModalName">Documento</h6>
-                <p class="text-muted small mb-3" id="detailModalMeta">Size • Category</p>
-                <div class="d-flex flex-column gap-2">
-                    <a href="#" id="detailModalDownloadBtn" class="btn btn-primary fw-semibold shadow-sm w-100"
+            <div class="modal-body px-4 pb-4">
+                <p class="text-muted mb-3" id="detailModalMeta" style="font-size: 0.95rem;">Size • Category</p>
+                <div class="mb-4 text-center bg-light rounded-4 d-flex align-items-center justify-content-center shadow-sm" style="height: 75vh; overflow: hidden; border: 1px solid #d1d5db;" id="previewContainer">
+                    <iframe id="previewIframe" src="" style="width: 100%; height: 100%; border: none; display: none; border-radius: 8px;"></iframe>
+                    <img id="previewImage" src="" style="max-width: 100%; max-height: 100%; object-fit: contain; display: none; border-radius: 8px;">
+                    <div id="previewUnsupported" style="display: none;">
+                        <i class="bi bi-file-earmark-x fs-1 text-secondary mb-2 d-inline-block"></i>
+                        <p class="text-muted mb-0">Vista previa no disponible para este tipo de archivo.</p>
+                    </div>
+                </div>
+                <div class="d-flex gap-2 justify-content-end">
+                    <button type="button" class="btn btn-light border bg-white fw-semibold"
+                        id="detailModalShareBtn"><i class="bi bi-share me-1"></i> Compartir</button>
+                    <a href="#" id="detailModalDownloadBtn" class="btn btn-primary fw-semibold shadow-sm"
                         style="background:#3b4b63; border-color:#3b4b63;"><i class="bi bi-download me-1"></i>
                         Descargar</a>
-                    <button type="button" class="btn btn-light border bg-white w-100 fw-semibold"
-                        id="detailModalShareBtn"><i class="bi bi-share me-1"></i> Compartir</button>
                 </div>
             </div>
         </div>
@@ -2031,6 +2038,28 @@ $documents = is_array($documents ?? null) ? $documents : [];
         document.getElementById('detailModalName').textContent = name;
         document.getElementById('detailModalMeta').textContent = size + ' • ' + category;
         document.getElementById('detailModalDownloadBtn').href = '<?= base_url("admin/documentos/download/") ?>' + id;
+
+        // Lógica de vista previa
+        const ext = name.split('.').pop().toLowerCase();
+        const previewIframe = document.getElementById('previewIframe');
+        const previewImage = document.getElementById('previewImage');
+        const previewUnsupported = document.getElementById('previewUnsupported');
+        
+        previewIframe.style.display = 'none';
+        previewIframe.src = '';
+        previewImage.style.display = 'none';
+        previewImage.src = '';
+        previewUnsupported.style.display = 'none';
+
+        if (['pdf'].includes(ext)) {
+            previewIframe.src = '<?= base_url("admin/documentos/preview/") ?>' + id;
+            previewIframe.style.display = 'block';
+        } else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
+            previewImage.src = '<?= base_url("admin/documentos/preview/") ?>' + id;
+            previewImage.style.display = 'block';
+        } else {
+            previewUnsupported.style.display = 'block';
+        }
 
         // Track view
         fetch(`<?= base_url("admin/documentos/track-view/") ?>${id}`, { method: 'POST' });

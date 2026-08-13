@@ -246,6 +246,39 @@ class FileController extends BaseController
         return $this->response->download($path, null)->setFileName($fileName);
     }
 
+    public function previewFile($id)
+    {
+        $this->bootstrapTenant();
+        $tenantId = \App\Services\TenantService::getInstance()->getTenantId();
+        
+        $documentModel = new TenantDocumentModel();
+        $doc = $documentModel->find($id);
+        if (!$doc || $doc['condominium_id'] != $tenantId) {
+            return $this->response->setStatusCode(404, 'File not found');
+        }
+
+        if ($doc['type'] !== 'file') {
+            return $this->response->setStatusCode(400, 'Not a file');
+        }
+
+        $path = WRITEPATH . 'uploads/documents/' . $doc['path'];
+        if (!file_exists($path)) {
+            return $this->response->setStatusCode(404, 'File missing in disk');
+        }
+
+        // Output file inline
+        $mime = mime_content_type($path);
+        
+        // Track view
+        $this->trackDocumentAction($tenantId, $id, 'view');
+        
+        $this->response->setContentType($mime);
+        $this->response->setHeader('Content-Disposition', 'inline; filename="' . basename($doc['name']) . '"');
+        $this->response->setHeader('Content-Length', filesize($path));
+        $this->response->setBody(file_get_contents($path));
+        return $this->response;
+    }
+
     public function trackView($id)
     {
         $this->bootstrapTenant();
