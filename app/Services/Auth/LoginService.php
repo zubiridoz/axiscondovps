@@ -78,6 +78,15 @@ class LoginService
                     continue; // Saltar, es un registro huérfano
                 }
             }
+
+            $r['initial'] = strtoupper(substr($r['condominium_name'] ?? 'C', 0, 1));
+            
+            if (!empty($r['logo'])) {
+                $r['logo_url'] = base_url('api/v1/public/image/' . $r['logo']);
+            } else {
+                $r['logo_url'] = null;
+            }
+
             $finalRoles[] = $r;
         }
         
