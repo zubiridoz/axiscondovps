@@ -203,9 +203,7 @@ function activityStatus(?string $datetime): array {
             <thead>
                 <tr>
                     <th>Condominio</th>
-                    <th>Administrador</th>
-                    <th>Backend</th>
-                    <th>App</th>
+                    <th>Administradores y Conexión</th>
                     <th>Plan</th>
                     <th>Estado</th>
                     <th>Métricas</th>
@@ -218,14 +216,12 @@ function activityStatus(?string $datetime): array {
                     <tr><td colspan="9" class="text-center text-muted py-4">No hay condominios registrados.</td></tr>
                 <?php else: ?>
                     <?php foreach ($condominiums as $c):
-                        $initial = strtoupper(substr($c['name'] ?? 'C', 0, 2));
+                        $initial = mb_substr($c['name'] ?? '?', 0, 2);
                         $status = $c['status'] ?? 'active';
                         $badgeClass = $status === 'active' ? 'badge-active' : ($status === 'suspended' ? 'badge-suspended' : 'badge-deleted');
                         $statusLabel = $status === 'active' ? 'Active' : ($status === 'suspended' ? 'Suspended' : 'Deleted');
-                        $adminName = trim(($c['admin_first_name'] ?? '') . ' ' . ($c['admin_last_name'] ?? ''));
-                        $adminEmail = $c['admin_email'] ?? '';
-                        $colors = ['#3b82f6','#8b5cf6','#ec4899','#f59e0b','#10b981','#06b6d4'];
-                        $bgColor = $colors[$c['id'] % count($colors)];
+                        $colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
+                        $bgColor = $colors[crc32($c['id']) % count($colors)];
                     ?>
                     <tr id="condo-row-<?= $c['id'] ?>">
                         <td>
@@ -240,20 +236,43 @@ function activityStatus(?string $datetime): array {
                             </div>
                         </td>
                         <td>
-                            <?php if ($adminName && $adminName !== ' '): ?>
-                                <div class="fw-medium" style="color:#1e293b;"><?= esc($adminName) ?></div>
-                                <div style="font-size:0.75rem;color:#94a3b8;"><?= esc($adminEmail) ?></div>
-                            <?php else: ?>
+                            <?php if (empty($c['admins'])): ?>
                                 <span style="font-size:0.8rem;color:#cbd5e1;">Sin asignar</span>
+                            <?php else: ?>
+                                <div class="d-flex flex-column" style="gap: 6px;">
+                                <?php foreach ($c['admins'] as $admin): 
+                                    $adminInitial = mb_substr($admin['first_name'] ?? '?', 0, 1) . mb_substr($admin['last_name'] ?? '', 0, 1);
+                                    $adminBg = $colors[crc32($admin['email'] ?? '1') % count($colors)];
+                                ?>
+                                    <div class="d-flex align-items-center gap-2 py-1 px-2 rounded hover-bg-light" style="min-width: 280px; transition: background-color 0.2s;">
+                                        <div class="rounded-circle d-flex align-items-center justify-content-center text-white flex-shrink-0" 
+                                             style="width: 28px; height: 28px; font-size: 0.65rem; font-weight: 600; background-color: <?= $adminBg ?>;">
+                                            <?= esc(strtoupper($adminInitial)) ?>
+                                        </div>
+                                        <div class="d-flex flex-column lh-1 flex-grow-1 overflow-hidden">
+                                            <span class="fw-semibold text-truncate" style="color: #334155; font-size: 0.8rem;">
+                                                <?= esc(trim($admin['first_name'] . ' ' . $admin['last_name'])) ?>
+                                            </span>
+                                            <span class="text-truncate" style="color: #64748b; font-size: 0.68rem; margin-top: 3px;">
+                                                <?= esc($admin['email']) ?>
+                                            </span>
+                                        </div>
+                                        <div class="ms-auto d-flex flex-column align-items-end justify-content-center" style="gap: 8px;">
+                                            <?php $webSt = activityStatus($admin['last_web_activity'] ?? null); ?>
+                                            <div class="d-flex align-items-center" title="Web: <?= $webSt['label'] ?>" style="font-size: 1.1rem; color: #475569;">
+                                                <i class="bi bi-browser-chrome me-2"></i>
+                                                <span class="status-dot <?= $webSt['dot'] ?>" style="width: 11px; height: 11px; margin-right: 0;"></span>
+                                            </div>
+                                            <?php $appSt = activityStatus($admin['last_app_activity'] ?? null); ?>
+                                            <div class="d-flex align-items-center" title="App: <?= $appSt['label'] ?>" style="font-size: 1.1rem; color: #475569;">
+                                                <i class="bi bi-phone me-2" style="margin-left: 1px;"></i>
+                                                <span class="status-dot <?= $appSt['dot'] ?>" style="width: 11px; height: 11px; margin-right: 0;"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                                </div>
                             <?php endif; ?>
-                        </td>
-                        <td>
-                            <?php $webSt = activityStatus($c['admin_last_web'] ?? null); ?>
-                            <span class="status-badge <?= $webSt['class'] ?>"><span class="status-dot <?= $webSt['dot'] ?>"></span><?= $webSt['label'] ?></span>
-                        </td>
-                        <td>
-                            <?php $appSt = activityStatus($c['admin_last_app'] ?? null); ?>
-                            <span class="status-badge <?= $appSt['class'] ?>"><span class="status-dot <?= $appSt['dot'] ?>"></span><?= $appSt['label'] ?></span>
                         </td>
                         <td>
                             <?php if (!empty($c['plan_name'])): ?>

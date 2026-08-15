@@ -40,27 +40,38 @@ class DashboardController extends BaseController
                 c.suspended_at,
                 c.deleted_at,
                 p.name AS plan_name,
-                u.first_name AS admin_first_name,
-                u.last_name AS admin_last_name,
-                u.email AS admin_email,
-                u.last_web_activity AS admin_last_web,
-                u.last_app_activity AS admin_last_app,
                 (SELECT COUNT(*) FROM units WHERE units.condominium_id = c.id) AS total_units,
                 (SELECT COUNT(*) FROM residents WHERE residents.condominium_id = c.id) AS total_residents,
                 (SELECT MAX(ft.created_at) FROM financial_transactions ft WHERE ft.condominium_id = c.id) AS last_activity
             FROM condominiums c
             LEFT JOIN plans p ON p.id = c.plan_id
-            LEFT JOIN (
-                SELECT ucr.condominium_id, ucr.user_id,
-                       ROW_NUMBER() OVER (PARTITION BY ucr.condominium_id ORDER BY ucr.id ASC) AS rn
-                FROM user_condominium_roles ucr
-                INNER JOIN roles r ON r.id = ucr.role_id
-                WHERE r.name = 'ADMIN'
-            ) admin_pivot ON admin_pivot.condominium_id = c.id AND admin_pivot.rn = 1
-            LEFT JOIN users u ON u.id = admin_pivot.user_id
             WHERE c.deleted_at IS NULL
             ORDER BY c.created_at DESC
         ")->getResultArray();
+
+        // Cargar TODOS los administradores de cada condominio
+        $condoIds = array_column($condominiums, 'id');
+        $adminsMap = [];
+        if (!empty($condoIds)) {
+            $adminsData = $db->table('user_condominium_roles ucr')
+                ->select('ucr.condominium_id, u.first_name, u.last_name, u.email, u.last_web_activity, u.last_app_activity')
+                ->join('roles r', 'r.id = ucr.role_id')
+                ->join('users u', 'u.id = ucr.user_id')
+                ->where('r.name', 'ADMIN')
+                ->where('u.deleted_at IS NULL')
+                ->whereIn('ucr.condominium_id', $condoIds)
+                ->orderBy('u.last_web_activity', 'DESC')
+                ->get()
+                ->getResultArray();
+            
+            foreach ($adminsData as $ad) {
+                $adminsMap[$ad['condominium_id']][] = $ad;
+            }
+        }
+
+        foreach ($condominiums as &$c) {
+            $c['admins'] = $adminsMap[$c['id']] ?? [];
+        }
 
         // ── Métricas de Ingresos (Revenue) ──
         // MRR: Suma de price_monthly de planes asignados a condominios activos (excluye eliminados)

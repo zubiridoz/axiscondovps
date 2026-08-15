@@ -3092,14 +3092,7 @@ $community = array_merge([
             });
         });
 
-        // Restaurar pestaña al recargar la página
-        const savedTab = localStorage.getItem('axis_settings_active_tab');
-        if (savedTab && tabMap[savedTab]) {
-            const savedBtn = document.querySelector(`.cfg-nav-link[data-tab="${savedTab}"]`);
-            if (savedBtn) {
-                savedBtn.click(); // Dispara la lógica para activar la pestaña
-            }
-        }
+        // Se movió la restauración de pestañas al final del archivo para evitar errores de inicialización.
 
         // ═══════════════════════════════════════════════════
         //  ADMINISTRADORES MODULE
@@ -3174,7 +3167,23 @@ $community = array_merge([
         `;
         }
 
+        let usePreloadedAdmins = true;
+
         async function loadAdmins() {
+            if (usePreloadedAdmins) {
+                usePreloadedAdmins = false;
+                const preloadedAdmins = <?= json_encode($admins ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?: '[]' ?>;
+                if (preloadedAdmins.length > 0) {
+                    adminContainer.innerHTML = preloadedAdmins.map((a, i) => renderAdminRow(a, i)).join('');
+                    bindRemoveButtons();
+                    bindFounderButtons();
+                } else {
+                    adminContainer.innerHTML = '<div class="admin-empty"><i class="bi bi-people"></i> No hay administradores registrados.</div>';
+                }
+                adminsLoaded = true;
+                return;
+            }
+
             adminContainer.innerHTML = '<div class="admin-loading"><span class="spinner-border spinner-border-sm me-2"></span> Cargando administradores...</div>';
 
             try {
@@ -4532,6 +4541,14 @@ $community = array_merge([
             });
         };
 
+        // Restaurar pestaña al recargar la página (colocado al final del bloque para evitar TDZ y mantener acceso a tabMap)
+        const savedTab = localStorage.getItem('axis_settings_active_tab');
+        if (savedTab && tabMap[savedTab]) {
+            const savedBtn = document.querySelector(`.cfg-nav-link[data-tab="${savedTab}"]`);
+            if (savedBtn) {
+                savedBtn.click();
+            }
+        }
     });
 
     // ─── CATEGORÍAS FINANCIERAS ─── //

@@ -53,6 +53,16 @@ class SettingsController extends BaseController
                 $financialCategories['expense'][] = $cat;
             }
         }
+        $admins = $db->table('user_condominium_roles AS ucr')
+            ->select('ucr.id AS assignment_id, ucr.role_id, ucr.is_owner, u.id AS user_id, u.first_name, u.last_name, u.email, r.name AS role_name')
+            ->join('users AS u', 'u.id = ucr.user_id')
+            ->join('roles AS r', 'r.id = ucr.role_id')
+            ->where('ucr.condominium_id', $condo['id'] ?? 0)
+            ->where('ucr.role_id', 2)
+            ->where('u.deleted_at IS NULL')
+            ->orderBy('ucr.created_at', 'ASC')
+            ->get()
+            ->getResultArray();
 
         return view('admin/settings', [
             'me' => [
@@ -107,6 +117,7 @@ class SettingsController extends BaseController
                 'signature_image'        => $condo['signature_image'] ?? null,
                 'signature_name'         => $condo['signature_name'] ?? null,
             ],
+            'admins'   => $admins,
             'sections' => $sections,
             'units'    => $units,
             'financial_categories' => $financialCategories,
