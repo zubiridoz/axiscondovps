@@ -3069,6 +3069,9 @@ $community = array_merge([
                 const tabKey = btn.dataset.tab;
                 if (!tabMap[tabKey]) return;
 
+                // Guardar pestaña en localStorage
+                localStorage.setItem('axis_settings_active_tab', tabKey);
+
                 // Update sidebar active state
                 document.querySelectorAll('.cfg-nav-link').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
@@ -3088,6 +3091,15 @@ $community = array_merge([
                 }
             });
         });
+
+        // Restaurar pestaña al recargar la página
+        const savedTab = localStorage.getItem('axis_settings_active_tab');
+        if (savedTab && tabMap[savedTab]) {
+            const savedBtn = document.querySelector(`.cfg-nav-link[data-tab="${savedTab}"]`);
+            if (savedBtn) {
+                savedBtn.click(); // Dispara la lógica para activar la pestaña
+            }
+        }
 
         // ═══════════════════════════════════════════════════
         //  ADMINISTRADORES MODULE
