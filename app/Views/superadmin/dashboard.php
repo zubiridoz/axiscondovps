@@ -196,7 +196,14 @@ function activityStatus(?string $datetime): array {
 <div class="sa-table-card">
     <div class="card-header-sa">
         <h6 class="fw-bold mb-0" style="color:#0f172a;"><i class="bi bi-grid-3x3-gap me-2" style="color:#3b82f6;"></i>Gestión de Condominios</h6>
-        <span class="badge" style="background:#f1f5f9;color:#3F67AC;font-size:0.75rem;"><?= count($condominiums) ?> registros</span>
+        <div class="d-flex align-items-center gap-3">
+            <div class="d-none d-md-flex align-items-center gap-3" style="font-size: 0.7rem; color: #64748b; background: #f8fafc; padding: 0.3rem 0.6rem; border-radius: 6px; border: 1px solid #e2e8f0;">
+                <div class="d-flex align-items-center"><span class="status-dot status-online" style="width: 8px; height: 8px; margin-right: 4px;"></span> Online (< 5 min)</div>
+                <div class="d-flex align-items-center"><span class="status-dot status-recent" style="width: 8px; height: 8px; margin-right: 4px;"></span> Reciente (< 30 min)</div>
+                <div class="d-flex align-items-center"><span class="status-dot status-offline" style="width: 8px; height: 8px; margin-right: 4px;"></span> Offline</div>
+            </div>
+            <span class="badge" style="background:#f1f5f9;color:#3F67AC;font-size:0.75rem;"><?= count($condominiums) ?> registros</span>
+        </div>
     </div>
     <div class="table-responsive">
         <table class="table sa-table mb-0">
@@ -239,38 +246,75 @@ function activityStatus(?string $datetime): array {
                             <?php if (empty($c['admins'])): ?>
                                 <span style="font-size:0.8rem;color:#cbd5e1;">Sin asignar</span>
                             <?php else: ?>
-                                <div class="d-flex flex-column" style="gap: 6px;">
-                                <?php foreach ($c['admins'] as $admin): 
-                                    $adminInitial = mb_substr($admin['first_name'] ?? '?', 0, 1) . mb_substr($admin['last_name'] ?? '', 0, 1);
-                                    $adminBg = $colors[crc32($admin['email'] ?? '1') % count($colors)];
-                                ?>
-                                    <div class="d-flex align-items-center gap-2 py-1 px-2 rounded hover-bg-light" style="min-width: 280px; transition: background-color 0.2s;">
-                                        <div class="rounded-circle d-flex align-items-center justify-content-center text-white flex-shrink-0" 
-                                             style="width: 28px; height: 28px; font-size: 0.65rem; font-weight: 600; background-color: <?= $adminBg ?>;">
-                                            <?= esc(strtoupper($adminInitial)) ?>
-                                        </div>
-                                        <div class="d-flex flex-column lh-1 flex-grow-1 overflow-hidden">
-                                            <span class="fw-semibold text-truncate" style="color: #334155; font-size: 0.8rem;">
-                                                <?= esc(trim($admin['first_name'] . ' ' . $admin['last_name'])) ?>
-                                            </span>
-                                            <span class="text-truncate" style="color: #64748b; font-size: 0.68rem; margin-top: 3px;">
-                                                <?= esc($admin['email']) ?>
-                                            </span>
-                                        </div>
-                                        <div class="ms-auto d-flex flex-column align-items-end justify-content-center" style="gap: 8px;">
-                                            <?php $webSt = activityStatus($admin['last_web_activity'] ?? null); ?>
-                                            <div class="d-flex align-items-center" title="Web: <?= $webSt['label'] ?>" style="font-size: 1.1rem; color: #475569;">
-                                                <i class="bi bi-browser-chrome me-2"></i>
-                                                <span class="status-dot <?= $webSt['dot'] ?>" style="width: 11px; height: 11px; margin-right: 0;"></span>
+                                <div class="d-flex flex-column" style="gap: 4px;">
+                                    <?php 
+                                    $renderAdmin = function($admin) use ($colors) {
+                                        $adminInitial = mb_substr($admin['first_name'] ?? '?', 0, 1) . mb_substr($admin['last_name'] ?? '', 0, 1);
+                                        $adminBg = $colors[crc32($admin['email'] ?? '1') % count($colors)];
+                                        $webSt = activityStatus($admin['last_web_activity'] ?? null);
+                                        $appSt = activityStatus($admin['last_app_activity'] ?? null);
+                                        return '
+                                        <div class="d-flex align-items-center gap-2 py-1 px-2 rounded hover-bg-light" style="min-width: 280px; transition: background-color 0.2s;">
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center text-white flex-shrink-0" 
+                                                 style="width: 28px; height: 28px; font-size: 0.65rem; font-weight: 600; background-color: ' . $adminBg . ';">
+                                                ' . esc(strtoupper($adminInitial)) . '
                                             </div>
-                                            <?php $appSt = activityStatus($admin['last_app_activity'] ?? null); ?>
-                                            <div class="d-flex align-items-center" title="App: <?= $appSt['label'] ?>" style="font-size: 1.1rem; color: #475569;">
-                                                <i class="bi bi-phone me-2" style="margin-left: 1px;"></i>
-                                                <span class="status-dot <?= $appSt['dot'] ?>" style="width: 11px; height: 11px; margin-right: 0;"></span>
+                                            <div class="d-flex flex-column lh-1 flex-grow-1 overflow-hidden">
+                                                <span class="fw-semibold text-truncate" style="color: #334155; font-size: 0.8rem;">
+                                                    ' . esc(trim(($admin['first_name'] ?? '') . ' ' . ($admin['last_name'] ?? ''))) . '
+                                                </span>
+                                                <span class="text-truncate" style="color: #64748b; font-size: 0.68rem; margin-top: 3px;">
+                                                    ' . esc($admin['email'] ?? '') . '
+                                                </span>
                                             </div>
-                                        </div>
-                                    </div>
-                                <?php endforeach; ?>
+                                            <div class="ms-auto d-flex flex-column align-items-end justify-content-center" style="gap: 8px;">
+                                                <div class="d-flex align-items-center custom-tooltip" data-tooltip="Web: ' . $webSt['label'] . '" style="font-size: 1.1rem; color: #475569;">
+                                                    <i class="bi bi-browser-chrome me-2"></i>
+                                                    <span class="status-dot ' . $webSt['dot'] . '" style="width: 11px; height: 11px; margin-right: 0;"></span>
+                                                </div>
+                                                <div class="d-flex align-items-center custom-tooltip" data-tooltip="App: ' . $appSt['label'] . '" style="font-size: 1.1rem; color: #475569;">
+                                                    <i class="bi bi-phone me-2" style="margin-left: 1px;"></i>
+                                                    <span class="status-dot ' . $appSt['dot'] . '" style="width: 11px; height: 11px; margin-right: 0;"></span>
+                                                </div>
+                                            </div>
+                                        </div>';
+                                    };
+                                    
+                                    // Mostrar siempre el administrador principal
+                                    echo $renderAdmin($c['admins'][0]);
+                                    ?>
+                                    
+                                    <?php if (count($c['admins']) > 1): ?>
+                                        <details style="margin-top: 2px;">
+                                            <summary class="btn btn-sm btn-light py-1 px-2 w-100 text-start d-flex align-items-center justify-content-between" style="font-size: 0.7rem; color: #64748b; border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 6px; list-style: none; cursor: pointer;">
+                                                <span><i class="bi bi-people me-1"></i> Ver <?= count($c['admins']) - 1 ?> administrador<?= count($c['admins']) > 2 ? 'es' : '' ?> más</span>
+                                                <i class="bi bi-chevron-down" style="font-size: 0.6rem;"></i>
+                                            </summary>
+                                            <div class="mt-1 d-flex flex-column" style="gap: 4px; padding-left: 4px; border-left: 2px solid #e2e8f0; margin-left: 4px;">
+                                                <?php for ($i = 1; $i < count($c['admins']); $i++): ?>
+                                                    <?= $renderAdmin($c['admins'][$i]) ?>
+                                                <?php endfor; ?>
+                                            </div>
+                                        </details>
+                                    <?php endif; ?>
+                                        <style>
+                                            details > summary::-webkit-details-marker { display: none; }
+                                            details[open] summary .bi-chevron-down { transform: rotate(180deg); }
+                                            details summary .bi-chevron-down { transition: transform 0.2s; }
+                                            
+                                            /* Custom Professional Tooltip */
+                                            .custom-tooltip { position: relative; cursor: pointer; }
+                                            .custom-tooltip::after {
+                                                content: attr(data-tooltip); position: absolute; bottom: 130%; left: 50%; transform: translateX(-50%) translateY(5px);
+                                                background-color: #0f172a; color: #f8fafc; padding: 4px 8px; border-radius: 4px; font-size: 0.65rem; font-weight: 500;
+                                                white-space: nowrap; opacity: 0; visibility: hidden; transition: all 0.2s ease; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); z-index: 1000; pointer-events: none;
+                                            }
+                                            .custom-tooltip::before {
+                                                content: ""; position: absolute; bottom: 130%; left: 50%; transform: translateX(-50%) translateY(5px);
+                                                border: 4px solid transparent; border-top-color: #0f172a; opacity: 0; visibility: hidden; transition: all 0.2s ease; z-index: 1000; pointer-events: none; margin-bottom: -8px;
+                                            }
+                                            .custom-tooltip:hover::after, .custom-tooltip:hover::before { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+                                        </style>
                                 </div>
                             <?php endif; ?>
                         </td>
