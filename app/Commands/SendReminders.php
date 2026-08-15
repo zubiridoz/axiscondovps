@@ -74,6 +74,32 @@ class SendReminders extends BaseCommand
         $todayStr = $now->format('Y-m-d');
         $currentDay = (int) $now->format('j');
 
+        // Pre-calculate units that actually owe money (saldo > 0.01)
+        // using the exact same financial logic as FinanceController
+        $unitsWithBalances = $db->table('units u')
+            ->select('u.id, u.initial_balance,
+                      IFNULL(SUM(CASE WHEN ft.type = "charge" AND ft.status != "cancelled" AND ft.deleted_at IS NULL THEN ft.amount ELSE 0 END), 0) AS total_charges,
+                      IFNULL(SUM(CASE WHEN ft.type = "credit" AND ft.status = "paid" AND ft.deleted_at IS NULL THEN ft.amount ELSE 0 END), 0) AS total_paid')
+            ->join('financial_transactions ft', 'ft.unit_id = u.id AND ft.condominium_id = u.condominium_id', 'left')
+            ->where('u.condominium_id', $condo['id'])
+            ->groupBy('u.id')
+            ->get()
+            ->getResultArray();
+
+        $unitsThatOwe = [];
+        foreach ($unitsWithBalances as $u) {
+            $saldo = ((float) $u['initial_balance'] + (float) $u['total_charges']) - (float) $u['total_paid'];
+            if ($saldo > 0.01) {
+                $unitsThatOwe[] = $u['id'];
+            }
+        }
+
+        // Get all basic unit data for this condominium
+        $allUnits = $db->table('units')
+            ->where('condominium_id', $condo['id'])
+            ->get()
+            ->getResultArray();
+
         foreach ($reminders as $reminder) {
             if (!$reminder['is_active']) continue;
 
@@ -108,14 +134,13 @@ class SendReminders extends BaseCommand
             }
 
             if (!$shouldSend) continue;
-
-            // Get all units for this condominium using direct DB access
-            $units = $db->table('units')
-                ->where('condominium_id', $condo['id'])
-                ->get()
-                ->getResultArray();
             
-            foreach ($units as $unit) {
+            foreach ($allUnits as $unit) {
+                // IMPORTANT: If unit has no pending debt, skip immediately (no notifications)
+                if (!in_array($unit['id'], $unitsThatOwe)) {
+                    continue;
+                }
+
                 $unitNeedsReminder = false;
 
                 if (in_array($reminder['trigger_type'], ['start_of_month', 'specific_day'])) {

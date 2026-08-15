@@ -1459,6 +1459,16 @@ $community = array_merge([
                     </div>
                 </div>
 
+                <div style="background-color: #f0f9ff; border-left: 4px solid #3b82f6; padding: 0.75rem 1rem; border-radius: 0.4rem; margin-bottom: 1rem;">
+                    <div style="display:flex; align-items:flex-start; gap:0.5rem;">
+                        <i class="bi bi-info-circle-fill" style="color: #3b82f6; margin-top:0.1rem;"></i>
+                        <p style="margin:0; font-size: 0.85rem; color: #1e293b;">
+                            <strong>Envío Inteligente:</strong> El sistema evalúa el saldo en tiempo real antes de enviar cada recordatorio. 
+                            Los residentes que estén al corriente o con saldo a favor serán <strong>omitidos automáticamente</strong> para evitar molestias, aunque el recordatorio esté encendido.
+                        </p>
+                    </div>
+                </div>
+
                 <div id="paymentRemindersList" style="display:flex; flex-direction:column; gap:0.75rem;">
                     <?php if (empty($payment_reminders)): ?>
                         <div
