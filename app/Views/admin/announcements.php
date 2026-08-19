@@ -2033,7 +2033,7 @@ $jsonData = htmlspecialchars(json_encode($rawAnnouncements, JSON_UNESCAPED_UNICO
                 var rel = timeAgo(ts);
                 $('an-det-meta').textContent = 'Admin • ' + rel;
                 $('an-det-views').textContent = a.view_count || 0;
-                $('an-det-content').innerHTML = a.content || '';
+                $('an-det-content').innerHTML = (a.content || '').replace(/\n/g, '<br>');
 
                 // Attachments
                 var att = a.attachments || [];

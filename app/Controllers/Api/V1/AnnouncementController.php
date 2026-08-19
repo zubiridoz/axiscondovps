@@ -154,6 +154,7 @@ class AnnouncementController extends ResourceController
             }
             $attachmentsMapped[$att['announcement_id']][] = $att;
         }
+        unset($att);
 
         // 3. Fetch de Likes (conteo masivo agrupado y likes del usuario)
         $likeModel = new AnnouncementLikeModel();
@@ -205,22 +206,11 @@ class AnnouncementController extends ResourceController
             $a['user_id'] = (int)($a['created_by'] ?? 0); // Alias para que Flutter identifique al autor
             $a['attachments'] = $attachmentsMapped[$aId] ?? [];
             
-            // Extraer documentos como texto para evitar imágenes rotas en la app
-            $validAttachments = [];
-            $docLinks = "";
+            // Mantener documentos en el array de attachments (la app móvil ya los soporta)
             foreach ($a['attachments'] as &$att) {
                 $att['url'] = $this->getAttachmentUrl($att);
-                if ($att['file_type'] === 'document') {
-                    $docName = $att['original_name'] ?? 'Documento adjunto';
-                    $docLinks .= "\n\n📎 $docName:\n" . $att['url'];
-                } else {
-                    $validAttachments[] = $att;
-                }
             }
-            $a['attachments'] = $validAttachments;
-            if ($docLinks !== "") {
-                $a['content'] = ($a['content'] ?? '') . $docLinks;
-            }
+            unset($att);
             
             $a['like_count'] = (int)($likesCountMapped[$aId] ?? 0);
             $a['comment_count'] = (int)($commentsCountMapped[$aId] ?? 0);
@@ -238,6 +228,7 @@ class AnnouncementController extends ResourceController
                 }
             }
         }
+        unset($a);
 
         // Checar si hay más resultados para el infinite scroll
         $totalQuery = $model->where('is_active', 1);
@@ -286,27 +277,15 @@ class AnnouncementController extends ResourceController
         $attachModel = new AnnouncementAttachmentModel();
         $ann['attachments'] = $attachModel->where('announcement_id', $id)->orderBy('id', 'ASC')->findAll();
         
-        // Extraer documentos como texto para evitar imágenes rotas en la app
-        $validAttachments = [];
-        $docLinks = "";
+        // Mantener documentos en el array de attachments (la app móvil ya los soporta)
         foreach ($ann['attachments'] as &$att) {
             $lowerName = strtolower($att['file_name'] ?? '');
             if ($att['file_type'] === 'image' && !str_ends_with($lowerName, '.jpg') && !str_ends_with($lowerName, '.jpeg') && !str_ends_with($lowerName, '.png') && !str_ends_with($lowerName, '.gif') && !str_ends_with($lowerName, '.webp')) {
                 $att['file_type'] = 'document';
             }
             $att['url'] = $this->getAttachmentUrl($att);
-
-            if ($att['file_type'] === 'document') {
-                $docName = $att['original_name'] ?? 'Documento adjunto';
-                $docLinks .= "\n\n📎 $docName:\n" . $att['url'];
-            } else {
-                $validAttachments[] = $att;
-            }
         }
-        $ann['attachments'] = $validAttachments;
-        if ($docLinks !== "") {
-            $ann['content'] = ($ann['content'] ?? '') . $docLinks;
-        }
+        unset($att);
 
         $likeModel = new AnnouncementLikeModel();
         
