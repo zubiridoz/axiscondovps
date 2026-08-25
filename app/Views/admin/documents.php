@@ -796,9 +796,11 @@ $documents = is_array($documents ?? null) ? $documents : [];
                                                         <div class="fw-semibold text-dark" style="font-size:0.92rem;">
                                                             <?= esc($mv['name']) ?>
                                                         </div>
-                                                        <div class="text-muted" style="font-size:0.75rem;"><i
-                                                                class="bi bi-eye me-1"></i> <?= $mv['view_count'] ?> vistas
-                                                            (<?= $mv['unique_viewers'] ?> únicos)</div>
+                                                        <div class="text-muted" style="font-size:0.75rem;">
+                                                            <a href="javascript:void(0)" class="text-decoration-none text-primary fw-bold" onclick="showDocumentActivity(<?= $mv['document_id'] ?>, 'view')">
+                                                                <i class="bi bi-eye me-1"></i> <?= $mv['view_count'] ?> vistas (<?= $mv['unique_viewers'] ?> únicos)
+                                                            </a>
+                                                        </div>
                                                     </div>
                                                     <span class="badge bg-light text-secondary border"
                                                         style="font-size:0.75rem;"><?= esc($mv['category'] ?? 'General') ?></span>
@@ -825,9 +827,11 @@ $documents = is_array($documents ?? null) ? $documents : [];
                                                         <div class="fw-semibold text-dark" style="font-size:0.92rem;">
                                                             <?= esc($md['name']) ?>
                                                         </div>
-                                                        <div class="text-muted" style="font-size:0.75rem;"><i
-                                                                class="bi bi-download me-1"></i> <?= $md['download_count'] ?>
-                                                            descargas</div>
+                                                        <div class="text-muted" style="font-size:0.75rem;">
+                                                            <a href="javascript:void(0)" class="text-decoration-none text-primary fw-bold" onclick="showDocumentActivity(<?= $md['document_id'] ?>, 'download')">
+                                                                <i class="bi bi-download me-1"></i> <?= $md['download_count'] ?> descargas
+                                                            </a>
+                                                        </div>
                                                     </div>
                                                     <span class="badge bg-light text-secondary border"
                                                         style="font-size:0.75rem;"><?= esc($md['category'] ?? 'General') ?></span>
@@ -902,13 +906,17 @@ $documents = is_array($documents ?? null) ? $documents : [];
                                                 <?= esc($initials) ?>
                                             </div>
                                             <div class="flex-grow-1">
-                                                <div class="fw-semibold text-dark" style="font-size:0.92rem;"><?= esc($uName) ?>
+                                                <div class="fw-semibold text-dark" style="font-size:0.92rem;">
+                                                    <?= esc($uName) ?>
+                                                    <?php if (!empty($tv['unit_number'])): ?>
+                                                        <span class="badge bg-secondary ms-1" style="font-size:0.65rem;">Unidad <?= esc($tv['unit_number']) ?></span>
+                                                    <?php endif; ?>
                                                 </div>
                                                 <div class="text-muted" style="font-size:0.75rem;"><?= esc($uEmail) ?></div>
                                             </div>
                                             <div class="text-end">
                                                 <div class="fw-bold text-primary"><?= $tv['view_count'] ?></div>
-                                                <div class="text-muted" style="font-size:0.7rem;">vistas</div>
+                                                <div class="text-muted" style="font-size:0.7rem;">interacciones</div>
                                             </div>
                                         </div>
                                         <?php $rank++; endforeach; ?>
@@ -2484,6 +2492,97 @@ $documents = is_array($documents ?? null) ? $documents : [];
                 });
             }
         }
+
+        function showDocumentActivity(docId, action = '') {
+            const offcanvasEl = document.getElementById('documentActivityOffcanvas');
+            const bsOffcanvas = new bootstrap.Offcanvas(offcanvasEl);
+            bsOffcanvas.show();
+
+            const container = document.getElementById('docActivityContent');
+            const titleEl = document.getElementById('docActivityTitle');
+            
+            titleEl.textContent = 'Cargando...';
+            container.innerHTML = `
+                <div class="d-flex justify-content-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                </div>
+            `;
+
+            let url = `<?= base_url('admin/documentos/activity/') ?>${docId}`;
+            if (action) {
+                url += `?action=${action}`;
+            }
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status !== 'success') {
+                        container.innerHTML = `<div class="alert alert-danger">Error: ${data.message || 'No se pudo cargar la actividad'}</div>`;
+                        titleEl.textContent = 'Error';
+                        return;
+                    }
+                    
+                    titleEl.textContent = data.document.name;
+                    
+                    if (!data.activity || data.activity.length === 0) {
+                        container.innerHTML = `<p class="text-muted text-center py-4">No hay interacciones registradas aún.</p>`;
+                        return;
+                    }
+
+                    let html = '<div class="timeline mt-3">';
+                    data.activity.forEach(item => {
+                        const isDownload = item.action === 'download';
+                        const icon = isDownload ? 'bi-download text-success' : 'bi-eye text-primary';
+                        const bgIcon = isDownload ? 'bg-success bg-opacity-10' : 'bg-primary bg-opacity-10';
+                        const actionText = isDownload ? 'Descargó el documento' : 'Visualizó el documento';
+                        const unitBadge = item.units ? `<span class="badge bg-secondary ms-2" style="font-size:0.65rem;">Unidad ${item.units}</span>` : '';
+                        
+                        html += `
+                            <div class="d-flex mb-4">
+                                <div class="me-3">
+                                    <div class="rounded-circle ${bgIcon} d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                        <i class="bi ${icon} fs-5"></i>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-dark d-flex align-items-center">
+                                        ${item.user_name}
+                                        ${unitBadge}
+                                    </div>
+                                    <div class="text-secondary small mb-1">${actionText}</div>
+                                    <div class="text-muted" style="font-size: 0.75rem;">
+                                        <i class="bi bi-clock me-1"></i> ${new Date(item.created_at).toLocaleString('es-MX')}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                    container.innerHTML = html;
+                })
+                .catch(err => {
+                    console.error('Error fetching document activity:', err);
+                    container.innerHTML = `<div class="alert alert-danger">Ocurrió un error de red al cargar el historial.</div>`;
+                    titleEl.textContent = 'Error';
+                });
+        }
     <?php endif; ?>
 </script>
+
+<!-- Offcanvas for Document Activity -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="documentActivityOffcanvas" aria-labelledby="documentActivityOffcanvasLabel" style="width: 400px;">
+    <div class="offcanvas-header border-bottom">
+        <h6 class="offcanvas-title fw-bold" id="documentActivityOffcanvasLabel">Detalle de Actividad</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <h6 class="fw-bold text-primary mb-3" id="docActivityTitle">...</h6>
+        <div id="docActivityContent">
+            <!-- Content injected via JS -->
+        </div>
+    </div>
+</div>
+
 <?= $this->endSection() ?>

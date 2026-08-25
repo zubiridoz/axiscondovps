@@ -180,6 +180,7 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin', 'filter' => ['a
     $routes->post('documentos/delete/(:num)', 'FileController::deleteDocument/$1');
     $routes->get('documentos/api/folders', 'FileController::apiGetFolders');
     $routes->post('documentos/track-view/(:num)', 'FileController::trackView/$1');
+    $routes->get('documentos/activity/(:num)', 'FileController::getDocumentActivity/$1');
     $routes->get('encuestas', 'PollController::indexView');
     $routes->post('encuestas/crear', 'PollController::create');
     $routes->post('encuestas/editar/(:any)', 'PollController::edit/$1');

@@ -508,12 +508,22 @@ class FileController extends BaseController
             ->select("dv.user_id, CONCAT(u.first_name, ' ', u.last_name) as user_name, u.email as user_email, COUNT(*) as view_count")
             ->join('users u', 'u.id = dv.user_id', 'left')
             ->where('dv.condominium_id', $tenantId)
-            ->where('dv.action', 'view')
+            ->whereIn('dv.action', ['view', 'download'])
             ->where('dv.user_id IS NOT NULL')
             ->groupBy('dv.user_id')
             ->orderBy('view_count', 'DESC')
             ->limit(10)
             ->get()->getResultArray();
+
+        foreach ($topViewers as &$tv) {
+            $units = $db->table('residents r')
+                ->select('un.unit_number')
+                ->join('units un', 'un.id = r.unit_id')
+                ->where('r.user_id', $tv['user_id'])
+                ->where('r.condominium_id', $tenantId)
+                ->get()->getResultArray();
+            $tv['unit_number'] = empty($units) ? null : implode(', ', array_column($units, 'unit_number'));
+        }
         
         $allCategories = [
             'Financiero',
@@ -551,6 +561,75 @@ class FileController extends BaseController
                 'recentDownloads' => $recentDownloads,
                 'topViewers' => $topViewers,
             ]
+        ]);
+    }
+
+    public function getDocumentActivity($id)
+    {
+        $this->bootstrapTenant();
+        $tenantId = \App\Services\TenantService::getInstance()->getTenantId();
+
+        // Verificar que el documento pertenece al tenant
+        $documentModel = new TenantDocumentModel();
+        $doc = $documentModel->find($id);
+        if (!$doc || $doc['condominium_id'] != $tenantId) {
+            return $this->response->setStatusCode(404, 'Documento no encontrado o sin acceso');
+        }
+
+        $db = \Config\Database::connect();
+        
+        $builder = $db->table('document_views dv')
+            ->select("
+                dv.id,
+                dv.action,
+                dv.created_at,
+                u.first_name,
+                u.last_name,
+                u.email,
+                un.unit_number
+            ")
+            ->join('users u', 'u.id = dv.user_id', 'left')
+            ->join('residents r', 'r.user_id = u.id AND r.condominium_id = dv.condominium_id', 'left')
+            ->join('units un', 'un.id = r.unit_id', 'left')
+            ->where('dv.condominium_id', $tenantId)
+            ->where('dv.document_id', (int)$id);
+
+        $requestedAction = $this->request->getGet('action');
+        if (in_array($requestedAction, ['view', 'download'])) {
+            $builder->where('dv.action', $requestedAction);
+        }
+
+        $activity = $builder->orderBy('dv.created_at', 'DESC')->get()->getResultArray();
+
+        // Agrupar posibles unidades si un residente tiene más de una, o simplemente limpiar nulos
+        // Usamos dv.id como llave única para evitar pérdida de eventos independientes simultáneos
+        $uniqueEvents = [];
+        foreach ($activity as $row) {
+            $key = $row['id'];
+            if (!isset($uniqueEvents[$key])) {
+                $uniqueEvents[$key] = $row;
+                $uniqueEvents[$key]['unit_number'] = $row['unit_number'] ? [$row['unit_number']] : [];
+            } else if ($row['unit_number']) {
+                if (!in_array($row['unit_number'], $uniqueEvents[$key]['unit_number'])) {
+                    $uniqueEvents[$key]['unit_number'][] = $row['unit_number'];
+                }
+            }
+        }
+
+        $formatted = array_values($uniqueEvents);
+        foreach ($formatted as &$f) {
+            $f['user_name'] = trim(($f['first_name'] ?? '') . ' ' . ($f['last_name'] ?? ''));
+            if (empty($f['user_name'])) {
+                $f['user_name'] = 'Usuario Eliminado';
+            }
+            $f['units'] = empty($f['unit_number']) ? null : implode(', ', $f['unit_number']);
+            unset($f['unit_number']);
+        }
+
+        return $this->response->setJSON([
+            'status' => 'success',
+            'document' => ['name' => $doc['name']],
+            'activity' => $formatted
         ]);
     }
 
