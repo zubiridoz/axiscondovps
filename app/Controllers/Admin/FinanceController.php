@@ -81,7 +81,7 @@ class FinanceController extends BaseController
             // ── Determine billing start month (earliest transaction) ──
             $bRow = $db->query(
                 "SELECT DATE_FORMAT(MIN(due_date), '%Y-%m') AS billing_start
-                 FROM financial_transactions WHERE condominium_id = ? AND type = 'charge'",
+                 FROM financial_transactions WHERE condominium_id = ?",
                 [$condoId]
             )->getRow();
             $billingStartMonth = $bRow && $bRow->billing_start ? $bRow->billing_start : $currentMonth;
@@ -4605,6 +4605,16 @@ class FinanceController extends BaseController
         <h3 class="section-title">Análisis de Ingresos</h3>
         <table width="100%" cellpadding="0" cellspacing="0"><tr><td style="background-color: #e2e8f0; height: 1px; line-height: 1px; font-size: 1px;">&nbsp;</td></tr></table>';
 
+        $pieColors = [
+            [59, 130, 246], // blue
+            [16, 185, 129], // emerald
+            [245, 158, 11], // amber
+            [236, 72, 153], // pink
+            [139, 92, 246], // violet
+            [14, 165, 233], // sky
+            [249, 115, 22]  // orange
+        ];
+
     if (empty($incomeByCat)) {
             $html_body .= '
             <br>
@@ -4667,15 +4677,6 @@ class FinanceController extends BaseController
                 $pdf->AddPage();
             }
             $cy = $pdf->GetY() + 15;
-            $pieColors = [
-                [59, 130, 246], // blue
-                [16, 185, 129], // emerald
-                [245, 158, 11], // amber
-                [236, 72, 153], // pink
-                [139, 92, 246], // violet
-                [14, 165, 233], // sky
-                [249, 115, 22]  // orange
-            ];
 
             $startAngle = 0;
             $cIdx = 0;
